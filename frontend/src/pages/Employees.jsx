@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from '../components/Modal';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
-import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck } from 'lucide-react';
+import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 const Employees = () => {
   const { showToast } = useToast();

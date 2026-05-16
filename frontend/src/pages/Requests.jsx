@@ -3,7 +3,7 @@ import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
-import { FileText, Clock, AlertTriangle, CheckCircle2, User, Building2, Calendar } from 'lucide-react';
+import { FileText, Clock, AlertTriangle, CheckCircle2, User, Building2, Calendar, Download } from 'lucide-react';
 
 const Requests = () => {
   const { showToast } = useToast();

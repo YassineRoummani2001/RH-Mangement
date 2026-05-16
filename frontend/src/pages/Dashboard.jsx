@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Skeleton } from '../components/Skeleton';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
-import { User, Building2, Calendar, Fingerprint, FileText, Share2, Download } from 'lucide-react';
+import { User, Building2, Calendar, Fingerprint, FileText, Share2, Download, Mail, Briefcase, AlertTriangle, Umbrella } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const data = [
