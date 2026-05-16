@@ -300,51 +300,54 @@ const LeaveManagement = () => {
         isOpen={isViewModalOpen} 
         onClose={() => setIsViewModalOpen(false)} 
         title="Détails de l'Absence"
-        icon="far fa-eye"
-        iconColor="#2563EB"
-        iconBg="#DBEAFE"
+        icon="far fa-calendar-check"
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
         showFooter={false}
       >
         {selectedAbsence && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ position: 'relative', marginBottom: '24px' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: selectedAbsence.bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 700, margin: '0 auto', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
+          <div style={{ padding: '4px 0' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: selectedAbsence.bg, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: 800, margin: '0 auto 12px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)', border: '3px solid var(--main-bg)' }}>
                 {selectedAbsence.initials}
               </div>
-              <div style={{ position: 'absolute', bottom: 0, right: 'calc(50% - 45px)', width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--success)', border: '3px solid var(--main-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                <Clock size={14} />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '4px' }}>{selectedAbsence.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <span className="filter-tag blue" style={{ padding: '2px 10px', fontSize: '0.65rem' }}>{selectedAbsence.dept}</span>
+                <span className="modern-status-badge badge-success" style={{ padding: '2px 10px', fontSize: '0.65rem' }}>{selectedAbsence.status}</span>
               </div>
             </div>
 
-            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '4px' }}>{selectedAbsence.name}</h3>
-            <p style={{ color: 'var(--text-gray)', fontSize: '0.95rem', marginBottom: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <MapPin size={14} /> {selectedAbsence.dept}
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', textAlign: 'left' }}>
-              <div className="detail-box">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  {selectedAbsence.type === 'Maladie' ? <HeartPulse size={14} color="var(--danger)" /> : <Umbrella size={14} color="var(--primary)" />}
-                  <span className="detail-label">Type d'absence</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '28px' }}>
+              <div className="detail-box" style={{ padding: '10px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  {selectedAbsence.type === 'Maladie' ? <HeartPulse size={12} color="var(--danger)" /> : <Umbrella size={12} color="var(--primary)" />}
+                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>Type de Congé</span>
                 </div>
-                <span className="detail-value">{selectedAbsence.type}</span>
+                <span className="detail-value" style={{ fontSize: '0.85rem' }}>{selectedAbsence.type}</span>
               </div>
               
-              <div className="detail-box">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <Clock size={14} color="var(--warning)" />
-                  <span className="detail-label">Durée Totale</span>
+              <div className="detail-box" style={{ padding: '10px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <Clock size={12} color="var(--warning)" />
+                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>Durée Totale</span>
                 </div>
-                <span className="detail-value">{selectedAbsence.duration}</span>
+                <span className="detail-value" style={{ fontSize: '0.85rem' }}>{selectedAbsence.duration}</span>
               </div>
 
-              <div className="detail-box" style={{ gridColumn: 'span 2' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <Calendar size={14} color="var(--primary)" />
-                  <span className="detail-label">Période du congé</span>
+              <div className="detail-box" style={{ gridColumn: 'span 2', padding: '10px 12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <Calendar size={12} color="var(--success)" />
+                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>Période d'absence</span>
                 </div>
-                <span className="detail-value">{selectedAbsence.period}</span>
+                <span className="detail-value" style={{ fontSize: '0.85rem' }}>{selectedAbsence.period}</span>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="action-btn primary" style={{ flex: 1, justifyContent: 'center', height: '42px', fontSize: '0.85rem' }} onClick={() => setIsViewModalOpen(false)}>
+                Fermer
+              </button>
             </div>
           </div>
         )}
@@ -356,25 +359,31 @@ const LeaveManagement = () => {
         onClose={() => setIsEditModalOpen(false)} 
         title="Modifier l'Absence"
         icon="far fa-edit"
-        iconColor="#2563EB"
-        iconBg="#DBEAFE"
-        submitText="Mettre à jour"
-        submitColor="#2563EB"
-        onSubmit={onEditSubmit}
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
+        showFooter={false}
       >
         {selectedAbsence && (
-          <form>
-            <div className="form-group">
-              <label className="form-label">Type d'absence</label>
+          <form style={{ padding: '4px 0' }}>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Umbrella size={12} color="var(--primary)" /> Type d'absence
+              </label>
               <select className="form-input" defaultValue={selectedAbsence.type}>
                 <option>Congé Annuel</option>
                 <option>Maladie</option>
-                <option>Absence Non Justifiée</option>
+                <option>Télétravail</option>
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Période</label>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Calendar size={12} color="var(--c-purple)" /> Période
+              </label>
               <input type="text" className="form-input" defaultValue={selectedAbsence.period} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onEditSubmit}>Mettre à jour</button>
+              <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>Annuler</button>
             </div>
           </form>
         )}

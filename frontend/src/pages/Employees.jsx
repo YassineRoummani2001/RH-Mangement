@@ -166,53 +166,66 @@ const Employees = () => {
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        title="Ajouter un employé"
+        title="Nouveau Collaborateur"
         icon="fas fa-user-plus"
-        iconColor="#2563EB"
-        iconBg="#DBEAFE"
-        submitColor="#2563EB"
-        onSubmit={onAddSubmit}
-        submitText="Ajouter l'employé"
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
+        showFooter={false}
       >
-        <form>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <form style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Prénom</label>
-              <input type="text" className="form-input" placeholder="Ex: Jean" />
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--primary)" /> Prénom
+              </label>
+              <input type="text" className="form-input" placeholder="Jean" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Nom</label>
-              <input type="text" className="form-input" placeholder="Ex: Dupont" />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Email</label>
-              <input type="email" className="form-input" placeholder="jean.dupont@entreprise.com" />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Poste</label>
-              <input type="text" className="form-input" placeholder="Ex: Développeur Frontend" />
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--primary)" /> Nom
+              </label>
+              <input type="text" className="form-input" placeholder="Dupont" />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Département</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Mail size={12} color="var(--c-purple)" /> Email
+              </label>
+              <input type="email" className="form-input" placeholder="jean.d@comp.com" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Briefcase size={12} color="var(--c-orange)" /> Poste
+              </label>
+              <input type="text" className="form-input" placeholder="Designer" />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Building2 size={12} color="var(--success)" /> Département
+              </label>
               <select className="form-input">
                 <option>Ingénierie</option>
                 <option>Marketing</option>
-                <option>Ventes</option>
-                <option>Ressources Humaines</option>
+                <option>RH</option>
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Type de contrat</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <ShieldCheck size={12} color="var(--c-blue)" /> Contrat
+              </label>
               <select className="form-input">
                 <option>CDI</option>
                 <option>CDD</option>
-                <option>Stage</option>
+                <option>Freelance</option>
               </select>
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onAddSubmit}>Créer le profil</button>
+            <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsAddModalOpen(false)}>Annuler</button>
           </div>
         </form>
       </Modal>
@@ -290,27 +303,35 @@ const Employees = () => {
       <Modal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
-        title="Modifier l'employé"
+        title="Modifier le Profil"
         icon="far fa-edit"
-        iconColor="#2563EB"
-        iconBg="#DBEAFE"
-        submitText="Sauvegarder"
-        submitColor="#2563EB"
-        onSubmit={onEditSubmit}
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
+        showFooter={false}
       >
         {selectedEmployee && (
-          <form>
-            <div className="form-group">
-              <label className="form-label">Nom Complet</label>
+          <form style={{ padding: '4px 0' }}>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--primary)" /> Nom Complet
+              </label>
               <input type="text" className="form-input" defaultValue={selectedEmployee.name} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Email</label>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Mail size={12} color="var(--c-purple)" /> Email Professionnel
+              </label>
               <input type="email" className="form-input" defaultValue={selectedEmployee.email} />
             </div>
-            <div className="form-group">
-              <label className="form-label">Poste</label>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Briefcase size={12} color="var(--c-orange)" /> Poste Actuel
+              </label>
               <input type="text" className="form-input" defaultValue={selectedEmployee.role} />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onEditSubmit}>Sauvegarder les modifications</button>
+              <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>Annuler</button>
             </div>
           </form>
         )}
@@ -320,18 +341,29 @@ const Employees = () => {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Supprimer l'employé"
-        icon="fas fa-exclamation-triangle"
-        iconColor="#E11D48"
-        iconBg="#FFE4E6"
-        submitText="Oui, supprimer"
-        submitColor="#E11D48"
-        onSubmit={onDeleteSubmit}
+        title="Supprimer définitivement"
+        icon="fas fa-trash-alt"
+        iconColor="var(--danger)"
+        iconBg="var(--danger-bg)"
+        showFooter={false}
       >
         {selectedEmployee && (
           <div style={{ textAlign: 'center', padding: '10px 0' }}>
-            <p style={{ fontSize: '1.1rem', color: '#1E293B', marginBottom: '8px' }}>Êtes-vous sûr ?</p>
-            <p style={{ color: '#64748B' }}>Vous êtes sur le point de supprimer le profil de <strong>{selectedEmployee.name}</strong>. Cette action est irréversible.</p>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--danger-bg)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 16px' }}>
+              <AlertTriangle size={30} />
+            </div>
+            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-dark)', marginBottom: '8px', fontWeight: 700 }}>Êtes-vous absolument sûr ?</h4>
+            <p style={{ color: 'var(--text-gray)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.5 }}>
+              Cette action supprimera le profil de <strong>{selectedEmployee.name}</strong>. Cette opération est irréversible.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="action-btn" style={{ flex: 1, height: '42px', backgroundColor: 'var(--danger)', color: 'white', borderColor: 'var(--danger)' }} onClick={onDeleteSubmit}>
+                Oui, supprimer
+              </button>
+              <button className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsDeleteModalOpen(false)}>
+                Annuler
+              </button>
+            </div>
           </div>
         )}
       </Modal>

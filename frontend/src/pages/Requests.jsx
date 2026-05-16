@@ -278,50 +278,57 @@ const Requests = () => {
           </div>
         )}
       </div>
-
-      <Modal 
+       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         title="Créer une Demande RH"
         icon="fas fa-file-signature"
-        iconColor="var(--c-teal)"
-        iconBg="var(--bg-teal)"
-        submitColor="var(--c-teal)"
-        onSubmit={handleNewRequestSubmit}
-        submitText="Soumettre la demande"
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
+        showFooter={false}
       >
-        <form onSubmit={e => { e.preventDefault(); handleNewRequestSubmit(); }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+        <form onSubmit={e => { e.preventDefault(); handleNewRequestSubmit(); }} style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">Type de demande</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <FileText size={12} color="var(--primary)" /> Type
+              </label>
               <select name="type" className="form-input" value={newRequestForm.type} onChange={handleNewRequestChange}>
                 <option>Attestation de Travail</option>
                 <option>Attestation de Salaire</option>
                 <option>Demande d'avance</option>
-                <option>Renouvellement de matériel</option>
                 <option>Autre</option>
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">Priorité</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <AlertTriangle size={12} color="var(--warning)" /> Priorité
+              </label>
               <select name="priorite" className="form-input" value={newRequestForm.priorite} onChange={handleNewRequestChange}>
-                <option>Normale (Délai 48h)</option>
-                <option>Haute (Délai 24h)</option>
-                <option>Urgente (Immédiat)</option>
+                <option>Normale</option>
+                <option>Haute</option>
+                <option>Urgente</option>
               </select>
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">Description ou détails additionnels</label>
-            <textarea name="description" className="form-input" rows="2" placeholder="Précisez la langue souhaitée, la période, ou toute information utile pour l'équipe RH..." value={newRequestForm.description} onChange={handleNewRequestChange}></textarea>
+            <label className="form-label" style={{ fontSize: '0.7rem' }}>Description</label>
+            <textarea name="description" className="form-input" rows="2" style={{ minHeight: '60px' }} placeholder="Détails du besoin..." value={newRequestForm.description} onChange={handleNewRequestChange}></textarea>
           </div>
-          <div className="form-group" style={{ marginBottom: '0' }}>
-            <label className="form-label">Pièces jointes (Optionnel)</label>
-            <div style={{ border: '2px dashed var(--border-color)', padding: '16px', textAlign: 'center', borderRadius: 'var(--radius-md)', color: 'var(--text-gray)', cursor: 'pointer' }} onClick={() => document.getElementById('fileInputRequests').click()}>
-              <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.5rem', marginBottom: '4px', color: 'var(--primary)' }}></i>
-              <div style={{ fontSize: '0.85rem' }}>{newRequestForm.fichier ? newRequestForm.fichier.name : 'Cliquez pour ajouter un fichier (PDF, JPG, PNG)'}</div>
-              <input id="fileInputRequests" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={e => setNewRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <div style={{ border: '1px dashed var(--border-color)', padding: '12px', textAlign: 'center', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sidebar-bg)' }} onClick={() => document.getElementById('fileInputRequests').click()}>
+              <Download size={16} color="var(--primary)" style={{ marginBottom: '4px' }} />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{newRequestForm.fichier ? newRequestForm.fichier.name : 'Ajouter un document (PDF, Image)'}</div>
+              <input id="fileInputRequests" type="file" style={{ display: 'none' }} onChange={e => setNewRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>
+              Soumettre la demande
+            </button>
+            <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsModalOpen(false)}>
+              Annuler
+            </button>
           </div>
         </form>
       </Modal>

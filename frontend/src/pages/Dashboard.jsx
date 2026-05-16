@@ -513,43 +513,62 @@ const Dashboard = () => {
       <Modal 
         isOpen={isEmployeeModalOpen} 
         onClose={() => setIsEmployeeModalOpen(false)} 
-        title="Ajouter un employé"
+        title="Ajouter un Collaborateur"
         icon="fas fa-user-plus"
-        iconColor="var(--c-blue)"
-        iconBg="var(--bg-blue)"
-        submitColor="var(--c-blue)"
-        onSubmit={handleEmployeeSubmit}
-        submitText="Ajouter l'employé"
+        iconColor="var(--primary)"
+        iconBg="var(--primary-bg)"
+        showFooter={false}
       >
-        <form onSubmit={e => { e.preventDefault(); handleEmployeeSubmit(); }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+        <form onSubmit={e => { e.preventDefault(); handleEmployeeSubmit(); }} style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Prénom</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--primary)" /> Prénom
+              </label>
               <input type="text" name="prenom" className="form-input" placeholder="Ex: Jean" value={employeeForm.prenom} onChange={handleEmployeeChange} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Nom</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--primary)" /> Nom
+              </label>
               <input type="text" name="nom" className="form-input" placeholder="Ex: Dupont" value={employeeForm.nom} onChange={handleEmployeeChange} required />
             </div>
           </div>
+          
           <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">Adresse Email</label>
+            <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Mail size={12} color="var(--c-purple)" /> Email Professionnel
+            </label>
             <input type="email" name="email" className="form-input" placeholder="jean.dupont@entreprise.com" value={employeeForm.email} onChange={handleEmployeeChange} required />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Poste</label>
-              <input type="text" name="poste" className="form-input" placeholder="Développeur Front-end" value={employeeForm.poste} onChange={handleEmployeeChange} required />
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Briefcase size={12} color="var(--c-orange)" /> Poste
+              </label>
+              <input type="text" name="poste" className="form-input" placeholder="Développeur" value={employeeForm.poste} onChange={handleEmployeeChange} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Département</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Building2 size={12} color="var(--success)" /> Département
+              </label>
               <select name="departement" className="form-input" value={employeeForm.departement} onChange={handleEmployeeChange}>
                 <option>Ingénierie</option>
                 <option>Marketing</option>
                 <option>Ventes</option>
-                <option>Ressources Humaines</option>
+                <option>RH</option>
               </select>
             </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="submit" className="action-btn primary" style={{ flex: 2, justifyContent: 'center', height: '42px' }}>
+              Enregistrer le profil
+            </button>
+            <button type="button" className="action-btn" style={{ flex: 1, justifyContent: 'center', height: '42px' }} onClick={() => setIsEmployeeModalOpen(false)}>
+              Annuler
+            </button>
           </div>
         </form>
       </Modal>
@@ -558,45 +577,53 @@ const Dashboard = () => {
         isOpen={isRequestModalOpen} 
         onClose={() => setIsRequestModalOpen(false)} 
         title="Nouvelle Demande"
-        icon="fas fa-file-alt"
+        icon="fas fa-file-signature"
         iconColor="var(--c-purple)"
         iconBg="var(--bg-purple)"
-        submitColor="var(--c-purple)"
-        onSubmit={handleRequestSubmit}
-        submitText="Soumettre la demande"
+        showFooter={false}
       >
-        <form onSubmit={e => { e.preventDefault(); handleRequestSubmit(); }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+        <form onSubmit={e => { e.preventDefault(); handleRequestSubmit(); }} style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">Type de demande</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <FileText size={12} color="var(--c-purple)" /> Type
+              </label>
               <select name="type" className="form-input" value={requestForm.type} onChange={handleRequestChange}>
                 <option>Attestation de Travail</option>
                 <option>Attestation de Salaire</option>
                 <option>Demande d'avance</option>
-                <option>Renouvellement de matériel</option>
                 <option>Autre</option>
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">Priorité</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <AlertTriangle size={12} color="var(--warning)" /> Priorité
+              </label>
               <select name="priorite" className="form-input" value={requestForm.priorite} onChange={handleRequestChange}>
-                <option>Normale (Délai 48h)</option>
-                <option>Haute (Délai 24h)</option>
-                <option>Urgente (Immédiat)</option>
+                <option>Normale</option>
+                <option>Haute</option>
+                <option>Urgente</option>
               </select>
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">Description ou détails additionnels</label>
-            <textarea name="description" className="form-input" rows="2" placeholder="Précisez la langue souhaitée, la période, ou toute information utile pour l'équipe RH..." value={requestForm.description} onChange={handleRequestChange}></textarea>
+            <label className="form-label" style={{ fontSize: '0.7rem' }}>Description</label>
+            <textarea name="description" className="form-input" rows="2" style={{ minHeight: '60px' }} placeholder="Détails du besoin..." value={requestForm.description} onChange={handleRequestChange}></textarea>
           </div>
-          <div className="form-group" style={{ marginBottom: '0' }}>
-            <label className="form-label">Pièces jointes (Optionnel)</label>
-            <div style={{ border: '2px dashed var(--border-color)', padding: '16px', textAlign: 'center', borderRadius: 'var(--radius-md)', color: 'var(--text-gray)', cursor: 'pointer' }} onClick={() => document.getElementById('fileInputDashboard').click()}>
-              <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.5rem', marginBottom: '4px', color: 'var(--primary)' }}></i>
-              <div style={{ fontSize: '0.85rem' }}>{requestForm.fichier ? requestForm.fichier.name : 'Cliquez pour ajouter un fichier (PDF, JPG, PNG)'}</div>
-              <input id="fileInputDashboard" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={e => setRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <div style={{ border: '1px dashed var(--border-color)', padding: '12px', textAlign: 'center', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sidebar-bg)' }} onClick={() => document.getElementById('fileInputDashboard').click()}>
+              <Download size={16} color="var(--primary)" style={{ marginBottom: '4px' }} />
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{requestForm.fichier ? requestForm.fichier.name : 'Ajouter un document'}</div>
+              <input id="fileInputDashboard" type="file" style={{ display: 'none' }} onChange={e => setRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="submit" className="action-btn primary" style={{ flex: 2, background: 'var(--c-purple)', borderColor: 'var(--c-purple)', height: '42px' }}>
+              Envoyer la demande
+            </button>
+            <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsRequestModalOpen(false)}>
+              Fermer
+            </button>
           </div>
         </form>
       </Modal>
@@ -609,37 +636,54 @@ const Dashboard = () => {
         icon="fas fa-calendar-alt"
         iconColor="var(--c-orange)"
         iconBg="var(--bg-orange)"
-        submitColor="var(--c-orange)"
-        onSubmit={handleLeaveSubmit}
-        submitText="Enregistrer l'absence"
+        showFooter={false}
       >
-        <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }}>
+        <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }} style={{ padding: '4px 0' }}>
           <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">Employé</label>
+            <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <User size={12} color="var(--primary)" /> Collaborateur
+            </label>
             <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
-              <option value="">Sélectionnez un employé...</option>
-              <option value="john-davis">John Davis (Opérations)</option>
-              <option value="maria-chen">Maria Chen (Conformité)</option>
+              <option value="">Choisir un employé...</option>
+              <option value="john-davis">John Davis</option>
+              <option value="maria-chen">Maria Chen</option>
             </select>
           </div>
+
           <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">Type de congé</label>
+            <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Umbrella size={12} color="var(--success)" /> Motif d'absence
+            </label>
             <select name="type" className="form-input" value={leaveForm.type} onChange={handleLeaveChange}>
               <option>Congé Annuel</option>
               <option>Congé Maladie</option>
-              <option>Télétravail Exceptionnel</option>
-              <option>Absence Non Justifiée</option>
+              <option>Télétravail</option>
+              <option>Autre</option>
             </select>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Date de début</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Calendar size={12} color="var(--text-gray)" /> Début
+              </label>
               <input type="date" name="dateDebut" className="form-input" value={leaveForm.dateDebut} onChange={handleLeaveChange} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Date de fin</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Calendar size={12} color="var(--text-gray)" /> Fin
+              </label>
               <input type="date" name="dateFin" className="form-input" value={leaveForm.dateFin} onChange={handleLeaveChange} required />
             </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="submit" className="action-btn primary" style={{ flex: 2, background: 'var(--c-orange)', borderColor: 'var(--c-orange)', height: '42px' }}>
+              Confirmer l'absence
+            </button>
+            <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsLeaveModalOpen(false)}>
+              Annuler
+            </button>
           </div>
         </form>
       </Modal>
