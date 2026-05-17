@@ -6,10 +6,48 @@ import {
   CheckCircle2, X
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const Notifications = () => {
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('all');
+
+  const getTranslatedTitle = (title) => {
+    if (i18n.language === 'en') {
+      if (title === 'Nouvelle demande de congé') return 'New Leave Request';
+      if (title === 'Document expiré') return 'Expired Document';
+      if (title === 'Mise à jour du système') return 'System Update';
+      if (title === 'Fiche de paie disponible') return 'Payslip Available';
+      if (title === 'Alerte Absence') return 'Absence Alert';
+      if (title === 'Nouveau message RH') return 'New HR Message';
+    }
+    return title;
+  };
+
+  const getTranslatedMessage = (msg) => {
+    if (i18n.language === 'en') {
+      if (msg.startsWith('Ali Benali a soumis')) return 'Ali Benali submitted a leave request for the period of May 20 to 25.';
+      if (msg.startsWith('Le contrat de travail')) return 'The employment contract of Marc Leblanc expires in 15 days. Please plan for renewal.';
+      if (msg.startsWith('La plateforme RH')) return 'The HR Management platform has been updated to version 2.4.0. Discover the news.';
+      if (msg.startsWith('Votre fiche de paie')) return 'Your payslip for the month of April 2026 is now available for download.';
+      if (msg.startsWith('Leïla Mansour est absente')) return 'Leïla Mansour is absent today without prior justification.';
+      if (msg.startsWith('Un nouveau message')) return 'A new message has been posted in the general channel.';
+    }
+    return msg;
+  };
+
+  const getTranslatedTime = (time) => {
+    if (i18n.language === 'en') {
+      if (time === 'Il y a 10 min') return '10 min ago';
+      if (time === 'Il y a 2h') return '2h ago';
+      if (time === 'Hier') return 'Yesterday';
+      if (time === '2 jours') return '2 days ago';
+      if (time === '3 jours') return '3 days ago';
+      if (time === '4 jours') return '4 days ago';
+    }
+    return time;
+  };
   const [notifications, setNotifications] = useState([
     { id: 1, title: 'Nouvelle demande de congé', message: 'Ali Benali a soumis une demande de congé annuel pour la période du 20 au 25 mai.', time: 'Il y a 10 min', date: '16 Mai 2026', type: 'request', unread: true, category: 'conge' },
     { id: 2, title: 'Document expiré', message: 'Le contrat de travail de Marc Leblanc arrive à échéance dans 15 jours. Veuillez prévoir le renouvellement.', time: 'Il y a 2h', date: '16 Mai 2026', type: 'alert', unread: true, category: 'document' },
@@ -63,12 +101,12 @@ const Notifications = () => {
     <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', maxWidth: '900px', margin: '0 auto' }}>
       <header className="header" style={{ marginBottom: '24px', flexShrink: 0 }}>
         <div className="header-title">
-          <h1>Centre de Notifications</h1>
-          <p>Gérez vos alertes et restez informé des activités RH</p>
+          <h1>{i18n.language === 'fr' ? 'Centre de Notifications' : 'Notification Center'}</h1>
+          <p>{i18n.language === 'fr' ? 'Gérez vos alertes et restez informé des activités RH' : 'Manage your alerts and stay informed of HR activities'}</p>
         </div>
         <div className="header-actions">
           <button onClick={markAllRead} className="action-btn" style={{ gap: '8px' }}>
-            <CheckCircle2 size={16} /> Tout marquer lu
+            <CheckCircle2 size={16} /> {i18n.language === 'fr' ? 'Tout marquer lu' : 'Mark all as read'}
           </button>
         </div>
       </header>
@@ -76,10 +114,10 @@ const Notifications = () => {
       {/* Tabs / Filters */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px', flexShrink: 0 }}>
         {[
-          { id: 'all', label: 'Toutes', count: notifications.length },
-          { id: 'unread', label: 'Non lues', count: notifications.filter(n => n.unread).length },
-          { id: 'request', label: 'Demandes', count: notifications.filter(n => n.type === 'request').length },
-          { id: 'alert', label: 'Alertes', count: notifications.filter(n => n.type === 'alert').length },
+          { id: 'all', label: i18n.language === 'fr' ? 'Toutes' : 'All', count: notifications.length },
+          { id: 'unread', label: i18n.language === 'fr' ? 'Non lues' : 'Unread', count: notifications.filter(n => n.unread).length },
+          { id: 'request', label: i18n.language === 'fr' ? 'Demandes' : 'Requests', count: notifications.filter(n => n.type === 'request').length },
+          { id: 'alert', label: i18n.language === 'fr' ? 'Alertes' : 'Alerts', count: notifications.filter(n => n.type === 'alert').length },
         ].map(tab => (
           <button
             key={tab.id}
@@ -157,19 +195,19 @@ const Notifications = () => {
 
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-dark)' }}>{notif.title}</h3>
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-dark)' }}>{getTranslatedTitle(notif.title)}</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-light)' }}>
                       <Calendar size={12} />
-                      {notif.date}
+                      {notif.date === '16 Mai 2026' && i18n.language === 'en' ? 'May 16, 2026' : notif.date}
                     </div>
                   </div>
                   
                   <p style={{ fontSize: '14px', color: 'var(--text-gray)', lineHeight: '1.6', marginBottom: '16px' }}>
-                    {notif.message}
+                    {getTranslatedMessage(notif.message)}
                   </p>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-light)' }}>{notif.time}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-light)' }}>{getTranslatedTime(notif.time)}</span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button 
                         onClick={() => toggleRead(notif.id)}
@@ -201,8 +239,8 @@ const Notifications = () => {
               <div style={{ width: '80px', height: '80px', backgroundColor: 'var(--sidebar-bg)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                 <Bell size={40} style={{ color: 'var(--text-light)' }} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '8px' }}>Aucune notification</h3>
-              <p style={{ color: 'var(--text-gray)', fontSize: '14px' }}>Vous êtes à jour ! Revenez plus tard pour de nouvelles alertes.</p>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '8px' }}>{i18n.language === 'fr' ? 'Aucune notification' : 'No notifications'}</h3>
+              <p style={{ color: 'var(--text-gray)', fontSize: '14px' }}>{i18n.language === 'fr' ? 'Vous êtes à jour ! Revenez plus tard pour de nouvelles alertes.' : 'You are up to date! Come back later for new alerts.'}</p>
             </motion.div>
           )}
         </AnimatePresence>

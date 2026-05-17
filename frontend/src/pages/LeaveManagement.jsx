@@ -5,10 +5,13 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { logSystemActivity } from '../utils/rbac';
 import { Calendar, Clock, Umbrella, HeartPulse, User, MapPin, CheckCircle2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 const LeaveManagement = () => {
   const { showToast } = useToast();
   const { user, effectiveRole } = useAuth();
+  const { t, i18n } = useTranslation();
   
   const isEmployee = effectiveRole === 'EMPLOYEE';
   const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
@@ -121,12 +124,12 @@ const LeaveManagement = () => {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <header className="header">
         <div className="header-title">
-          <h1>{isEmployee ? "Mes Congés & Absences" : "Gestion des Congés"}</h1>
-          <p>{isEmployee ? "Gérez vos jours de repos et consultez vos soldes." : "Suivez la disponibilité de l'équipe et gérez les demandes"}</p>
+          <h1>{isEmployee ? (i18n.language === 'fr' ? "Mes Congés & Absences" : "My Leaves & Absences") : (i18n.language === 'fr' ? "Gestion des Congés" : "Leave Management")}</h1>
+          <p>{isEmployee ? (i18n.language === 'fr' ? "Gérez vos jours de repos et consultez vos soldes." : "Manage your days off and check your balances.") : (i18n.language === 'fr' ? "Suivez la disponibilité de l'équipe et gérez les demandes" : "Track team availability and manage requests")}</p>
         </div>
         <div className="header-actions">
           <button className="action-btn primary" onClick={() => setIsLeaveModalOpen(true)}>
-            <i className="fas fa-calendar-plus"></i> {isEmployee ? "Demander un Congé" : "Enregistrer une Absence"}
+            <i className="fas fa-calendar-plus"></i> {isEmployee ? (i18n.language === 'fr' ? "Demander un Congé" : "Request Leave") : (i18n.language === 'fr' ? "Enregistrer une Absence" : "Record Absence")}
           </button>
         </div>
       </header>
@@ -140,21 +143,21 @@ const LeaveManagement = () => {
                 <div className="stat-icon primary"><i className="fas fa-calendar-check"></i></div>
               </div>
               <div className="stat-value">18</div>
-              <div className="stat-label">Jours Restants (Annuel)</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Jours Restants (Annuel)' : 'Remaining Days (Annual)'}</div>
             </div>
             <div className="stat-card amber-card">
               <div className="stat-header">
                 <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
               </div>
               <div className="stat-value">{filteredAbsences.filter(a => a.status === 'En attente').length}</div>
-              <div className="stat-label">Demandes en Attente</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
             </div>
             <div className="stat-card emerald-card">
               <div className="stat-header">
                 <div className="stat-icon success"><i className="fas fa-plane-departure"></i></div>
               </div>
               <div className="stat-value">12</div>
-              <div className="stat-label">Jours Pris Cette Année</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Jours Pris Cette Année' : 'Days Taken This Year'}</div>
             </div>
           </>
         ) : (
@@ -164,21 +167,21 @@ const LeaveManagement = () => {
                 <div className="stat-icon success"><i className="fas fa-umbrella-beach"></i></div>
               </div>
               <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Approuvé' && a.type === 'Congé Annuel').length}</div>
-              <div className="stat-label">En Congé Approuvé</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'En Congé Approuvé' : 'On Approved Leave'}</div>
             </div>
             <div className="stat-card amber-card">
               <div className="stat-header">
                 <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
               </div>
               <div className="stat-value">{pendingRequests.length}</div>
-              <div className="stat-label">Demandes en Attente</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
             </div>
             <div className="stat-card purple-card">
               <div className="stat-header">
                 <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-briefcase-medical"></i></div>
               </div>
               <div className="stat-value">{filteredAbsences.filter(a => a.type === 'Maladie').length}</div>
-              <div className="stat-label">Arrêts Maladie</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Arrêts Maladie' : 'Sick Leaves'}</div>
             </div>
           </>
         )}
@@ -189,7 +192,7 @@ const LeaveManagement = () => {
           {/* Calendar Preview Section */}
           <div className="card" style={{ height: '100%' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Calendrier de l'Équipe (Novembre 2026)</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{i18n.language === 'fr' ? "Calendrier de l'Équipe (Novembre 2026)" : "Team Calendar (November 2026)"}</h3>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button className="action-btn" style={{ padding: '6px', border: 'none' }}><i className="fas fa-chevron-left"></i></button>
                 <button className="action-btn" style={{ padding: '6px', border: 'none' }}><i className="fas fa-chevron-right"></i></button>
@@ -198,7 +201,7 @@ const LeaveManagement = () => {
             {/* Mini Calendar Component */}
             <div style={{ padding: '16px 0', background: 'transparent' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '8px' }}>
-                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
+                {(i18n.language === 'fr' ? ['L', 'M', 'M', 'J', 'V', 'S', 'D'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S']).map((day, index) => (
                   <div key={`${day}-${index}`} style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-gray)', textAlign: 'center' }}>{day}</div>
                 ))}
               </div>
@@ -244,11 +247,11 @@ const LeaveManagement = () => {
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginTop: '16px', padding: '0 12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--text-gray)' }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }}></div>
-                  Congé Approuvé
+                  {i18n.language === 'fr' ? 'Congé Approuvé' : 'Approved Leave'}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--text-gray)' }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#EF4444' }}></div>
-                  Alerte / Maladie
+                  {i18n.language === 'fr' ? 'Alerte / Maladie' : 'Alert / Sickness'}
                 </div>
               </div>
             </div>
@@ -257,8 +260,10 @@ const LeaveManagement = () => {
           {/* Leave Requests Column (Managers only) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>À Valider</h3>
-              <span style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 500 }}>{pendingRequests.length} attente(s)</span>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{i18n.language === 'fr' ? 'À Valider' : 'To Validate'}</h3>
+              <Link to="/requests" style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 500, textDecoration: 'none' }}>
+                {pendingRequests.length} {i18n.language === 'fr' ? 'attente(s)' : 'pending'}
+              </Link>
             </div>
             
             {pendingRequests.length > 0 ? pendingRequests.slice(0, 3).map(req => (
@@ -291,12 +296,12 @@ const LeaveManagement = () => {
         <div className="table-toolbar">
           <h3 className="modern-table-title">
             <i className="fas fa-list" style={{ color: '#2563EB', marginRight: '10px' }}></i>
-            {isEmployee ? "Historique de mes absences" : "Toutes les Absences"}
+            {isEmployee ? (i18n.language === 'fr' ? "Historique de mes absences" : "My Absence History") : (i18n.language === 'fr' ? "Toutes les Absences" : "All Absences")}
           </h3>
           <div className="filter-group">
             <div className="search-bar">
               <i className="fas fa-search"></i>
-              <input type="text" placeholder="Rechercher..." />
+              <input type="text" placeholder={i18n.language === 'fr' ? "Rechercher..." : "Search..."} />
             </div>
           </div>
         </div>
@@ -305,12 +310,12 @@ const LeaveManagement = () => {
           <table>
             <thead>
               <tr>
-                <th>Employé</th>
-                <th>Type</th>
-                <th>Période</th>
-                <th>Durée</th>
-                <th>Statut</th>
-                <th style={{ textAlign: 'center' }}>Actions</th>
+                <th>{i18n.language === 'fr' ? 'Employé' : 'Employee'}</th>
+                <th>{i18n.language === 'fr' ? 'Type' : 'Type'}</th>
+                <th>{i18n.language === 'fr' ? 'Période' : 'Period'}</th>
+                <th>{i18n.language === 'fr' ? 'Durée' : 'Duration'}</th>
+                <th>{i18n.language === 'fr' ? 'Statut' : 'Status'}</th>
+                <th style={{ textAlign: 'center' }}>{i18n.language === 'fr' ? 'Actions' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
@@ -330,7 +335,7 @@ const LeaveManagement = () => {
                   <td style={{ color: '#64748B' }}>{abs.duration}</td>
                   <td>
                     <span className={`modern-status-badge ${abs.status === 'Approuvé' ? 'badge-success' : abs.status === 'Rejeté' ? 'badge-danger' : 'badge-warning'}`}>
-                      {abs.status}
+                      {abs.status === 'Approuvé' ? (i18n.language === 'fr' ? 'Approuvé' : 'Approved') : abs.status === 'Rejeté' ? (i18n.language === 'fr' ? 'Rejeté' : 'Rejected') : (i18n.language === 'fr' ? 'En attente' : 'Pending')}
                     </span>
                   </td>
                   <td style={{ textAlign: 'center' }}>
@@ -359,7 +364,7 @@ const LeaveManagement = () => {
       <Modal 
         isOpen={isLeaveModalOpen} 
         onClose={() => setIsLeaveModalOpen(false)} 
-        title={isEmployee ? "Demander un Congé" : "Enregistrer une Absence"}
+        title={isEmployee ? (i18n.language === 'fr' ? "Demander un Congé" : "Request Leave") : (i18n.language === 'fr' ? "Enregistrer une Absence" : "Record Absence")}
         icon="fas fa-calendar-alt"
         iconColor="#2563EB"
         iconBg="#DBEAFE"
@@ -368,34 +373,34 @@ const LeaveManagement = () => {
       >
         <form onSubmit={onLeaveSubmit} style={{ padding: '4px 0' }}>
           <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">Type d'absence</label>
+            <label className="form-label">{i18n.language === 'fr' ? "Type d'absence" : "Absence Type"}</label>
             <select className="form-input" required value={leaveForm.type} onChange={(e) => setLeaveForm({...leaveForm, type: e.target.value})}>
-              <option value="Congé Annuel">Congé Annuel</option>
-              <option value="Maladie">Congé Maladie</option>
-              <option value="Maternité / Paternité">Maternité / Paternité</option>
-              {!isEmployee && <option value="Absence Non Justifiée">Absence Non Justifiée</option>}
+              <option value="Congé Annuel">{i18n.language === 'fr' ? "Congé Annuel" : "Annual Leave"}</option>
+              <option value="Maladie">{i18n.language === 'fr' ? "Congé Maladie" : "Sick Leave"}</option>
+              <option value="Maternité / Paternité">{i18n.language === 'fr' ? "Maternité / Paternité" : "Maternity / Paternity"}</option>
+              {!isEmployee && <option value="Absence Non Justifiée">{i18n.language === 'fr' ? "Absence Non Justifiée" : "Unjustified Absence"}</option>}
             </select>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Date de début</label>
+              <label className="form-label">{i18n.language === 'fr' ? "Date de début" : "Start Date"}</label>
               <input type="date" required className="form-input" value={leaveForm.start} onChange={(e) => setLeaveForm({...leaveForm, start: e.target.value})} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Date de fin</label>
+              <label className="form-label">{i18n.language === 'fr' ? "Date de fin" : "End Date"}</label>
               <input type="date" required className="form-input" value={leaveForm.end} onChange={(e) => setLeaveForm({...leaveForm, end: e.target.value})} />
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label className="form-label">Motif / Justification</label>
-            <textarea className="form-input" rows="2" placeholder="Raison de la demande..." value={leaveForm.motif} onChange={(e) => setLeaveForm({...leaveForm, motif: e.target.value})}></textarea>
+            <label className="form-label">{i18n.language === 'fr' ? "Motif / Justification" : "Reason / Justification"}</label>
+            <textarea className="form-input" rows="2" placeholder={i18n.language === 'fr' ? "Raison de la demande..." : "Reason for request..."} value={leaveForm.motif} onChange={(e) => setLeaveForm({...leaveForm, motif: e.target.value})}></textarea>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>
-              Soumettre
+              {i18n.language === 'fr' ? "Soumettre" : "Submit"}
             </button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsLeaveModalOpen(false)}>
-              Annuler
+              {i18n.language === 'fr' ? "Annuler" : "Cancel"}
             </button>
           </div>
         </form>
