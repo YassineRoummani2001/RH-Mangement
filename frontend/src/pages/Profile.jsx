@@ -2,23 +2,56 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { User, Mail, Phone, Calendar, Briefcase, MapPin, Shield, Edit3, Key, Clock, CheckCircle } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
-  // Mock employee details for visual layout completeness
-  const employeeDetails = {
+  // Dynamic employee details loaded from local settings
+  const formatHireDate = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('-')) {
+      const [year, month, day] = dateStr.split('-');
+      const monthsFR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+      const monthsEN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const currentLang = localStorage.getItem('i18nextLng') || 'fr';
+      const months = currentLang.startsWith('fr') ? monthsFR : monthsEN;
+      const mIdx = parseInt(month, 10) - 1;
+      return `${parseInt(day, 10)} ${months[mIdx] || ''} ${year}`;
+    }
+    return dateStr;
+  };
+
+  const savedProfile = localStorage.getItem('hr_profile_data');
+  let employeeDetails = {
     phone: '+212 6 12 34 56 78',
-    department: user.role === 'HR_MANAGER' ? 'Ressources Humaines' : 'Ingénierie',
-    hireDate: '12 Janvier 2024',
-    contractType: 'CDI (Temps Plein)',
-    location: 'Casablanca, Maroc',
+    department: user?.role === 'HR_MANAGER' ? t('profile.hrDept') : t('profile.engineeringDept'),
+    hireDate: t('profile.mockHireDate'),
+    contractType: t('profile.mockContractType'),
+    location: t('profile.mockLocation'),
     annualLeavesUsed: 4,
     annualLeavesTotal: 22,
     sickLeavesUsed: 2,
     sickLeavesTotal: 8,
   };
+
+  if (savedProfile) {
+    try {
+      const parsed = JSON.parse(savedProfile);
+      employeeDetails = {
+        ...employeeDetails,
+        phone: parsed.phone || employeeDetails.phone,
+        department: parsed.department || employeeDetails.department,
+        hireDate: parsed.hireDate ? formatHireDate(parsed.hireDate) : employeeDetails.hireDate,
+        contractType: parsed.contractType || employeeDetails.contractType,
+        location: parsed.location || employeeDetails.location,
+      };
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   const remainingAnnual = employeeDetails.annualLeavesTotal - employeeDetails.annualLeavesUsed;
   const remainingSick = employeeDetails.sickLeavesTotal - employeeDetails.sickLeavesUsed;
@@ -29,8 +62,8 @@ const Profile = () => {
       {/* Header */}
       <header className="header" style={{ marginBottom: '24px' }}>
         <div className="header-title">
-          <h1>Mon Profil</h1>
-          <p>Consultez vos informations personnelles, votre solde de congés et vos activités récentes</p>
+          <h1>{t('profile.title')}</h1>
+          <p>{t('profile.subtitle')}</p>
         </div>
       </header>
 
@@ -79,11 +112,11 @@ const Profile = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span className={`filter-tag ${user.role === 'HR_MANAGER' ? 'blue' : 'green'}`} style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
-              {user.role === 'HR_MANAGER' ? 'Responsable RH' : 'Collaborateur'}
+              {user.role === 'HR_MANAGER' ? t('profile.hrManager') : t('profile.employee')}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#10B981', fontWeight: 600 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 8px #10B981' }}></span>
-              En ligne
+              {t('profile.online')}
             </span>
           </div>
 
@@ -99,7 +132,7 @@ const Profile = () => {
         <div className="card">
           <div className="card-title" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
             <User size={18} color="var(--primary)" />
-            Informations Professionnelles
+            {t('profile.professionalInfo')}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -108,8 +141,8 @@ const Profile = () => {
                 <Briefcase size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Poste / Titre</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{user.role === 'HR_MANAGER' ? 'Directrice des Ressources Humaines' : 'Ingénieur Logiciel'}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.postTitle')}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{user.role === 'HR_MANAGER' ? t('profile.mockHRRole') : t('profile.mockEngRole')}</div>
               </div>
             </div>
 
@@ -118,7 +151,7 @@ const Profile = () => {
                 <Shield size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Département</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.department')}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{employeeDetails.department}</div>
               </div>
             </div>
@@ -128,7 +161,7 @@ const Profile = () => {
                 <Calendar size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Date d'embauche</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.hireDate')}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{employeeDetails.hireDate}</div>
               </div>
             </div>
@@ -138,7 +171,7 @@ const Profile = () => {
                 <Clock size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Type de contrat</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.contractType')}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{employeeDetails.contractType}</div>
               </div>
             </div>
@@ -148,7 +181,7 @@ const Profile = () => {
                 <Phone size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Téléphone</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.phone')}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{employeeDetails.phone}</div>
               </div>
             </div>
@@ -158,7 +191,7 @@ const Profile = () => {
                 <MapPin size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>Localisation</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.location')}</div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{employeeDetails.location}</div>
               </div>
             </div>
@@ -171,19 +204,19 @@ const Profile = () => {
           <div className="card" style={{ flex: 1 }}>
             <div className="card-title" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
               <Calendar size={18} color="var(--success)" />
-              Mes Congés Restants
+              {t('profile.remainingLeaves')}
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--success)' }}>
-                  {totalRemaining} <span style={{ fontSize: '0.9rem', color: 'var(--text-gray)', fontWeight: 500 }}>jours restants</span>
+                  {totalRemaining} <span style={{ fontSize: '0.9rem', color: 'var(--text-gray)', fontWeight: 500 }}>{t('profile.daysRemaining')}</span>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dark)', fontWeight: 500, marginBottom: '4px' }}>
-                      <span>Congés Annuels</span>
+                      <span>{t('profile.annualLeaves')}</span>
                       <span>{remainingAnnual} / {employeeDetails.annualLeavesTotal} j</span>
                     </div>
                     <div style={{ height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -193,7 +226,7 @@ const Profile = () => {
 
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-dark)', fontWeight: 500, marginBottom: '4px' }}>
-                      <span>Congés Maladie</span>
+                      <span>{t('profile.sickLeaves')}</span>
                       <span>{remainingSick} / {employeeDetails.sickLeavesTotal} j</span>
                     </div>
                     <div style={{ height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
@@ -209,7 +242,7 @@ const Profile = () => {
           <div className="card">
             <div className="card-title" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
               <Clock size={18} color="var(--c-orange)" />
-              Actions Rapides & Paramètres
+              {t('profile.quickActionsSettings')}
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -220,7 +253,7 @@ const Profile = () => {
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
               >
                 <Edit3 size={16} />
-                <span>Modifier le Profil</span>
+                <span>{t('profile.editProfile')}</span>
               </Link>
               <Link 
                 to="/settings" 
@@ -229,7 +262,7 @@ const Profile = () => {
                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
               >
                 <Key size={16} />
-                <span>Sécurité</span>
+                <span>{t('profile.security')}</span>
               </Link>
             </div>
           </div>

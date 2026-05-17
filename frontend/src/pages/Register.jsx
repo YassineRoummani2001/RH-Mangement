@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import {
   User, Mail, Lock, ArrowRight, Loader2,
-  Sun, Moon, AlertCircle, Shield, Zap, Users
+  Sun, Moon, AlertCircle, Shield, Zap, Users, Eye, EyeOff
 } from 'lucide-react';
 
 const Register = () => {
@@ -16,6 +16,7 @@ const Register = () => {
   const [formData, setFormData] = useState({ prenom: '', nom: '', email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -29,7 +30,7 @@ const Register = () => {
 
   const inputStyle = {
     width: '100%',
-    padding: '13px 16px',
+    padding: '13px 16px 13px 44px',
     fontSize: '14px',
     fontWeight: 500,
     borderRadius: '10px',
@@ -37,7 +38,7 @@ const Register = () => {
     backgroundColor: isDark ? '#1e293b' : '#f8fafc',
     color: isDark ? '#f1f5f9' : '#0f172a',
     outline: 'none',
-    transition: 'border-color .15s, box-shadow .15s',
+    transition: 'border-color .15s, box-shadow .15s, background-color .15s',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
   };
@@ -137,25 +138,28 @@ const Register = () => {
             {/* Name row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {[
-                { name: 'prenom', label: t('employees.form.firstName'), placeholder: 'Jean',   icon: User },
-                { name: 'nom',    label: t('employees.form.lastName'),    placeholder: 'Dupont', icon: User },
-              ].map(({ name, label, placeholder, icon: Icon }) => (
+                { name: 'prenom', label: t('employees.form.firstName'), placeholder: 'Jean',   icon: User, color: '#9333ea', bg: 'rgba(147,51,234,.1)' },
+                { name: 'nom',    label: t('employees.form.lastName'),    placeholder: 'Dupont', icon: User, color: '#6366f1', bg: 'rgba(99,102,241,.1)' },
+              ].map(({ name, label, placeholder, icon: Icon, color, bg }) => (
                 <div key={name}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
-                    <Icon style={{ width: 14, height: 14, color: '#2563eb' }} />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: bg, color: color }}><Icon style={{ width: 12, height: 12 }} /></span>
                     {label}
                   </label>
-                  <input
-                    name={name}
-                    type="text"
-                    placeholder={placeholder}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    required
-                    style={inputStyle}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <Icon style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: color, zIndex: 5 }} />
+                    <input
+                      name={name}
+                      type="text"
+                      placeholder={placeholder}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      required
+                      style={inputStyle}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -163,40 +167,69 @@ const Register = () => {
             {/* Email */}
             <div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
-                <Mail style={{ width: 14, height: 14, color: '#2563eb' }} />
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(37,99,235,.1)', color: '#2563eb' }}><Mail style={{ width: 12, height: 12 }} /></span>
                 {t('auth.email')}
               </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="nom@entreprise.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-                onFocus={onFocus}
-                onBlur={onBlur}
-              />
+              <div style={{ position: 'relative' }}>
+                <Mail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#2563eb', zIndex: 5 }} />
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="nom@entreprise.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+              </div>
             </div>
 
             {/* Password */}
             <div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
-                <Lock style={{ width: 14, height: 14, color: '#2563eb' }} />
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(217,119,6,.1)', color: '#d97706' }}><Lock style={{ width: 12, height: 12 }} /></span>
                 {t('auth.password')}
               </label>
-              <input
-                name="password"
-                type="password"
-                placeholder={t('auth.minPasswordLength')}
-                value={formData.password}
-                onChange={handleChange}
-                autoComplete="new-password"
-                required
-                style={inputStyle}
-                onFocus={onFocus}
-                onBlur={onBlur}
-              />
+              <div style={{ position: 'relative' }}>
+                <Lock style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#d97706', zIndex: 5 }} />
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={t('auth.minPasswordLength')}
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                  style={{ ...inputStyle, paddingRight: '44px' }}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#64748b' : '#9ca3af',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    zIndex: 10,
+                    outline: 'none'
+                  }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
+                </button>
+              </div>
               <p style={{ marginTop: 6, fontSize: 12, color: isDark ? '#64748b' : '#9ca3af', paddingLeft: 2 }}>
                 {t('auth.passwordReq')}
               </p>

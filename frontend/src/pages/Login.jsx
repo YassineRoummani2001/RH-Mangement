@@ -6,7 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import {
   Mail, Lock, ArrowRight, Loader2,
-  Sun, Moon, AlertCircle, ChevronDown
+  Sun, Moon, AlertCircle, ChevronDown, UserCheck, Eye, EyeOff
 } from 'lucide-react';
 
 const Login = () => {
@@ -20,6 +20,7 @@ const Login = () => {
   const [role, setRole]         = useState('HR_MANAGER');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const roles = [
     { id: 'EMPLOYEE', label: t('auth.employee') },
@@ -49,7 +50,7 @@ const Login = () => {
   /* ─── shared inline styles (bypass Tailwind dark: issues with native inputs) ─── */
   const inputStyle = {
     width: '100%',
-    padding: '13px 16px',
+    padding: '13px 16px 13px 44px',
     fontSize: '14px',
     fontWeight: 500,
     borderRadius: '10px',
@@ -57,7 +58,7 @@ const Login = () => {
     backgroundColor: isDark ? '#1e293b' : '#f8fafc',
     color: isDark ? '#f1f5f9' : '#0f172a',
     outline: 'none',
-    transition: 'border-color .15s, box-shadow .15s',
+    transition: 'border-color .15s, box-shadow .15s, background-color .15s',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
   };
@@ -146,10 +147,12 @@ const Login = () => {
 
             {/* Role */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(147,51,234,.1)', color: '#9333ea' }}><UserCheck style={{ width: 12, height: 12 }} /></span>
                 {t('auth.role')}
               </label>
               <div style={{ position: 'relative' }}>
+                <UserCheck style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#9333ea', zIndex: 5 }} />
                 <select value={role} onChange={(e) => setRole(e.target.value)} style={selectStyle} required>
                   {roles.map((r) => <option key={r.id} value={r.id} style={{ background: isDark ? '#1e293b' : '#fff', color: isDark ? '#f1f5f9' : '#0f172a' }}>{r.label}</option>)}
                 </select>
@@ -159,42 +162,73 @@ const Login = () => {
 
             {/* Email */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(37,99,235,.1)', color: '#2563eb' }}><Mail style={{ width: 12, height: 12 }} /></span>
                 {t('auth.email')}
               </label>
-              <input
-                type="email"
-                placeholder="nom@entreprise.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,.12)'; }}
-                onBlur={(e)  => { e.target.style.borderColor = isDark ? '#334155' : '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
-              />
+              <div style={{ position: 'relative' }}>
+                <Mail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#2563eb', zIndex: 5 }} />
+                <input
+                  type="email"
+                  placeholder="nom@entreprise.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={inputStyle}
+                  onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,.12)'; }}
+                  onBlur={(e)  => { e.target.style.borderColor = isDark ? '#334155' : '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
             </div>
 
             {/* Password */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(217,119,6,.1)', color: '#d97706' }}><Lock style={{ width: 12, height: 12 }} /></span>
                   {t('auth.password')}
                 </label>
                 <Link to="/forgot-password" style={{ fontSize: 13, fontWeight: 700, color: '#2563eb', textDecoration: 'none' }}>
                   {t('auth.forgotPassword').replace(' ?', '').replace('?', '')}
                 </Link>
               </div>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-                style={inputStyle}
-                onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,.12)'; }}
-                onBlur={(e)  => { e.target.style.borderColor = isDark ? '#334155' : '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
-              />
+              <div style={{ position: 'relative' }}>
+                <Lock style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#d97706', zIndex: 5 }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  style={{ ...inputStyle, paddingRight: '44px' }}
+                  onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,.12)'; }}
+                  onBlur={(e)  => { e.target.style.borderColor = isDark ? '#334155' : '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: isDark ? '#64748b' : '#9ca3af',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px',
+                    zIndex: 10,
+                    outline: 'none'
+                  }}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
+                </button>
+              </div>
             </div>
 
             {/* Submit */}

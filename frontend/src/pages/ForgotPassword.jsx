@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   Mail, ArrowLeft, Loader2,
   Sun, Moon, AlertCircle, CheckCircle2
@@ -10,6 +11,7 @@ import {
 const ForgotPassword = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +29,7 @@ const ForgotPassword = () => {
         setIsSuccess(true);
         setIsLoading(false);
       } else {
-        setError('Veuillez entrer une adresse e-mail valide.');
+        setError(t('auth.invalidEmailError'));
         setIsLoading(false);
       }
     }, 1500);
@@ -37,7 +39,7 @@ const ForgotPassword = () => {
 
   const inputStyle = {
     width: '100%',
-    padding: '13px 16px',
+    padding: '13px 16px 13px 44px',
     fontSize: '14px',
     fontWeight: 500,
     borderRadius: '10px',
@@ -45,7 +47,7 @@ const ForgotPassword = () => {
     backgroundColor: isDark ? '#1e293b' : '#f8fafc',
     color: isDark ? '#f1f5f9' : '#0f172a',
     outline: 'none',
-    transition: 'border-color .15s, box-shadow .15s',
+    transition: 'border-color .15s, box-shadow .15s, background-color .15s',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
   };
@@ -70,10 +72,10 @@ const ForgotPassword = () => {
             <span style={{ color: '#fff', fontSize: 18, fontWeight: 700, letterSpacing: '-.01em' }}>RH Management</span>
           </div>
           <h1 style={{ color: '#fff', fontSize: 48, fontWeight: 800, lineHeight: 1.15, marginBottom: 20 }}>
-            Mot de passe<br /><span style={{ color: '#93c5fd' }}>oublié ?</span>
+            {t('auth.forgotTitle').split('oublié')[0]}<br /><span style={{ color: '#93c5fd' }}>{t('auth.forgotTitle').includes('oublié') ? 'oublié ?' : 'forgot?'}</span>
           </h1>
           <p style={{ color: '#bfdbfe', fontSize: 17, lineHeight: 1.7, maxWidth: 340 }}>
-            Ne vous inquiétez pas, cela arrive à tout le monde. Entrez votre e-mail pour réinitialiser votre accès.
+            {t('auth.forgotDesc')}
           </p>
         </div>
       </div>
@@ -105,10 +107,10 @@ const ForgotPassword = () => {
             <>
               <div style={{ marginBottom: 28 }}>
                 <h2 style={{ fontSize: 30, fontWeight: 800, color: isDark ? '#f1f5f9' : '#0f172a', marginBottom: 8, letterSpacing: '-.02em' }}>
-                  Réinitialisation
+                  {t('auth.resetTitle')}
                 </h2>
                 <p style={{ fontSize: 14, color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.6 }}>
-                  Entrez votre adresse e-mail pour recevoir un lien de récupération.
+                  {t('auth.resetDesc')}
                 </p>
               </div>
 
@@ -126,19 +128,22 @@ const ForgotPassword = () => {
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
-                    <Mail style={{ width: 14, height: 14, color: '#2563eb' }} />
-                    Adresse e-mail
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(37,99,235,.1)', color: '#2563eb' }}><Mail style={{ width: 12, height: 12 }} /></span>
+                    {t('auth.email')}
                   </label>
-                  <input
-                    type="email"
-                    placeholder="nom@entreprise.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={inputStyle}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <Mail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#2563eb', zIndex: 5 }} />
+                    <input
+                      type="email"
+                      placeholder="nom@entreprise.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      style={inputStyle}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
                 </div>
 
                 <motion.button
@@ -149,9 +154,9 @@ const ForgotPassword = () => {
                   style={{ width: '100%', background: '#2563eb', color: '#fff', fontWeight: 700, fontSize: 15, padding: '15px 24px', borderRadius: 12, border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.7 : 1, boxShadow: '0 4px 14px rgba(37,99,235,.35)', fontFamily: 'inherit' }}
                 >
                   {isLoading ? (
-                    <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />Envoi...</>
+                    <><Loader2 style={{ width: 18, height: 18, animation: 'spin 1s linear infinite' }} />{t('auth.sending')}</>
                   ) : (
-                    "Envoyer le lien"
+                    t('auth.sendLink')
                   )}
                 </motion.button>
               </form>
@@ -161,15 +166,15 @@ const ForgotPassword = () => {
               <div style={{ width: 64, height: 64, background: 'rgba(34,197,94,.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                 <CheckCircle2 style={{ width: 32, height: 32, color: '#22c55e' }} />
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: isDark ? '#f1f5f9' : '#0f172a', marginBottom: 12 }}>Vérifiez vos e-mails</h2>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: isDark ? '#f1f5f9' : '#0f172a', marginBottom: 12 }}>{t('auth.checkEmailTitle')}</h2>
               <p style={{ fontSize: 15, color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.6, marginBottom: 32 }}>
-                Nous avons envoyé un lien de réinitialisation à <strong>{email}</strong>.
+                {t('auth.checkEmailDesc', { email })}
               </p>
               <button 
                 onClick={() => setIsSuccess(false)}
                 style={{ background: 'transparent', border: 'none', color: '#2563eb', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}
               >
-                Renvoyer l'e-mail
+                {t('auth.resendEmail')}
               </button>
             </div>
           )}
@@ -177,7 +182,7 @@ const ForgotPassword = () => {
           <div style={{ marginTop: 32, textAlign: 'center' }}>
             <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textDecoration: 'none', fontSize: 14 }}>
               <ArrowLeft style={{ width: 16, height: 16 }} />
-              Retour à la connexion
+              {t('auth.backToLogin')}
             </Link>
           </div>
         </motion.div>

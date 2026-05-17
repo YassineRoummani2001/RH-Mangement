@@ -59,7 +59,17 @@
     "passwordReq": "At least 8 characters with letters and numbers.",
     "creatingAccount": "Creating account...",
     "signUpBtn": "Create my account",
-    "hasAccount": "Already have an account?"
+    "hasAccount": "Already have an account?",
+    "resetTitle": "Reset Password",
+    "resetDesc": "Enter your email address to receive a recovery link.",
+    "forgotTitle": "Forgot Password?",
+    "forgotDesc": "Don't worry, it happens to everyone. Enter your email to reset your access.",
+    "sendLink": "Send Link",
+    "sending": "Sending...",
+    "checkEmailTitle": "Check your email",
+    "checkEmailDesc": "We have sent a reset link to {{email}}.",
+    "resendEmail": "Resend email",
+    "invalidEmailError": "Please enter a valid email address."
   },
   "sidebar": {
     "systemTitle": "HR Management",
@@ -216,6 +226,101 @@
       "confirmDescPost": "This operation is irreversible.",
       "confirmBtn": "Yes, delete",
       "cancelBtn": "Cancel"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "View your personal information, leave balances, and recent activities",
+    "hrDept": "Human Resources",
+    "engineeringDept": "Engineering",
+    "mockHireDate": "January 12, 2024",
+    "mockContractType": "CDI (Full Time)",
+    "mockLocation": "Casablanca, Morocco",
+    "daysRemaining": "days remaining",
+    "online": "Online",
+    "hrManager": "HR Manager",
+    "employee": "Employee",
+    "professionalInfo": "Professional Information",
+    "postTitle": "Position / Title",
+    "mockHRRole": "Director of Human Resources",
+    "mockEngRole": "Software Engineer",
+    "department": "Department",
+    "hireDate": "Hire Date",
+    "contractType": "Contract Type",
+    "phone": "Phone",
+    "location": "Location",
+    "remainingLeaves": "My Remaining Leaves",
+    "annualLeaves": "Annual Leaves",
+    "sickLeaves": "Sick Leaves",
+    "quickActionsSettings": "Quick Actions & Settings",
+    "editProfile": "Edit Profile",
+    "security": "Security"
+  },
+  "settings": {
+    "title": "Platform Settings",
+    "subtitle": "Manage your account, organization preferences, and integrations",
+    "saveAllBtn": "Save Changes",
+    "tabs": {
+      "editProfile": "Edit Profile",
+      "organisation": "Organisation",
+      "notifications": "Notifications",
+      "security": "Security",
+      "integrations": "Integrations"
+    },
+    "profile": {
+      "title": "Edit Profile",
+      "uploadPhoto": "Upload Photo",
+      "delete": "Delete",
+      "photoLimits": "JPG, GIF or PNG. Max size 800K",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "role": "Role / Title",
+      "phone": "Phone Number",
+      "location": "Location",
+      "contractType": "Contract Type",
+      "hireDate": "Hire Date",
+      "department": "Department"
+    },
+    "organisationTab": {
+      "title": "Organisation Settings",
+      "companyName": "Company Name",
+      "industry": "Industry Sector",
+      "companySize": "Company Size"
+    },
+    "notificationsTab": {
+      "title": "Notification Preferences",
+      "weeklySummary": "Receive a weekly email summary",
+      "employeeRequests": "Notify me of new employee requests",
+      "complianceAlerts": "Compliance alerts (Immediate)"
+    },
+    "securityTab": {
+      "title": "Security & Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "updateBtn": "Update Password",
+      "twoFactor": "Two-Factor Authentication (2FA)",
+      "secureAccount": "Secure Your Account",
+      "secureAccountDesc": "Adds an extra layer of security.",
+      "enableBtn": "Enable 2FA"
+    },
+    "integrationsTab": {
+      "title": "Integrations",
+      "slackDesc": "Receive HR notifications on Slack.",
+      "googleDesc": "Synchronize employees and calendars.",
+      "connected": "Connected",
+      "connectBtn": "Connect",
+      "disconnectBtn": "Disconnect",
+      "connecting": "Connecting..."
+    },
+    "toast": {
+      "saveSuccess": "Changes saved successfully!",
+      "passwordSuccess": "Password updated successfully!",
+      "slackConnected": "Slack connected successfully!",
+      "slackDisconnected": "Slack disconnected!",
+      "googleConnected": "Google Workspace connected successfully!",
+      "googleDisconnected": "Google Workspace disconnected!"
     }
   }
 }

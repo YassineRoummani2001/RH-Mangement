@@ -59,7 +59,17 @@
     "passwordReq": "Au moins 8 caractères avec lettres et chiffres.",
     "creatingAccount": "Création du compte…",
     "signUpBtn": "Créer mon compte",
-    "hasAccount": "Vous avez déjà un compte ?"
+    "hasAccount": "Vous avez déjà un compte ?",
+    "resetTitle": "Réinitialisation",
+    "resetDesc": "Entrez votre adresse e-mail pour recevoir un lien de récupération.",
+    "forgotTitle": "Mot de passe oublié ?",
+    "forgotDesc": "Ne vous inquiétez pas, cela arrive à tout le monde. Entrez votre e-mail pour réinitialiser votre accès.",
+    "sendLink": "Envoyer le lien",
+    "sending": "Envoi...",
+    "checkEmailTitle": "Vérifiez vos e-mails",
+    "checkEmailDesc": "Nous avons envoyé un lien de réinitialisation à {{email}}.",
+    "resendEmail": "Renvoyer l'e-mail",
+    "invalidEmailError": "Veuillez entrer une adresse e-mail valide."
   },
   "sidebar": {
     "systemTitle": "RH Management",
@@ -216,6 +226,101 @@
       "confirmDescPost": "Cette opération est irréversible.",
       "confirmBtn": "Oui, supprimer",
       "cancelBtn": "Annuler"
+    }
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "subtitle": "Consultez vos informations personnelles, votre solde de congés et vos activités récentes",
+    "hrDept": "Ressources Humaines",
+    "engineeringDept": "Ingénierie",
+    "mockHireDate": "12 Janvier 2024",
+    "mockContractType": "CDI (Temps Plein)",
+    "mockLocation": "Casablanca, Maroc",
+    "daysRemaining": "jours restants",
+    "online": "En ligne",
+    "hrManager": "Responsable RH",
+    "employee": "Collaborateur",
+    "professionalInfo": "Informations Professionnelles",
+    "postTitle": "Poste / Titre",
+    "mockHRRole": "Directrice des Ressources Humaines",
+    "mockEngRole": "Ingénieur Logiciel",
+    "department": "Département",
+    "hireDate": "Date d'embauche",
+    "contractType": "Type de contrat",
+    "phone": "Téléphone",
+    "location": "Localisation",
+    "remainingLeaves": "Mes Congés Restants",
+    "annualLeaves": "Congés Annuels",
+    "sickLeaves": "Congés Maladie",
+    "quickActionsSettings": "Actions Rapides & Paramètres",
+    "editProfile": "Modifier le Profil",
+    "security": "Sécurité"
+  },
+  "settings": {
+    "title": "Paramètres de la Plateforme",
+    "subtitle": "Gérez votre compte, les préférences de l'organisation et les intégrations",
+    "saveAllBtn": "Enregistrer les modifications",
+    "tabs": {
+      "editProfile": "Modifier le Profil",
+      "organisation": "Organisation",
+      "notifications": "Notifications",
+      "security": "Sécurité",
+      "integrations": "Intégrations"
+    },
+    "profile": {
+      "title": "Modifier le Profil",
+      "uploadPhoto": "Télécharger une photo",
+      "delete": "Supprimer",
+      "photoLimits": "JPG, GIF ou PNG. Taille max 800K",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Adresse Email",
+      "role": "Rôle / Titre",
+      "phone": "Téléphone",
+      "location": "Localisation",
+      "contractType": "Type de contrat",
+      "hireDate": "Date d'embauche",
+      "department": "Département"
+    },
+    "organisationTab": {
+      "title": "Paramètres de l'Organisation",
+      "companyName": "Nom de l'Entreprise",
+      "industry": "Secteur d'Activité",
+      "companySize": "Taille de l'Entreprise"
+    },
+    "notificationsTab": {
+      "title": "Préférences de Notifications",
+      "weeklySummary": "Recevoir un résumé hebdomadaire par email",
+      "employeeRequests": "M'avertir des nouvelles demandes d'employés",
+      "complianceAlerts": "Alertes de conformité (Immédiat)"
+    },
+    "securityTab": {
+      "title": "Sécurité & Mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "updateBtn": "Mettre à jour le mot de passe",
+      "twoFactor": "Authentification à Deux Facteurs (2FA)",
+      "secureAccount": "Sécurisez votre compte",
+      "secureAccountDesc": "Ajoute une couche de sécurité supplémentaire.",
+      "enableBtn": "Activer 2FA"
+    },
+    "integrationsTab": {
+      "title": "Intégrations",
+      "slackDesc": "Recevez les notifications RH sur Slack.",
+      "googleDesc": "Synchronisez les employés et calendriers.",
+      "connected": "Connecté",
+      "connectBtn": "Connecter",
+      "disconnectBtn": "Déconnecter",
+      "connecting": "Connexion..."
+    },
+    "toast": {
+      "saveSuccess": "Modifications enregistrées !",
+      "passwordSuccess": "Mot de passe mis à jour !",
+      "slackConnected": "Slack connecté avec succès !",
+      "slackDisconnected": "Slack déconnecté !",
+      "googleConnected": "Google Workspace connecté avec succès !",
+      "googleDisconnected": "Google Workspace déconnecté !"
     }
   }
 }
