@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { User, Mail, Phone, Calendar, Briefcase, MapPin, Shield, Edit3, Key, Clock, CheckCircle } from 'lucide-react';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const { t } = useTranslation();
 
   // Dynamic employee details loaded from local settings
@@ -239,33 +239,35 @@ const Profile = () => {
           </div>
 
           {/* Card: Profile Activity / Quick Navigation */}
-          <div className="card">
-            <div className="card-title" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
-              <Clock size={18} color="var(--c-orange)" />
-              {t('profile.quickActionsSettings')}
-            </div>
+          {effectiveRole === 'HR_MANAGER' && (
+            <div className="card">
+              <div className="card-title" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
+                <Clock size={18} color="var(--c-orange)" />
+                {t('profile.quickActionsSettings')}
+              </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <Link 
-                to="/settings" 
-                state={{ tab: 'profil' }}
-                className="action-btn primary" 
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
-              >
-                <Edit3 size={16} />
-                <span>{t('profile.editProfile')}</span>
-              </Link>
-              <Link 
-                to="/settings" 
-                state={{ tab: 'securite' }}
-                className="action-btn" 
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
-              >
-                <Key size={16} />
-                <span>{t('profile.security')}</span>
-              </Link>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <Link 
+                  to="/settings" 
+                  state={{ tab: 'profil' }}
+                  className="action-btn primary" 
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
+                >
+                  <Edit3 size={16} />
+                  <span>{t('profile.editProfile')}</span>
+                </Link>
+                <Link 
+                  to="/settings" 
+                  state={{ tab: 'securite' }}
+                  className="action-btn" 
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textDecoration: 'none', height: '40px' }}
+                >
+                  <Key size={16} />
+                  <span>{t('profile.security')}</span>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </motion.div>

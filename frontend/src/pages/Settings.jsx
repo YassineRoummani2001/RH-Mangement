@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { User, Mail, Phone, MapPin, Clock, Calendar, Briefcase, Shield, Globe, Users, Bell, AlertTriangle, Lock, Key, Eye, EyeOff, Loader2, Check, Link2 } from 'lucide-react';
+import { logSystemActivity } from '../utils/rbac';
 
 const moroccanCities = [
   "Casablanca", "Rabat", "Marrakech", "Tanger", "Fès", "Agadir", "Meknès", "Oujda", 
@@ -24,6 +25,29 @@ const Settings = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'profil');
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const logsPerPage = 5;
+  
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      const logs = JSON.parse(localStorage.getItem('system_audit_logs')) || [];
+      setAuditLogs(logs);
+      setCurrentPage(1); // Reset to page 1 when loading logs
+    }
+  }, [activeTab]);
+
+  const indexOfLastLog = currentPage * logsPerPage;
+  const indexOfFirstLog = indexOfLastLog - logsPerPage;
+  const currentLogs = auditLogs.slice(indexOfFirstLog, indexOfLastLog);
+  const totalPages = Math.ceil(auditLogs.length / logsPerPage);
+
+  const clearAuditLogs = () => {
+    localStorage.removeItem('system_audit_logs');
+    setAuditLogs([]);
+    showToast("Journal d'audit réinitialisé avec succès.", "success");
+    logSystemActivity("Nettoyage des logs", user?.name, "Effacement de l'ensemble du journal d'audit");
+  };
 
   const [formData, setFormData] = useState(() => {
     const saved = localStorage.getItem('hr_profile_data');
@@ -161,6 +185,9 @@ const Settings = () => {
           </button>
           <button className={`settings-nav-item ${activeTab === 'integrations' ? 'active' : ''}`} onClick={() => setActiveTab('integrations')}>
             <i className="fas fa-plug"></i> <span>{t('settings.tabs.integrations')}</span>
+          </button>
+          <button className={`settings-nav-item ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>
+            <i className="fas fa-history"></i> <span>Journal d'Audit</span>
           </button>
         </div>
 
@@ -833,6 +860,142 @@ const Settings = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Pane: Audit Logs */}
+          {activeTab === 'audit' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>Journal d'Audit de Sécurité</h3>
+                <button className="action-btn" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', background: 'transparent' }} onClick={clearAuditLogs}>
+                  <i className="fas fa-trash-alt"></i> Vider l'historique
+                </button>
+              </div>
+              
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginBottom: '20px' }}>
+                Ce journal contient l'historique complet des actions d'administration, de modification de profils, de processus de validation de demandes et d'activités d'authentification effectuées sur la plateforme.
+              </p>
+              
+              <div className="table-responsive" style={{ overflow: 'hidden', borderRadius: '8px', border: `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead style={{ background: isDark ? '#1e293b' : '#f8fafc', borderBottom: `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+                    <tr>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: isDark ? '#cbd5e1' : '#475569' }}>Date & Heure</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: isDark ? '#cbd5e1' : '#475569' }}>Activité</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: isDark ? '#cbd5e1' : '#475569' }}>Auteur</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: isDark ? '#cbd5e1' : '#475569' }}>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentLogs.map((log) => {
+                      let badgeColor = '#3b82f6';
+                      let badgeBg = 'rgba(59, 130, 246, 0.1)';
+                      if (log.action.includes('Suppression') || log.action.includes('Nettoyage')) {
+                        badgeColor = '#ef4444';
+                        badgeBg = 'rgba(239, 68, 68, 0.1)';
+                      } else if (log.action.includes('Création') || log.action.includes('Approbation') || log.action.includes('Validation') || log.action.includes('Génération')) {
+                        badgeColor = '#10b981';
+                        badgeBg = 'rgba(16, 185, 129, 0.1)';
+                      } else if (log.action.includes('Modification') || log.action.includes('Transfert')) {
+                        badgeColor = '#f59e0b';
+                        badgeBg = 'rgba(245, 158, 11, 0.1)';
+                      }
+                      
+                      return (
+                        <tr key={log.id} style={{ borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, background: isDark ? '#1e293b' : '#ffffff' }}>
+                          <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', color: 'var(--text-gray)' }}>
+                            {new Date(log.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' })}
+                          </td>
+                          <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, color: badgeColor, background: badgeBg }}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px', fontWeight: 600, color: isDark ? '#f1f5f9' : '#1e293b' }}>
+                            {log.user}
+                          </td>
+                          <td style={{ padding: '12px 16px', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.4 }}>
+                            {log.details}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {auditLogs.length === 0 && (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-gray)' }}>
+                          Aucune activité enregistrée pour le moment.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              {auditLogs.length > logsPerPage && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '12px', background: isDark ? '#1e293b' : '#f8fafc', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)', fontWeight: 500 }}>
+                    Affichage de <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{indexOfFirstLog + 1}</span> à <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{Math.min(indexOfLastLog, auditLogs.length)}</span> sur <span style={{ color: 'var(--text-dark)', fontWeight: 700 }}>{auditLogs.length}</span> entrées
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button 
+                      style={{ 
+                        padding: '6px 12px', 
+                        fontSize: '0.8rem', 
+                        borderRadius: '6px', 
+                        border: `1px solid ${isDark ? '#475569' : '#cbd5e1'}`, 
+                        background: isDark ? '#334155' : '#ffffff', 
+                        color: currentPage === 1 ? 'var(--text-gray)' : 'var(--text-dark)',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Précédent
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        style={{ 
+                          padding: '6px 12px', 
+                          fontSize: '0.8rem', 
+                          borderRadius: '6px', 
+                          border: currentPage === page ? '1px solid var(--primary)' : `1px solid ${isDark ? '#475569' : '#cbd5e1'}`, 
+                          background: currentPage === page ? 'var(--primary)' : (isDark ? '#334155' : '#ffffff'), 
+                          color: currentPage === page ? '#ffffff' : 'var(--text-dark)',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: currentPage === page ? '0 2px 4px rgba(37, 99, 236, 0.2)' : 'none'
+                        }}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button 
+                      style={{ 
+                        padding: '6px 12px', 
+                        fontSize: '0.8rem', 
+                        borderRadius: '6px', 
+                        border: `1px solid ${isDark ? '#475569' : '#cbd5e1'}`, 
+                        background: isDark ? '#334155' : '#ffffff', 
+                        color: currentPage === totalPages ? 'var(--text-gray)' : 'var(--text-dark)',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        transition: 'all 0.2s'
+                      }}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

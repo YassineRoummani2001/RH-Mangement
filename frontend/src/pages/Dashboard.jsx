@@ -20,7 +20,7 @@ const data = [
 ];
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -295,7 +295,7 @@ const Dashboard = () => {
   const DASHBOARD_TOTAL = 452;
 
   // If Employee, show simple dashboard
-  if (user?.role === 'EMPLOYEE') {
+  if (effectiveRole === 'EMPLOYEE') {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
         <header className="header">
@@ -472,12 +472,37 @@ const Dashboard = () => {
     );
   }
 
+  const isHRManager = effectiveRole === 'HR_MANAGER';
+  const isHRAgent = effectiveRole === 'HR_AGENT';
+  const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
+
+  const roleTitle = {
+    HR_MANAGER: t('auth.hrManager'),
+    HR_AGENT: 'Agent RH',
+    DEPARTMENT_MANAGER: 'Chef de Service',
+    INTERIM_MANAGER: 'Chef de Service (Intérim)',
+  }[effectiveRole] || t('auth.manager');
+
+  const stats = {
+    activeEmployees: isDeptManager ? "42" : "452",
+    pendingVal: isDeptManager ? "3" : "18",
+    onLeaveToday: isDeptManager ? "2" : "8",
+    complianceRate: isDeptManager ? "95%" : "87%"
+  };
+
+  const labels = {
+    activeEmployees: isDeptManager ? "Collaborateurs du service" : t('dashboard.stats.activeEmployees'),
+    pendingVal: isDeptManager ? "Demandes à valider" : t('dashboard.stats.pendingVal'),
+    onLeaveToday: isDeptManager ? "Absents aujourd'hui" : t('dashboard.stats.onLeaveToday'),
+    complianceRate: isDeptManager ? "Conformité du service" : t('dashboard.stats.complianceRate')
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
       {/* Header */}
       <header className="header">
         <div className="header-title">
-          <h1>{t('dashboard.managerTitle', { role: user?.role === 'HR_MANAGER' ? t('auth.hrManager') : t('auth.manager') })}</h1>
+          <h1>{t('dashboard.managerTitle', { role: roleTitle })}</h1>
           <p>{t('dashboard.managerSubtitle')}</p>
         </div>
       </header>
@@ -491,8 +516,8 @@ const Dashboard = () => {
             </div>
             <div className="stat-trend positive"><i className="fas fa-arrow-up"></i> +12%</div>
           </div>
-          <div className="stat-value">452</div>
-          <div className="stat-label">{t('dashboard.stats.activeEmployees')}</div>
+          <div className="stat-value">{stats.activeEmployees}</div>
+          <div className="stat-label">{labels.activeEmployees}</div>
         </div>
 
         <div className="stat-card amber-card">
@@ -500,8 +525,8 @@ const Dashboard = () => {
             <div className="stat-icon warning"><i className="fas fa-clock"></i></div>
             <div className="stat-trend negative"><i className="fas fa-circle" style={{ fontSize: '8px' }}></i> Urgent</div>
           </div>
-          <div className="stat-value">18</div>
-          <div className="stat-label">{t('dashboard.stats.pendingVal')}</div>
+          <div className="stat-value">{stats.pendingVal}</div>
+          <div className="stat-label">{labels.pendingVal}</div>
         </div>
 
         <div className="stat-card emerald-card">
@@ -509,8 +534,8 @@ const Dashboard = () => {
             <div className="stat-icon success"><i className="fas fa-calendar-check"></i></div>
             <div className="stat-trend positive"><i className="fas fa-check"></i> À jour</div>
           </div>
-          <div className="stat-value">8</div>
-          <div className="stat-label">{t('dashboard.stats.onLeaveToday')}</div>
+          <div className="stat-value">{stats.onLeaveToday}</div>
+          <div className="stat-label">{labels.onLeaveToday}</div>
         </div>
 
         <div className="stat-card lime-card">
@@ -518,60 +543,62 @@ const Dashboard = () => {
             <div className="stat-icon" style={{ background: '#ECFCCB', color: '#65A30D' }}><i className="fas fa-shield-alt"></i></div>
             <div className="stat-trend positive" style={{ color: 'var(--success)' }}>Optimal</div>
           </div>
-          <div className="stat-value">87%</div>
-          <div className="stat-label">{t('dashboard.stats.complianceRate')}</div>
+          <div className="stat-value">{stats.complianceRate}</div>
+          <div className="stat-label">{labels.complianceRate}</div>
         </div>
       </div>
 
       {/* Middle Section */}
       <div className="middle-grid">
         {/* Department Quotas (Like Compliance Progress) */}
-        <div className="card">
-          <div className="card-title">
-            <i className="fas fa-check-circle" style={{ color: 'var(--success)' }}></i>
-            {t('dashboard.departmentBudgets')}
-          </div>
-          
-          <div className="progress-item">
-            <div className="progress-header">
-              <span>Ingénierie</span>
-              <span style={{ color: 'var(--success)' }}>92%</span>
+        {isHRManager && (
+          <div className="card">
+            <div className="card-title">
+              <i className="fas fa-check-circle" style={{ color: 'var(--success)' }}></i>
+              {t('dashboard.departmentBudgets')}
             </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: '92%', backgroundColor: 'var(--success)' }}></div>
+            
+            <div className="progress-item">
+              <div className="progress-header">
+                <span>Ingénierie</span>
+                <span style={{ color: 'var(--success)' }}>92%</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: '92%', backgroundColor: 'var(--success)' }}></div>
+              </div>
             </div>
-          </div>
 
-          <div className="progress-item">
-            <div className="progress-header">
-              <span>Marketing</span>
-              <span style={{ color: 'var(--success)' }}>88%</span>
+            <div className="progress-item">
+              <div className="progress-header">
+                <span>Marketing</span>
+                <span style={{ color: 'var(--success)' }}>88%</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: '88%', backgroundColor: 'var(--success)' }}></div>
+              </div>
             </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: '88%', backgroundColor: 'var(--success)' }}></div>
-            </div>
-          </div>
 
-          <div className="progress-item">
-            <div className="progress-header">
-              <span>Ventes</span>
-              <span style={{ color: 'var(--warning)' }}>75%</span>
+            <div className="progress-item">
+              <div className="progress-header">
+                <span>Ventes</span>
+                <span style={{ color: 'var(--warning)' }}>75%</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: '75%', backgroundColor: 'var(--warning)' }}></div>
+              </div>
             </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: '75%', backgroundColor: 'var(--warning)' }}></div>
-            </div>
-          </div>
 
-          <div className="progress-item" style={{ marginBottom: 0 }}>
-            <div className="progress-header">
-              <span>Ressources Humaines</span>
-              <span style={{ color: 'var(--success)' }}>95%</span>
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: '95%', backgroundColor: 'var(--success)' }}></div>
+            <div className="progress-item" style={{ marginBottom: 0 }}>
+              <div className="progress-header">
+                <span>Ressources Humaines</span>
+                <span style={{ color: 'var(--success)' }}>95%</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: '95%', backgroundColor: 'var(--success)' }}></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Recent Activity */}
         <div className="card">
@@ -620,18 +647,24 @@ const Dashboard = () => {
             {t('dashboard.quickActions')}
           </div>
           
-          <button className="quick-action-btn action-blue" onClick={() => setIsEmployeeModalOpen(true)}>
-            <i className="fas fa-user-plus"></i> {t('dashboard.addEmployee')}
-          </button>
+          {(effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT') && (
+            <button className="quick-action-btn action-blue" onClick={() => setIsEmployeeModalOpen(true)}>
+              <i className="fas fa-user-plus"></i> {t('dashboard.addEmployee')}
+            </button>
+          )}
           <button className="quick-action-btn action-purple" onClick={() => setIsRequestModalOpen(true)}>
             <i className="fas fa-file-alt"></i> {t('dashboard.createRequest')}
           </button>
-          <button className="quick-action-btn action-orange" onClick={() => setIsLeaveModalOpen(true)}>
-            <i className="fas fa-calendar-check"></i> {t('dashboard.manageLeaves')}
-          </button>
-          <button className="quick-action-btn primary" style={{ marginTop: '8px' }}>
-            <i className="fas fa-download"></i> {t('dashboard.generatePayroll')}
-          </button>
+          {(effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT' || effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER') && (
+            <button className="quick-action-btn action-orange" onClick={() => setIsLeaveModalOpen(true)}>
+              <i className="fas fa-calendar-check"></i> {t('dashboard.manageLeaves')}
+            </button>
+          )}
+          {effectiveRole === 'HR_MANAGER' && (
+            <button className="quick-action-btn primary" style={{ marginTop: '8px' }}>
+              <i className="fas fa-download"></i> {t('dashboard.generatePayroll')}
+            </button>
+          )}
         </div>
 
         {/* Analytics Section - 2 columns */}

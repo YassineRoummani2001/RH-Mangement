@@ -16,7 +16,16 @@ export default function AppLayout() {
     const nextLang = i18n.language === 'fr' ? 'en' : 'fr';
     i18n.changeLanguage(nextLang);
   };
-  const { user, logout } = useAuth();
+  const { user, logout, effectiveRole } = useAuth();
+  const isHRManager = effectiveRole === 'HR_MANAGER';
+
+  const roleLabel = {
+    HR_MANAGER: 'Responsable RH',
+    HR_AGENT: 'Agent RH',
+    DEPARTMENT_MANAGER: 'Chef de service',
+    INTERIM_MANAGER: 'Chef de service (Intérim)',
+    EMPLOYEE: 'Employé',
+  }[effectiveRole] || 'Collaborateur';
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
@@ -166,7 +175,7 @@ export default function AppLayout() {
                  <img src={user.avatar} alt="User" style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid var(--primary-bg)', objectFit: 'cover' }} />
                  <div style={{ display: 'flex', flexDirection: 'column' }}>
                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)', lineHeight: '1.2' }}>{user.name}</span>
-                   <span style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{user.role === 'HR_MANAGER' ? t('auth.hrManager') : (user.role === 'EMPLOYEE' ? t('auth.employee') : t('auth.manager'))}</span>
+                   <span style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{roleLabel}</span>
                  </div>
                  <i className={`fas fa-chevron-${isProfileOpen ? 'up' : 'down'}`} style={{ fontSize: '0.8rem', color: 'var(--text-gray)', marginLeft: '4px' }}></i>
               </div>
@@ -178,8 +187,8 @@ export default function AppLayout() {
                     <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-dark)' }}>{t('topbar.loggedInAs')}</span>
                     <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-gray)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user.email}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                      <span className={`filter-tag ${user.role === 'HR_MANAGER' ? 'blue' : 'green'}`} style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
-                        {user.role === 'HR_MANAGER' ? t('auth.hrManager') : t('auth.collaborator')}
+                      <span className={`filter-tag ${isHRManager ? 'blue' : effectiveRole === 'HR_AGENT' ? 'purple' : 'green'}`} style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
+                        {roleLabel}
                       </span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.65rem', color: '#10B981', fontWeight: 600 }}>
                         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 8px #10B981' }}></span>
@@ -191,12 +200,16 @@ export default function AppLayout() {
                   <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', color: 'var(--text-dark)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s' }}>
                     <i className="far fa-user" style={{ width: '16px', textAlign: 'center', color: 'var(--primary)' }}></i> {t('topbar.myProfile')}
                   </Link>
-                  <Link to="/settings" state={{ tab: 'securite' }} onClick={() => setIsProfileOpen(false)} className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', color: 'var(--text-dark)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s' }}>
-                    <i className="fas fa-shield-alt" style={{ width: '16px', textAlign: 'center', color: 'var(--c-purple)' }}></i> {t('topbar.security')}
-                  </Link>
-                  <Link to="/settings" state={{ tab: 'profil' }} onClick={() => setIsProfileOpen(false)} className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', color: 'var(--text-dark)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s' }}>
-                    <i className="fas fa-cog" style={{ width: '16px', textAlign: 'center', color: 'var(--text-gray)' }}></i> {t('topbar.settings')}
-                  </Link>
+                  {isHRManager && (
+                    <Link to="/settings" state={{ tab: 'securite' }} onClick={() => setIsProfileOpen(false)} className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', color: 'var(--text-dark)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s' }}>
+                      <i className="fas fa-shield-alt" style={{ width: '16px', textAlign: 'center', color: 'var(--c-purple)' }}></i> {t('topbar.security')}
+                    </Link>
+                  )}
+                  {isHRManager && (
+                    <Link to="/settings" state={{ tab: 'profil' }} onClick={() => setIsProfileOpen(false)} className="dropdown-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', color: 'var(--text-dark)', textDecoration: 'none', fontSize: '0.9rem', transition: 'background 0.2s' }}>
+                      <i className="fas fa-cog" style={{ width: '16px', textAlign: 'center', color: 'var(--text-gray)' }}></i> {t('topbar.settings')}
+                    </Link>
+                  )}
                   
                   <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '8px 0' }}></div>
                   

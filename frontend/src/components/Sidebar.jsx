@@ -1,16 +1,26 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
-  const { user, logout } = useAuth();
+  const { user, effectiveRole, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
 
-  const canSeeEmployees = user?.role === 'HR_MANAGER' || user?.role === 'DEPARTMENT_MANAGER';
-  const canSeeCompliance = user?.role === 'HR_MANAGER';
+  // Determine page permissions based on effective dynamically-resolved role
+  const isEmployee = effectiveRole === 'EMPLOYEE';
+  const isHRManager = effectiveRole === 'HR_MANAGER';
+  const isHRAgent = effectiveRole === 'HR_AGENT';
+  const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
+
+  const canSeeEmployees = isHRManager || isHRAgent || isDeptManager;
+  const canSeeCompliance = isHRManager || isHRAgent;
+  const canSeeCalendar = isHRManager || isHRAgent;
+  const canSeeFinance = isHRManager;
+  const canSeeSettings = isHRManager;
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -30,29 +40,26 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <i className="fas fa-home"></i>
           <span className="nav-text">{t('sidebar.dashboard')}</span>
-          {user?.role === 'HR_MANAGER' && <span className="nav-badge gray">42</span>}
         </NavLink>
 
         {canSeeEmployees && (
           <NavLink to="/employees" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <i className="fas fa-users"></i>
-            <span className="nav-text">{user?.role === 'HR_MANAGER' ? t('sidebar.employees') : t('sidebar.myTeam')}</span>
-            <span className="nav-badge gray">452</span>
+            <span className="nav-text">{isHRManager || isHRAgent ? t('sidebar.employees') : t('sidebar.myTeam')}</span>
           </NavLink>
         )}
 
         <NavLink to="/requests" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <i className="fas fa-file-signature"></i>
-          <span className="nav-text">{user?.role === 'EMPLOYEE' ? t('sidebar.myRequests') : t('sidebar.hrRequests')}</span>
+          <span className="nav-text">{isEmployee ? t('sidebar.myRequests') : t('sidebar.hrRequests')}</span>
         </NavLink>
 
         <NavLink to="/leave" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <i className="fas fa-calendar-alt"></i>
-          <span className="nav-text">{user?.role === 'EMPLOYEE' ? t('sidebar.myLeaves') : t('sidebar.leavesAndAbsences')}</span>
-          {user?.role !== 'EMPLOYEE' && <span className="nav-badge gray">12</span>}
+          <span className="nav-text">{isEmployee ? t('sidebar.myLeaves') : t('sidebar.leavesAndAbsences')}</span>
         </NavLink>
 
-        {user?.role === 'HR_MANAGER' && (
+        {canSeeCalendar && (
           <NavLink to="/calendar" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <i className="fas fa-calendar-check"></i>
             <span className="nav-text">{t('sidebar.calendar')}</span>
@@ -66,7 +73,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           </NavLink>
         )}
 
-        {user?.role === 'HR_MANAGER' && (
+        {canSeeFinance && (
           <NavLink to="/finance" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <i className="fas fa-wallet"></i>
             <span className="nav-text">{t('sidebar.finance')}</span>
@@ -80,10 +87,12 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           <span className="nav-text">{t('sidebar.notifications')}</span>
         </NavLink>
 
-        <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <i className="fas fa-cog"></i>
-          <span className="nav-text">{t('sidebar.settings')}</span>
-        </NavLink>
+        {canSeeSettings && (
+          <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <i className="fas fa-cog"></i>
+            <span className="nav-text">{t('sidebar.settings')}</span>
+          </NavLink>
+        )}
 
         {/* Mobile-only theme & profile section */}
         <div className="mobile-only-nav">
@@ -98,7 +107,9 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             <img src={user?.avatar} alt="User" />
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">{user?.name}</span>
-              <span className="sidebar-user-role">{user?.role === 'HR_MANAGER' ? t('sidebar.hrDirector') : t('auth.employee')}</span>
+              <span className="sidebar-user-role">
+                {isHRManager ? t('sidebar.hrDirector') : isHRAgent ? 'Agent RH' : isDeptManager ? 'Chef de service' : t('auth.employee')}
+              </span>
             </div>
             <button className="logout-btn" onClick={() => logout()} title={t('sidebar.logout')}>
               <i className="fas fa-sign-out-alt"></i>

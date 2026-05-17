@@ -1,10 +1,18 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { logSystemActivity, getEffectiveRole } from '../utils/rbac';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Roles: 'EMPLOYEE', 'HR_AGENT', 'HR_MANAGER', 'DEPARTMENT_MANAGER'
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (user) {
@@ -15,35 +23,48 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const login = (email, password, role = 'HR_MANAGER') => {
-    // Role-aware mock user data
     const roleProfiles = {
-      HR_MANAGER:          { name: 'Sarah Connor',  title: 'Responsable RH' },
-      HR_AGENT:            { name: 'Marc Leblanc',  title: 'Agent RH' },
-      EMPLOYEE:            { name: 'Ali Benali',    title: 'Employé' },
-      DEPARTMENT_MANAGER:  { name: 'Leila Mansour', title: 'Chef de service' },
-      INTERIM_MANAGER:     { name: 'Hassan Alami',  title: 'Chef de service intérim' },
+      HR_MANAGER:          { name: 'Sarah Connor',  title: 'Responsable RH', dept: 'Ressources Humaines' },
+      HR_AGENT:            { name: 'Marc Leblanc',  title: 'Agent RH', dept: 'Ressources Humaines' },
+      EMPLOYEE:            { name: 'Ali Benali',    title: 'Employé', dept: 'Ingénierie' },
+      DEPARTMENT_MANAGER:  { name: 'Leila Mansour', title: 'Chef de service', dept: 'Ingénierie' },
+      INTERIM_MANAGER:     { name: 'Hassan Alami',  title: 'Chef de service intérim', dept: 'Finance' },
     };
+    
     const profile = roleProfiles[role] ?? roleProfiles['HR_MANAGER'];
     const initials = profile.name.split(' ').map(n => n[0]).join('+');
 
+    // Default interim until is tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const mockUser = {
-      id: 1,
+      id: Math.floor(1000 + Math.random() * 9000),
       name: profile.name,
       title: profile.title,
       email,
       role,
-      avatar: `https://ui-avatars.com/api/?name=${initials}&background=2563EB&color=fff`
+      dept: profile.dept,
+      avatar: `https://ui-avatars.com/api/?name=${initials}&background=2563EB&color=fff`,
+      ...(role === 'INTERIM_MANAGER' ? { interimUntil: tomorrow.toISOString() } : {})
     };
+    
     setUser(mockUser);
+    logSystemActivity("Connexion", mockUser.name, `Session ouverte pour ${mockUser.title} (${role})`);
     return { success: true };
   };
 
   const logout = () => {
+    if (user) {
+      logSystemActivity("Déconnexion", user.name, "Déconnexion de la session utilisateur");
+    }
     setUser(null);
   };
 
+  const effectiveRole = user ? getEffectiveRole(user) : null;
+
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, effectiveRole, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

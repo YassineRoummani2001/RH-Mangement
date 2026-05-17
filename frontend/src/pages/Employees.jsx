@@ -4,11 +4,14 @@ import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
+import { logSystemActivity } from '../utils/rbac';
 import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 const Employees = () => {
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const { user, effectiveRole } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -16,46 +19,96 @@ const Employees = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  // Form states f Add Employee
+  const [addForm, setAddForm] = useState({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', role: '' });
+
+  // Evaluate RBAC permissions locally f the page
+  const isHRManager = effectiveRole === 'HR_MANAGER';
+  const isHRAgent = effectiveRole === 'HR_AGENT';
+  const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
+
+  const canCreate = isHRManager || isHRAgent;
+  const canEdit = isHRManager || isHRAgent;
+  const canDelete = isHRManager || isHRAgent;
+
   const handleAction = (type, employee) => {
     setSelectedEmployee(employee);
     if (type === 'view') setIsViewModalOpen(true);
-    if (type === 'edit') setIsEditModalOpen(true);
+    if (type === 'edit') {
+      setEditForm({ name: employee.name, email: employee.email, role: employee.role });
+      setIsEditModalOpen(true);
+    }
     if (type === 'delete') setIsDeleteModalOpen(true);
   };
 
-  const onAddSubmit = () => {
-    showToast('Employé ajouté avec succès !', 'success');
+  const onAddSubmit = (e) => {
+    e.preventDefault();
+    const fullName = `${addForm.firstName} ${addForm.lastName}`;
+    showToast(`Employé ${fullName} ajouté avec succès !`, 'success');
+    logSystemActivity(
+      "Création d'employé",
+      user?.name,
+      `Création du profil de l'employé: ${fullName} (${addForm.role}) dans le service ${addForm.dept}`
+    );
     setIsAddModalOpen(false);
+    // Reset form
+    setAddForm({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
   };
 
-  const onEditSubmit = () => {
+  const onEditSubmit = (e) => {
+    e.preventDefault();
     showToast('Profil mis à jour !', 'success');
+    logSystemActivity(
+      "Modification d'employé",
+      user?.name,
+      `Modification du profil de ${selectedEmployee.name} -> Nouveau rôle: ${editForm.role}`
+    );
     setIsEditModalOpen(false);
   };
 
   const onDeleteSubmit = () => {
     showToast('L\'employé a été retiré du système.', 'error');
+    logSystemActivity(
+      "Suppression d'employé",
+      user?.name,
+      `Suppression définitive du compte de l'employé ${selectedEmployee.name}`
+    );
     setIsDeleteModalOpen(false);
   };
 
   const employeesData = [
-    { name: "Emma Wilson", email: "emma.w@company.com", role: "Chef de Produit Senior", type: "Temps plein", dept: "Produit", date: "15 Jan, 2024", status: "Actif", initials: "EW", bg: "#2563EB" },
-    { name: "David Chen", email: "david.c@entreprise.com", role: "Développeur Frontend", type: "Temps plein", dept: "Ingénierie", date: "01 Mar, 2025", status: "Actif", initials: "DC", bg: "#10B981" },
-    { name: "Sarah Miller", email: "sarah.m@entreprise.com", role: "Analyste Financière", type: "Temps partiel", dept: "Finance", date: "10 Nov, 2023", status: "En Congé", initials: "SM", bg: "#F59E0B" },
-    { name: "Marcus Rowe", email: "marcus.r@entreprise.com", role: "Généraliste RH", type: "Temps plein", dept: "RH", date: "20 Oct, 2026", status: "Intégration", initials: "MR", bg: "#9333EA" },
+    { id: 1, name: "Emma Wilson", email: "emma.w@company.com", role: "Chef de Produit Senior", type: "Temps plein", dept: "Produit", date: "15 Jan, 2024", status: "Actif", initials: "EW", bg: "#2563EB" },
+    { id: 2, name: "David Chen", email: "david.c@entreprise.com", role: "Développeur Frontend", type: "Temps plein", dept: "Ingénierie", date: "01 Mar, 2025", status: "Actif", initials: "DC", bg: "#10B981" },
+    { id: 3, name: "Sarah Miller", email: "sarah.m@entreprise.com", role: "Analyste Financière", type: "Temps partiel", dept: "Finance", date: "10 Nov, 2023", status: "En Congé", initials: "SM", bg: "#F59E0B" },
+    { id: 4, name: "Marcus Rowe", email: "marcus.r@entreprise.com", role: "Généraliste RH", type: "Temps plein", dept: "Ressources Humaines", date: "20 Oct, 2026", status: "Intégration", initials: "MR", bg: "#9333EA" },
   ];
+
+  // Apply strict Department Filter for Department Managers and Interim Managers
+  const filteredEmployees = employeesData.filter(emp => {
+    if (isDeptManager) {
+      // Must match exactly or match standard abbreviations
+      const userDept = user?.dept?.toLowerCase() || '';
+      const empDept = emp.dept.toLowerCase();
+      // Match RH/Ressources Humaines, Ingénierie, Finance, etc.
+      return empDept.includes(userDept) || userDept.includes(empDept);
+    }
+    return true;
+  });
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <header className="header">
         <div className="header-title">
-          <h1>{t('employees.title')}</h1>
-          <p>{t('employees.subtitle')}</p>
+          <h1>{isDeptManager ? t('sidebar.myTeam') : t('employees.title')}</h1>
+          <p>{isDeptManager ? "Visualisez et suivez les membres de votre département uniquement." : t('employees.subtitle')}</p>
         </div>
         <div className="header-actions">
-          <button className="action-btn primary" onClick={() => setIsAddModalOpen(true)}>
-            <i className="fas fa-user-plus"></i> {t('employees.addEmployee')}
-          </button>
+          {canCreate && (
+            <button className="action-btn primary" onClick={() => setIsAddModalOpen(true)}>
+              <i className="fas fa-user-plus"></i> {t('employees.addEmployee')}
+            </button>
+          )}
         </div>
       </header>
 
@@ -65,28 +118,28 @@ const Employees = () => {
           <div className="stat-header">
             <div className="stat-icon primary"><i className="fas fa-users"></i></div>
           </div>
-          <div className="stat-value">452</div>
+          <div className="stat-value">{isDeptManager ? filteredEmployees.length : 452}</div>
           <div className="stat-label">{t('employees.stats.active')}</div>
         </div>
         <div className="stat-card purple-card">
           <div className="stat-header">
             <div className="stat-icon success" style={{ background: '#E0E7FF', color: '#4F46E5' }}><i className="fas fa-user-plus"></i></div>
           </div>
-          <div className="stat-value">24</div>
+          <div className="stat-value">{isDeptManager ? 0 : 24}</div>
           <div className="stat-label">{t('employees.stats.onboarding')}</div>
         </div>
         <div className="stat-card amber-card">
           <div className="stat-header">
             <div className="stat-icon warning"><i className="fas fa-umbrella-beach"></i></div>
           </div>
-          <div className="stat-value">12</div>
+          <div className="stat-value">{isDeptManager ? filteredEmployees.filter(e => e.status === 'En Congé').length : 12}</div>
           <div className="stat-label">{t('employees.stats.onLeave')}</div>
         </div>
         <div className="stat-card emerald-card">
           <div className="stat-header">
             <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-building"></i></div>
           </div>
-          <div className="stat-value">8</div>
+          <div className="stat-value">{isDeptManager ? 1 : 8}</div>
           <div className="stat-label">{t('employees.stats.departments')}</div>
         </div>
       </div>
@@ -94,7 +147,7 @@ const Employees = () => {
       {/* Table Section */}
       <div className="card glass-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="table-toolbar">
-          <h3 className="modern-table-title">{t('employees.title')}</h3>
+          <h3 className="modern-table-title">{isDeptManager ? `Membres - Département ${user?.dept}` : t('employees.title')}</h3>
           <div className="filter-group">
             <div className="search-bar">
               <i className="fas fa-search"></i>
@@ -118,15 +171,11 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody>
-              {employeesData.map((emp, i) => (
+              {filteredEmployees.map((emp, i) => (
                 <tr key={i}>
                   <td>
                     <div className="user-cell">
-                      {emp.initials === "EW" || emp.initials === "SM" ? (
-                        <img src={`https://ui-avatars.com/api/?name=${emp.name}&background=${emp.bg.replace('#','')}&color=fff`} alt={emp.name} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                      ) : (
-                        <div className="avatar-initials" style={{ background: emp.bg }}>{emp.initials}</div>
-                      )}
+                      <img src={`https://ui-avatars.com/api/?name=${emp.name}&background=${emp.bg.replace('#','')}&color=fff`} alt={emp.name} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
                       <div>
                         <span className="user-info-name">{emp.name}</span>
                         <span className="user-info-sub">{emp.email}</span>
@@ -142,20 +191,33 @@ const Employees = () => {
                   <td><span className={`modern-status-badge ${emp.status === 'Actif' ? 'badge-success' : emp.status === 'En Congé' ? 'badge-warning' : 'badge-info'}`}>{emp.status}</span></td>
                   <td style={{ textAlign: 'center' }}>
                     <div className="table-actions" style={{ justifyContent: 'center' }}>
-                      <button className="modern-action-btn" onClick={() => handleAction('view', emp)}><i className="far fa-eye"></i></button>
-                      <button className="modern-action-btn" onClick={() => handleAction('edit', emp)}><i className="far fa-edit"></i></button>
-                      <button className="modern-action-btn" onClick={() => handleAction('delete', emp)}><i className="far fa-trash-alt"></i></button>
+                      <button className="modern-action-btn" onClick={() => handleAction('view', emp)} title={t('employees.table.view')}><i className="far fa-eye"></i></button>
+                      
+                      {canEdit && (
+                        <button className="modern-action-btn" onClick={() => handleAction('edit', emp)} title={t('employees.table.edit')}><i className="far fa-edit"></i></button>
+                      )}
+                      
+                      {canDelete && (
+                        <button className="modern-action-btn" onClick={() => handleAction('delete', emp)} title={t('employees.table.delete')}><i className="far fa-trash-alt"></i></button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredEmployees.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-gray)' }}>
+                    Aucun employé trouvé dans votre département.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
         
         <Pagination 
           currentPage={currentPage} 
-          totalItems={452} 
+          totalItems={filteredEmployees.length} 
           itemsPerPage={4} 
           onPageChange={setCurrentPage} 
         />
@@ -171,19 +233,33 @@ const Employees = () => {
         iconBg="var(--primary-bg)"
         showFooter={false}
       >
-        <form style={{ padding: '4px 0' }}>
+        <form onSubmit={onAddSubmit} style={{ padding: '4px 0' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.form.firstName')}
               </label>
-              <input type="text" className="form-input" placeholder="Jean" />
+              <input 
+                type="text" 
+                required
+                value={addForm.firstName} 
+                onChange={(e) => setAddForm({ ...addForm, firstName: e.target.value })}
+                className="form-input" 
+                placeholder="Jean" 
+              />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.form.lastName')}
               </label>
-              <input type="text" className="form-input" placeholder="Dupont" />
+              <input 
+                type="text" 
+                required
+                value={addForm.lastName} 
+                onChange={(e) => setAddForm({ ...addForm, lastName: e.target.value })}
+                className="form-input" 
+                placeholder="Dupont" 
+              />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -191,13 +267,27 @@ const Employees = () => {
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Mail size={12} color="var(--c-purple)" /> {t('employees.form.email')}
               </label>
-              <input type="email" className="form-input" placeholder="jean.d@comp.com" />
+              <input 
+                type="email" 
+                required
+                value={addForm.email} 
+                onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                className="form-input" 
+                placeholder="jean.d@comp.com" 
+              />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
               </label>
-              <input type="text" className="form-input" placeholder="Designer" />
+              <input 
+                type="text" 
+                required
+                value={addForm.role} 
+                onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
+                className="form-input" 
+                placeholder="Développeur" 
+              />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
@@ -205,25 +295,34 @@ const Employees = () => {
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Building2 size={12} color="var(--success)" /> {t('employees.form.department')}
               </label>
-              <select className="form-input">
-                <option>Ingénierie</option>
-                <option>Marketing</option>
-                <option>RH</option>
+              <select 
+                className="form-input"
+                value={addForm.dept}
+                onChange={(e) => setAddForm({ ...addForm, dept: e.target.value })}
+              >
+                <option value="Ingénierie">Ingénierie</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Finance">Finance</option>
+                <option value="Ressources Humaines">Ressources Humaines</option>
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ShieldCheck size={12} color="var(--c-blue)" /> {t('employees.form.contract')}
               </label>
-              <select className="form-input">
-                <option>CDI</option>
-                <option>CDD</option>
-                <option>Freelance</option>
+              <select 
+                className="form-input"
+                value={addForm.contract}
+                onChange={(e) => setAddForm({ ...addForm, contract: e.target.value })}
+              >
+                <option value="CDI">CDI</option>
+                <option value="CDD">CDD</option>
+                <option value="Freelance">Freelance</option>
               </select>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onAddSubmit}>{t('employees.form.createProfile')}</button>
+            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('employees.form.createProfile')}</button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsAddModalOpen(false)}>{t('employees.form.cancel')}</button>
           </div>
         </form>
@@ -282,7 +381,7 @@ const Employees = () => {
                   <Calendar size={12} color="var(--success)" />
                   <span className="detail-label" style={{ fontSize: '0.65rem' }}>{t('employees.detail.hired')}</span>
                 </div>
-                <span className="detail-value" style={{ fontSize: '0.8rem' }}>15 Jan 2024</span>
+                <span className="detail-value" style={{ fontSize: '0.8rem' }}>{selectedEmployee.date}</span>
               </div>
             </div>
 
@@ -309,27 +408,27 @@ const Employees = () => {
         showFooter={false}
       >
         {selectedEmployee && (
-          <form style={{ padding: '4px 0' }}>
+          <form onSubmit={onEditSubmit} style={{ padding: '4px 0' }}>
             <div className="form-group" style={{ marginBottom: '12px' }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.table.employee')}
               </label>
-              <input type="text" className="form-input" defaultValue={selectedEmployee.name} />
+              <input type="text" className="form-input" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </div>
             <div className="form-group" style={{ marginBottom: '12px' }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Mail size={12} color="var(--c-purple)" /> {t('employees.form.email')}
               </label>
-              <input type="email" className="form-input" defaultValue={selectedEmployee.email} />
+              <input type="email" className="form-input" required value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             </div>
             <div className="form-group" style={{ marginBottom: '24px' }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
               </label>
-              <input type="text" className="form-input" defaultValue={selectedEmployee.role} />
+              <input type="text" className="form-input" required value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onEditSubmit}>{t('employees.form.saveChanges')}</button>
+              <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('employees.form.saveChanges')}</button>
               <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>{t('employees.form.cancel')}</button>
             </div>
           </form>

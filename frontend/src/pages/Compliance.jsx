@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Modal from '../components/Modal';
 import { useToast } from '../context/ToastContext';
+import { jsPDF } from 'jspdf';
 
 const Compliance = () => {
   const { showToast } = useToast();
@@ -89,9 +90,133 @@ const Compliance = () => {
 
   const handleExportSubmit = () => {
     showToast('Génération du rapport de conformité...', 'info');
+    
     setTimeout(() => {
-      showToast(`Rapport exporté avec succès au format ${exportFormat.toUpperCase()} !`, 'success');
+      if (exportFormat === 'pdf') {
+        try {
+          const doc = new jsPDF();
+          
+          // Header Banner
+          doc.setFillColor(37, 99, 235); // Primary Blue
+          doc.rect(0, 0, 210, 35, 'F');
+          
+          // Header Title
+          doc.setFontSize(22);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(255, 255, 255);
+          doc.text("Rapport de Conformite", 20, 22);
+          
+          // Header Subtitle
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(219, 234, 254); // Light blue
+          doc.text(`Généré le: ${new Date().toLocaleDateString()}`, 20, 30);
+          
+          // Metadata Box
+          doc.setFillColor(248, 250, 252); // Very light gray
+          doc.rect(20, 45, 170, 25, 'F');
+          doc.setDrawColor(226, 232, 240); // Border color
+          doc.rect(20, 45, 170, 25);
+          
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(71, 85, 105); // Slate gray
+          doc.text("Période:", 25, 55);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(30, 41, 59);
+          doc.text(`${exportRange === 'current' ? 'Mai 2026' : exportRange}`, 45, 55);
+          
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(71, 85, 105);
+          doc.text("Format d'export:", 25, 63);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(30, 41, 59);
+          doc.text("PDF Document", 60, 63);
+          
+          // Content Title
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text("Employés non conformes", 20, 85);
+          
+          // Decorative line under title
+          doc.setDrawColor(37, 99, 235);
+          doc.setLineWidth(1);
+          doc.line(20, 88, 80, 88);
+          
+          let y = 100;
+          employees.forEach((emp) => {
+            // Card background
+            doc.setFillColor(255, 255, 255);
+            doc.rect(20, y - 5, 170, 25, 'F');
+            doc.setDrawColor(241, 245, 249);
+            doc.rect(20, y - 5, 170, 25);
+            
+            // Left color bar
+            const [barR, barG, barB] = emp.isLate ? [239, 68, 68] : [245, 158, 11];
+            doc.setFillColor(barR, barG, barB);
+            doc.rect(20, y - 5, 4, 25, 'F');
+            
+            // Employee Name
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(15, 23, 42);
+            doc.text(emp.name, 30, y + 3);
+            
+            // Employee Email
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 116, 139);
+            doc.text(emp.email, 30, y + 8);
+            
+            // Requirement
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(71, 85, 105);
+            doc.text("Exigence:", 30, y + 15);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(30, 41, 59);
+            doc.text(emp.requirement, 50, y + 15);
+            
+            // Status Badge
+            const statusText = emp.status;
+            const [bgR, bgG, bgB] = emp.isLate ? [254, 226, 226] : [254, 243, 199];
+            doc.setFillColor(bgR, bgG, bgB);
+            doc.rect(130, y, 50, 8, 'F');
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            const [textR, textG, textB] = emp.isLate ? [220, 38, 38] : [217, 119, 6];
+            doc.setTextColor(textR, textG, textB);
+            doc.text(statusText, 135, y + 5.5);
+            
+            y += 32;
+          });
+          
+          doc.save(`Rapport_Conformite_${new Date().getTime()}.pdf`);
+          showToast(`Rapport exporté avec succès !`, 'success');
+        } catch (error) {
+          console.error(error);
+          showToast('Erreur lors de la génération du PDF', 'error');
+        }
+      } else {
+        // For CSV/Excel, create a dummy CSV blob
+        const content = `Rapport de Conformite\nPeriode: ${exportRange === 'current' ? 'Mai 2026' : exportRange}\nGenere le: ${new Date().toLocaleDateString()}\n\nNom,Email,Exigence,Statut\n` + 
+          employees.map(emp => `"${emp.name}","${emp.email}","${emp.requirement}","${emp.status}"`).join('\n');
+          
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Rapport_Conformite_${new Date().getTime()}.${exportFormat}`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast(`Rapport exporté avec succès !`, 'success');
+      }
     }, 1200);
+    
     setIsExportModalOpen(false);
   };
 
@@ -375,82 +500,105 @@ const Compliance = () => {
         submitText="Générer & Télécharger"
         onSubmit={handleExportSubmit}
       >
-        <form onSubmit={(e) => { e.preventDefault(); handleExportSubmit(); }} style={{ padding: '4px 0' }}>
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '8px', display: 'block' }}>Format d'exportation</label>
+        <form onSubmit={(e) => { e.preventDefault(); handleExportSubmit(); }} style={{ padding: '0' }}>
+          <div className="form-group" style={{ marginBottom: '12px' }}>
+            <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '6px', display: 'block', fontWeight: 600, color: 'var(--text-dark)' }}>Format d'exportation</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+              {/* PDF */}
               <div 
                 style={{ 
-                  border: exportFormat === 'pdf' ? '2px solid var(--primary)' : '1px solid var(--border-color)', 
-                  padding: '12px', 
+                  border: exportFormat === 'pdf' ? '2px solid #EF4444' : '1px solid var(--border-color)', 
+                  padding: '10px 8px', 
                   textAlign: 'center', 
                   borderRadius: 'var(--radius-md)', 
                   cursor: 'pointer',
-                  background: exportFormat === 'pdf' ? 'var(--primary-bg)' : 'var(--sidebar-bg)',
-                  transition: 'all 0.2s ease'
+                  background: exportFormat === 'pdf' ? 'linear-gradient(135deg, #FEE2E2 0%, #FFF1F2 100%)' : 'var(--sidebar-bg)',
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                  boxShadow: exportFormat === 'pdf' ? '0 2px 8px rgba(239, 68, 68, 0.1)' : 'none'
                 }}
                 onClick={() => setExportFormat('pdf')}
               >
-                <i className="far fa-file-pdf" style={{ fontSize: '1.5rem', color: '#EF4444', marginBottom: '6px', display: 'block' }}></i>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-dark)' }}>PDF Doc</span>
+                {exportFormat === 'pdf' && (
+                  <i className="fas fa-check-circle" style={{ position: 'absolute', top: '4px', right: '4px', color: '#EF4444', fontSize: '0.8rem' }}></i>
+                )}
+                <i className="fas fa-file-pdf" style={{ fontSize: '1.4rem', color: '#EF4444', marginBottom: '4px', display: 'block' }}></i>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: exportFormat === 'pdf' ? '#991B1B' : 'var(--text-dark)' }}>PDF Doc</span>
               </div>
+
+              {/* Excel */}
               <div 
                 style={{ 
-                  border: exportFormat === 'xlsx' ? '2px solid var(--primary)' : '1px solid var(--border-color)', 
-                  padding: '12px', 
+                  border: exportFormat === 'xlsx' ? '2px solid #10B981' : '1px solid var(--border-color)', 
+                  padding: '10px 8px', 
                   textAlign: 'center', 
                   borderRadius: 'var(--radius-md)', 
                   cursor: 'pointer',
-                  background: exportFormat === 'xlsx' ? 'var(--primary-bg)' : 'var(--sidebar-bg)',
-                  transition: 'all 0.2s ease'
+                  background: exportFormat === 'xlsx' ? 'linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%)' : 'var(--sidebar-bg)',
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                  boxShadow: exportFormat === 'xlsx' ? '0 2px 8px rgba(16, 185, 129, 0.1)' : 'none'
                 }}
                 onClick={() => setExportFormat('xlsx')}
               >
-                <i className="far fa-file-excel" style={{ fontSize: '1.5rem', color: '#10B981', marginBottom: '6px', display: 'block' }}></i>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-dark)' }}>Excel (.xlsx)</span>
+                {exportFormat === 'xlsx' && (
+                  <i className="fas fa-check-circle" style={{ position: 'absolute', top: '4px', right: '4px', color: '#10B981', fontSize: '0.8rem' }}></i>
+                )}
+                <i className="fas fa-file-excel" style={{ fontSize: '1.4rem', color: '#10B981', marginBottom: '4px', display: 'block' }}></i>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: exportFormat === 'xlsx' ? '#065F46' : 'var(--text-dark)' }}>Excel (.xlsx)</span>
               </div>
+
+              {/* CSV */}
               <div 
                 style={{ 
                   border: exportFormat === 'csv' ? '2px solid var(--primary)' : '1px solid var(--border-color)', 
-                  padding: '12px', 
+                  padding: '10px 8px', 
                   textAlign: 'center', 
                   borderRadius: 'var(--radius-md)', 
                   cursor: 'pointer',
-                  background: exportFormat === 'csv' ? 'var(--primary-bg)' : 'var(--sidebar-bg)',
-                  transition: 'all 0.2s ease'
+                  background: exportFormat === 'csv' ? 'linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%)' : 'var(--sidebar-bg)',
+                  transition: 'all 0.2s ease',
+                  position: 'relative',
+                  boxShadow: exportFormat === 'csv' ? '0 2px 8px rgba(37, 99, 236, 0.1)' : 'none'
                 }}
                 onClick={() => setExportFormat('csv')}
               >
-                <i className="far fa-file-alt" style={{ fontSize: '1.5rem', color: 'var(--primary)', marginBottom: '6px', display: 'block' }}></i>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-dark)' }}>CSV Data</span>
+                {exportFormat === 'csv' && (
+                  <i className="fas fa-check-circle" style={{ position: 'absolute', top: '4px', right: '4px', color: 'var(--primary)', fontSize: '0.8rem' }}></i>
+                )}
+                <i className="fas fa-file-csv" style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '4px', display: 'block' }}></i>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: exportFormat === 'csv' ? '#1E40AF' : 'var(--text-dark)' }}>CSV Data</span>
               </div>
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label" style={{ fontSize: '0.75rem' }}>Période du rapport</label>
-            <select className="form-input" value={exportRange} onChange={(e) => setExportRange(e.target.value)}>
-              <option value="current">Ce mois-ci (Mai 2026)</option>
-              <option value="last3">3 derniers mois</option>
-              <option value="ytd">Depuis le début de l'année (YTD)</option>
-              <option value="custom">Période personnalisée</option>
-            </select>
+          <div className="form-group" style={{ marginBottom: '12px' }}>
+            <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-dark)' }}>Période du rapport</label>
+            <div style={{ position: 'relative' }}>
+              <i className="far fa-calendar-alt" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-gray)', fontSize: '0.85rem' }}></i>
+              <select className="form-input" style={{ paddingLeft: '32px', height: '36px', fontSize: '0.8rem' }} value={exportRange} onChange={(e) => setExportRange(e.target.value)}>
+                <option value="current">Ce mois-ci (Mai 2026)</option>
+                <option value="last3">3 derniers mois</option>
+                <option value="ytd">Depuis le début de l'année (YTD)</option>
+                <option value="custom">Période personnalisée</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ fontSize: '0.75rem' }}>Options additionnelles</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'var(--sidebar-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)' }} />
-                Inclure les taux globaux par formation
+            <label className="form-label" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-dark)' }}>Options additionnelles</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px', background: 'var(--sidebar-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
+                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)', width: '14px', height: '14px' }} />
+                <span>Inclure les taux globaux par formation</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)' }} />
-                Inclure les détails des non-conformités
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
+                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)', width: '14px', height: '14px' }} />
+                <span>Inclure les détails des non-conformités</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)' }} />
-                Signer numériquement le rapport
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', cursor: 'pointer', color: 'var(--text-dark)', fontWeight: 500 }}>
+                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--primary)', width: '14px', height: '14px' }} />
+                <span>Signer numériquement le rapport</span>
               </label>
             </div>
           </div>
