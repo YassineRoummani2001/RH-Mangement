@@ -379,6 +379,13 @@ export default function Finance() {
             grid-template-columns: 1fr !important;
           }
         }
+
+        /* Mobile responsiveness rule */
+        @media (max-width: 1024px) {
+          .finance-grid-layout {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
     </div>
   );

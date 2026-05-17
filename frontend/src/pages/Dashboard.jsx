@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,11 @@ const Dashboard = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleRequestAction = (row) => {
     setSelectedRequest(row);
@@ -218,6 +223,44 @@ const Dashboard = () => {
         showToast('Erreur lors de la génération du fichier.', 'error');
       }
     }, 1000);
+  };
+
+  const fallbackCopyText = (text) => {
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        showToast('Lien de partage copié dans le presse-papiers !', 'success');
+      } else {
+        showToast('Impossible de copier le lien.', 'error');
+      }
+    } catch (err) {
+      console.error("Fallback copy failed:", err);
+      showToast('Impossible de copier le lien.', 'error');
+    }
+  };
+
+  const handleShareDocument = (row) => {
+    const mockLink = `${window.location.origin}/requests/share/${row.title ? encodeURIComponent(row.title.toLowerCase().replace(/\s+/g, '-')) : 'doc-123'}?owner=${encodeURIComponent(row.owner || '')}&dept=${encodeURIComponent(row.dept || '')}&date=${encodeURIComponent(row.date || '')}&sub=${encodeURIComponent(row.sub || '')}`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(mockLink)
+        .then(() => {
+          showToast('Lien de partage copié dans le presse-papiers !', 'success');
+        })
+        .catch((err) => {
+          console.error("Clipboard copy failed:", err);
+          fallbackCopyText(mockLink);
+        });
+    } else {
+      fallbackCopyText(mockLink);
+    }
   };
 
   // --- Employee Form State ---
@@ -599,26 +642,30 @@ const Dashboard = () => {
             Évolution des Demandes et Absences
           </div>
           <div style={{ height: '220px', width: '100%', minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorAbsences" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--warning)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--warning)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" stroke="var(--text-gray)" />
-                <YAxis stroke="var(--text-gray)" />
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                <Tooltip contentStyle={{ backgroundColor: 'var(--main-bg)', borderColor: 'var(--border-color)', borderRadius: '8px' }} />
-                <Area type="monotone" dataKey="requests" name="Demandes" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRequests)" />
-                <Area type="monotone" dataKey="absences" name="Absences" stroke="var(--warning)" fillOpacity={1} fill="url(#colorAbsences)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorAbsences" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--warning)" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="var(--warning)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="var(--text-gray)" />
+                  <YAxis stroke="var(--text-gray)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--main-bg)', borderColor: 'var(--border-color)', borderRadius: '8px' }} />
+                  <Area type="monotone" dataKey="requests" name="Demandes" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRequests)" />
+                  <Area type="monotone" dataKey="absences" name="Absences" stroke="var(--warning)" fillOpacity={1} fill="url(#colorAbsences)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: '100%', width: '100%' }} />
+            )}
           </div>
         </div>
 
@@ -637,31 +684,35 @@ const Dashboard = () => {
             
             {/* Chart */}
             <div style={{ height: '140px', width: '100%' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Approuvées', value: 24, color: '#10B981' },
-                      { name: 'En attente', value: 18, color: '#F59E0B' },
-                      { name: 'Rejetées', value: 3, color: '#EF4444' }
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={48}
-                    outerRadius={62}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {[
-                      { color: '#10B981' },
-                      { color: '#F59E0B' },
-                      { color: '#EF4444' }
-                    ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+              {isMounted ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Approuvées', value: 24, color: '#10B981' },
+                        { name: 'En attente', value: 18, color: '#F59E0B' },
+                        { name: 'Rejetées', value: 3, color: '#EF4444' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={48}
+                      outerRadius={62}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {[
+                        { color: '#10B981' },
+                        { color: '#F59E0B' },
+                        { color: '#EF4444' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ height: '100%', width: '100%' }} />
+              )}
             </div>
             
             {/* Legend / Status List */}
@@ -751,7 +802,7 @@ const Dashboard = () => {
                     <div className="table-actions" style={{ justifyContent: 'center' }}>
                       <button className="modern-action-btn" onClick={() => handleRequestAction(row)}><i className="far fa-eye"></i></button>
                       <button className="modern-action-btn" title="Exporter" onClick={() => handleExportDocument(row)}><i className="fas fa-download"></i></button>
-                      <button className="modern-action-btn" onClick={() => showToast('Lien de partage copié !', 'success')}><i className="fas fa-share-alt"></i></button>
+                      <button className="modern-action-btn" title={t('common.share') || "Partager"} onClick={() => handleShareDocument(row)}><i className="fas fa-share-alt"></i></button>
                     </div>
                   </td>
                 </tr>

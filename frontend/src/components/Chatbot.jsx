@@ -142,37 +142,101 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Floating Bubble Button */}
-      <button 
-        onClick={() => {
-          const nextState = !isOpen;
-          setIsOpen(nextState);
-          playUISound(nextState ? 'open' : 'close');
-        }}
+      {/* Floating Premium AI Avatar Trigger Button */}
+      <div 
         style={{
           position: 'fixed',
           bottom: '24px',
           right: '24px',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-          color: '#ffffff',
-          border: 'none',
-          boxShadow: '0 8px 30px rgba(37,99,235,0.4)',
-          cursor: 'pointer',
+          zIndex: 99999,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: isOpen ? 'rotate(90deg) scale(0.9)' : 'scale(1)'
+          justifyContent: 'center'
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = isOpen ? 'rotate(90deg) scale(0.95)' : 'scale(1.08)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = isOpen ? 'rotate(90deg) scale(0.9)' : 'scale(1)'}
       >
-        {isOpen ? <X style={{ width: 24, height: 24 }} /> : <MessageSquare style={{ width: 24, height: 24 }} />}
-      </button>
+        {/* Pulsing Outer Halo Effect */}
+        {!isOpen && (
+          <div 
+            style={{
+              position: 'absolute',
+              width: '78px',
+              height: '78px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(99,102,241,0.25) 0%, rgba(139,92,246,0) 70%)',
+              animation: 'aiPulse 2.4s infinite ease-in-out',
+              pointerEvents: 'none'
+            }}
+          />
+        )}
+
+        <button 
+          onClick={() => {
+            const nextState = !isOpen;
+            setIsOpen(nextState);
+            playUISound(nextState ? 'open' : 'close');
+          }}
+          style={{
+            width: '62px',
+            height: '62px',
+            borderRadius: '50%',
+            background: isOpen 
+              ? 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' 
+              : 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            color: '#ffffff',
+            border: 'none',
+            outline: 'none',
+            boxShadow: isOpen 
+              ? '0 10px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.1)' 
+              : '0 10px 35px rgba(59,130,246,0.35), 0 0 0 2px rgba(59,130,246,0.1), inset 0 1.5px 1.5px rgba(255,255,255,0.25)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transform: isOpen ? 'rotate(180deg) scale(0.95)' : 'scale(1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'rotate(180deg) scale(1.02)' : 'scale(1.08)';
+            if (!isOpen) {
+              e.currentTarget.style.boxShadow = '0 12px 40px rgba(139,92,246,0.5), 0 0 0 4px rgba(139,92,246,0.15), inset 0 2px 2px rgba(255,255,255,0.35)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'rotate(180deg) scale(0.95)' : 'scale(1)';
+            e.currentTarget.style.boxShadow = isOpen 
+              ? '0 10px 30px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.1)' 
+              : '0 10px 35px rgba(59,130,246,0.35), 0 0 0 2px rgba(59,130,246,0.1), inset 0 1.5px 1.5px rgba(255,255,255,0.25)';
+          }}
+        >
+          {isOpen ? (
+            <X style={{ width: 22, height: 22 }} />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <Sparkles 
+                style={{ 
+                  width: 24, 
+                  height: 24, 
+                  color: '#ffffff',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                }} 
+              />
+              <span 
+                style={{ 
+                  position: 'absolute', 
+                  top: -3, 
+                  right: -3, 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  backgroundColor: '#10B981', 
+                  border: '1.5px solid #3b82f6',
+                  boxShadow: '0 0 8px #10B981' 
+                }} 
+              />
+            </div>
+          )}
+        </button>
+      </div>
 
       {/* Expanded Chat Box Widget */}
       {isOpen && (
@@ -361,7 +425,7 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Embedded CSS animations for slideUp and bounce */}
+      {/* Embedded CSS animations for slideUp, bounce, and AI animations */}
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -370,6 +434,11 @@ export default function Chatbot() {
         @keyframes bounce {
           from { transform: translateY(0); }
           to { transform: translateY(-5px); }
+        }
+        @keyframes aiPulse {
+          0% { transform: scale(0.9); opacity: 0.25; }
+          50% { transform: scale(1.15); opacity: 0.65; }
+          100% { transform: scale(0.9); opacity: 0.25; }
         }
       `}</style>
     </>

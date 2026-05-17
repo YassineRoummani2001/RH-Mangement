@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import NotFound from './pages/NotFound';
+import ShareDocument from './pages/ShareDocument';
 import { useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/requests/share/:docId" element={<ShareDocument />} />
           
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />

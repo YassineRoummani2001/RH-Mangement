@@ -4,7 +4,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
-import Chatbot from './Chatbot';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(true);
@@ -62,7 +61,32 @@ export default function AppLayout() {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: 'auto' }}>
             {/* Notifications & Date */}
-            <div className="header-actions" style={{ margin: 0 }}>
+            <div className="header-actions" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Language Toggle (Always Visible on Desktop & Mobile) */}
+              <button 
+                onClick={toggleLanguage} 
+                title={t('topbar.switchLanguage')} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '6px', 
+                  padding: '0 12px', 
+                  height: '36px', 
+                  borderRadius: '18px', 
+                  border: '1px solid var(--border-color)', 
+                  background: 'var(--main-bg)', 
+                  cursor: 'pointer', 
+                  color: 'var(--text-gray)', 
+                  transition: 'all 0.2s', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 700 
+                }}
+              >
+                <i className="fas fa-globe" style={{ color: 'var(--primary)' }}></i>
+                <span>{i18n.language === 'fr' ? 'FR' : 'EN'}</span>
+              </button>
+
               <div 
                 ref={notifRef}
                 className="action-icon" 
@@ -130,17 +154,6 @@ export default function AppLayout() {
               <i className={theme === 'light' ? 'fas fa-moon' : 'fas fa-sun'}></i>
             </button>
 
-            {/* Language Toggle */}
-            <button 
-              className="hide-on-mobile"
-              onClick={toggleLanguage} 
-              title={t('topbar.switchLanguage')} 
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0 12px', height: '40px', borderRadius: '20px', border: '1px solid var(--border-color)', background: 'var(--main-bg)', cursor: 'pointer', color: 'var(--text-gray)', transition: 'all 0.2s', fontSize: '0.85rem', fontWeight: 600 }}
-            >
-              <i className="fas fa-globe"></i>
-              <span>{i18n.language === 'fr' ? 'FR' : 'EN'}</span>
-            </button>
-
             {/* Divider */}
             <div className="hide-on-mobile" style={{ width: '1px', height: '32px', backgroundColor: 'var(--border-color)', margin: '0 4px' }}></div>
 
@@ -205,7 +218,6 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </main>
-      {user?.role === 'HR_MANAGER' && <Chatbot />}
     </div>
   );
 }
