@@ -19,6 +19,7 @@ export default function Finance() {
   const [selectedEmpId, setSelectedEmpId] = useState(1);
   const [bonus, setBonus] = useState(1500);
   const [allowance, setAllowance] = useState(800); // Prime de transport/logement
+  const [isSigned, setIsSigned] = useState(false);
 
   const currentEmp = mockEmployees.find(e => e.id === Number(selectedEmpId)) || mockEmployees[0];
 
@@ -199,6 +200,20 @@ export default function Finance() {
             </div>
           </div>
 
+          {/* Signature Checkbox */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
+            <input 
+              type="checkbox" 
+              id="employeeSignature"
+              checked={isSigned}
+              onChange={(e) => setIsSigned(e.target.checked)}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <label htmlFor="employeeSignature" style={{ fontSize: '14px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#374151', cursor: 'pointer' }}>
+              {i18n.language === 'fr' ? 'Signature du Salarié' : 'Employee Signature'}
+            </label>
+          </div>
+
           {/* Quick deductions info block */}
           <div style={{ background: isDark ? 'rgba(37,99,235,0.04)' : 'rgba(37,99,235,0.02)', padding: '16px', borderRadius: '12px', border: `1.5px dashed ${isDark ? '#3b82f6' : '#93c5fd'}`, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#2563eb' }}>Barème Social & Fiscal Maroc 🇲🇦</div>
@@ -329,8 +344,14 @@ export default function Finance() {
           {/* Signatures */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '16px', fontSize: '0.75rem', color: '#64748b' }}>
             <div>
-              <span style={{ display: 'block', fontWeight: 700, marginBottom: '40px', color: '#0f172a' }}>Signature du Salarié</span>
-              <div style={{ borderTop: '1px dashed #cbd5e1', width: '120px' }}></div>
+              <span style={{ display: 'block', fontWeight: 700, marginBottom: isSigned ? '10px' : '40px', color: '#0f172a' }}>Signature du Salarié</span>
+              {isSigned ? (
+                <div style={{ color: '#2563eb', fontWeight: 700, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <CheckCircle style={{ width: 14, height: 14 }} /> Signé électroniquement
+                </div>
+              ) : (
+                <div style={{ borderTop: '1px dashed #cbd5e1', width: '120px' }}></div>
+              )}
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ display: 'block', fontWeight: 700, marginBottom: '40px', color: '#0f172a' }}>La Direction RH</span>

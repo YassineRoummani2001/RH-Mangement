@@ -321,7 +321,7 @@ const Compliance = () => {
           <div className="filter-group">
             <div className="search-bar">
               <i className="fas fa-search"></i>
-              <input type="text" placeholder="Rechercher..." onChange={() => showToast('Recherche en cours...', 'info')} />
+              <input type="text" placeholder="Rechercher..." />
             </div>
           </div>
         </div>
