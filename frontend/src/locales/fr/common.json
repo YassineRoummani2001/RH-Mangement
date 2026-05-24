@@ -31,11 +31,11 @@
     "password": "Mot de passe",
     "rememberMe": "Se souvenir de moi",
     "role": "Rôle",
-    "hrManager": "Responsable RH",
+    "hrManager": "Administrateur RH",
     "hrAgent": "Agent RH",
     "collaborator": "Collaborateur",
     "employee": "Employé",
-    "manager": "Manager",
+    "manager": "Chef de Service",
     "interimManager": "Chef de service intérim",
     "backToLogin": "Retour à la connexion",
     "welcomeBack": "Bon retour chez vous.",
@@ -81,6 +81,12 @@
     "hrRequests": "Demandes RH",
     "myLeaves": "Mes Congés",
     "leavesAndAbsences": "Congés & Absences",
+    "authorizations": "Autorisations",
+    "attestations": "Attestations",
+    "trainings": "Formations",
+    "absences": "Absences & Retards",
+    "assignments": "Affectations",
+    "signature": "Signature Électronique",
     "compliance": "Conformité",
     "calendar": "Calendrier",
     "finance": "Salaires & Paie",
@@ -104,6 +110,304 @@
     "helpCenter": "Centre d'Aide",
     "logout": "Déconnexion",
     "switchLanguage": "Changer de langue"
+  },
+  "authorizations": {
+    "title": "Autorisations Exceptionnelles d'Absence",
+    "myTitle": "Mes Autorisations d'Absence",
+    "subtitle": "Validation et suivi des autorisations exceptionnelles d'absence",
+    "mySubtitle": "Quota annuel : {{quota}}h | Utilisé : {{used}}h | Restant : {{remaining}}h",
+    "newRequest": "Nouvelle demande",
+    "annualQuota": "Quota annuel",
+    "usedHours": "Heures utilisées",
+    "remainingHours": "Heures restantes",
+    "total": "Total demandes",
+    "pending": "En attente",
+    "approved": "Approuvées",
+    "validatedByChef": "Validées Chef",
+    "history": "Historique des Autorisations",
+    "ref": "Référence",
+    "employee": "Employé",
+    "department": "Département",
+    "date": "Date",
+    "duration": "Durée",
+    "reason": "Motif",
+    "status": "Statut",
+    "actions": "Actions",
+    "details": "Détails",
+    "noData": "Aucune autorisation trouvée",
+    "filters": {
+      "all": "Tous",
+      "pending": "En attente",
+      "validatedChef": "Validée Chef",
+      "approved": "Approuvée",
+      "refused": "Refusée"
+    },
+    "status_values": {
+      "pending": "En attente",
+      "validatedChef": "Validée Chef",
+      "approved": "Approuvée",
+      "refused": "Refusée"
+    },
+    "modal": {
+      "newTitle": "Nouvelle Autorisation d'Absence",
+      "desiredDate": "Date souhaitée",
+      "durationHours": "Durée (heures)",
+      "reasonLabel": "Motif de l'absence",
+      "reasonPlaceholder": "Décrivez le motif de votre absence exceptionnelle...",
+      "quotaInfo": "Quota restant : {{remaining}}h / {{quota}}h",
+      "submit": "Soumettre la demande",
+      "detailTitle": "Autorisation {{id}}",
+      "submittedAt": "Soumis le",
+      "validate": "Valider",
+      "refuse": "Refuser",
+      "approveDefinitive": "Approuver définitivement"
+    },
+    "toast": {
+      "submitted": "Demande d'autorisation soumise avec succès !",
+      "validatedChef": "Autorisation de {{name}} validée et transmise au RH.",
+      "approvedRH": "Autorisation de {{name}} approuvée définitivement.",
+      "refused": "Demande de {{name}} refusée.",
+      "missingFields": "Veuillez remplir tous les champs obligatoires."
+    }
+  },
+  "attestations": {
+    "title": "Gestion des Attestations",
+    "myTitle": "Mes Attestations & Documents",
+    "sgTitle": "Documents à Signer",
+    "subtitle": "Gérez les attestations de travail, de salaire et bulletins de paie",
+    "mySubtitle": "Demandez et téléchargez vos attestations et bulletins de paie",
+    "sgSubtitle": "Consultez et signez électroniquement les documents validés",
+    "requestDoc": "Demander un document",
+    "generateMonthly": "Générer bulletins du mois",
+    "available": "Disponible",
+    "processing": "En cours",
+    "waitingSignature": "En attente signature",
+    "table": {
+      "ref": "Référence",
+      "type": "Type de document",
+      "employee": "Employé",
+      "department": "Département",
+      "requestedAt": "Demandé le",
+      "status": "Statut",
+      "signature": "Signature",
+      "actions": "Actions",
+      "noSignature": "—",
+      "noData": "Aucun document trouvé"
+    },
+    "filters": {
+      "all": "Tous",
+      "work": "Travail",
+      "salary": "Salaire",
+      "payslip": "Bulletin"
+    },
+    "modal": {
+      "requestTitle": "Demander un Document",
+      "docType": "Type de document",
+      "note": "Note complémentaire (optionnel)",
+      "notePlaceholder": "Ex: Document requis pour une demande de visa, en français...",
+      "delay": "Délai de traitement habituel : 24 à 48 heures ouvrables",
+      "submit": "Soumettre la demande"
+    },
+    "toast": {
+      "submitted": "Votre demande d'attestation a été soumise !",
+      "generating": "Génération du PDF en cours...",
+      "generated": "Document PDF généré et téléchargé !",
+      "processed": "Document traité, en attente de signature.",
+      "generateMonthly": "Génération des bulletins du mois en cours..."
+    }
+  },
+  "trainings": {
+    "title": "Gestion des Formations",
+    "myTitle": "Mes Formations",
+    "subtitle": "Planifiez, gérez et suivez les formations de l'entreprise",
+    "mySubtitle": "Consultez et inscrivez-vous aux formations disponibles",
+    "newTraining": "Nouvelle formation",
+    "total": "Formations totales",
+    "inProgress": "En cours",
+    "participants": "Total participants",
+    "myEnrollments": "Mes inscriptions",
+    "planned": "Planifiées",
+    "perMonth": "Formations / Mois",
+    "byDomain": "Par domaine",
+    "status": {
+      "planned": "Planifiée",
+      "inProgress": "En cours",
+      "done": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "filters": {
+      "all": "Tous",
+      "planned": "Planifiée",
+      "inProgress": "En cours",
+      "done": "Terminée"
+    },
+    "card": {
+      "trainer": "Formateur",
+      "location": "Lieu",
+      "participants": "Participants",
+      "enroll": "S'inscrire",
+      "enrolled": "✓ Inscrit(e)",
+      "full": "Complet"
+    },
+    "modal": {
+      "createTitle": "Créer une Formation",
+      "titleLabel": "Titre de la formation",
+      "titlePlaceholder": "Ex: ReactJS Avancé",
+      "domain": "Domaine",
+      "trainer": "Formateur / Organisme",
+      "trainerPlaceholder": "Nom du formateur",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "location": "Lieu",
+      "locationPlaceholder": "Casablanca / En ligne",
+      "maxPart": "Max. participants",
+      "description": "Description",
+      "descPlaceholder": "Objectifs, programme, prérequis...",
+      "submit": "Créer la formation",
+      "participantsList": "Liste des participants",
+      "delete": "Supprimer la formation"
+    },
+    "toast": {
+      "created": "Formation créée avec succès !",
+      "deleted": "Formation supprimée.",
+      "enrolled": "Inscription à \"{{title}}\" confirmée !",
+      "alreadyEnrolled": "Vous êtes déjà inscrit(e) à cette formation.",
+      "full": "Cette formation est complète.",
+      "missingFields": "Veuillez remplir tous les champs obligatoires."
+    }
+  },
+  "absences": {
+    "title": "Absences & Retards",
+    "subtitle": "Suivi, justification et gestion des absences et retards du personnel",
+    "record": "Enregistrer une absence",
+    "totalAbsences": "Absences totales",
+    "totalLate": "Retards enregistrés",
+    "unjustified": "Non justifiées",
+    "withDoc": "Avec justificatif",
+    "registry": "Registre des Absences & Retards",
+    "filters": {
+      "all": "Tous",
+      "absence": "Absence",
+      "late": "Retard"
+    },
+    "table": {
+      "ref": "Référence",
+      "employee": "Employé",
+      "department": "Département",
+      "type": "Type",
+      "date": "Date",
+      "duration": "Durée",
+      "status": "Statut",
+      "warning": "Avertissement",
+      "actions": "Actions",
+      "noData": "Aucune absence enregistrée",
+      "warningSent": "Envoyé",
+      "noWarning": "—",
+      "noJustif": "Aucun"
+    },
+    "status_values": {
+      "unjustified": "Non justifiée",
+      "justified": "Justifiée",
+      "justifiedMedical": "Justifiée médicale",
+      "inProgress": "En cours"
+    },
+    "modal": {
+      "createTitle": "Enregistrer une Absence / Retard",
+      "employeeName": "Nom de l'employé",
+      "type": "Type",
+      "absence": "Absence",
+      "late": "Retard",
+      "department": "Département",
+      "date": "Date",
+      "durationHours": "Durée (heures)",
+      "statusLabel": "Statut",
+      "reason": "Motif / Remarque",
+      "reasonPlaceholder": "Motif de l'absence...",
+      "warningAlert": "Un avertissement automatique sera envoyé à l'employé.",
+      "submit": "Enregistrer",
+      "detailTitle": "Détails {{id}}",
+      "addJustif": "Ajouter un justificatif médical"
+    },
+    "toast": {
+      "recorded": "{{type}} enregistrée.",
+      "warningNote": "Avertissement envoyé à l'employé",
+      "justifAdded": "Justificatif ajouté — Statut mis à jour.",
+      "missingFields": "Veuillez remplir tous les champs obligatoires."
+    }
+  },
+  "assignments": {
+    "title": "Gestion des Affectations",
+    "subtitle": "Affectez, modifiez et gérez les postes et services des employés",
+    "listTitle": "Liste des Affectations",
+    "allDepts": "Tous",
+    "table": {
+      "employee": "Employé",
+      "email": "Email",
+      "position": "Poste",
+      "department": "Département",
+      "since": "Affecté depuis",
+      "status": "Statut",
+      "actions": "Actions",
+      "noData": "Aucun employé trouvé"
+    },
+    "modal": {
+      "editTitle": "Modifier l'affectation de {{name}}",
+      "department": "Département",
+      "position": "Poste / Fonction",
+      "positionPlaceholder": "Ex: Développeur Senior",
+      "dateNote": "La date d'affectation sera mise à jour automatiquement.",
+      "saveBtn": "Enregistrer les modifications",
+      "deleteTitle": "Confirmer la suppression",
+      "deleteDesc": "Êtes-vous sûr(e) de vouloir supprimer l'affectation de {{name}} ?",
+      "deleteWarn": "Cette action est irréversible.",
+      "deleteBtn": "Supprimer"
+    },
+    "toast": {
+      "updated": "Affectation de {{name}} mise à jour.",
+      "deleted": "Affectation de {{name}} supprimée."
+    }
+  },
+  "signature": {
+    "title": "Signature Électronique",
+    "subtitle": "Apposez votre signature électronique sur les documents validés par le département RH",
+    "pending": "En attente de signature",
+    "signed": "Signés",
+    "total": "Total traités",
+    "pendingTab": "En attente",
+    "signedTab": "Signés",
+    "allSigned": "Tous les documents ont été signés !",
+    "allSignedDesc": "Aucun document en attente de signature.",
+    "validatedRH": "Validé RH — En attente signature SG",
+    "sign": "Signer",
+    "historyTitle": "Historique des Signatures",
+    "table": {
+      "ref": "Référence",
+      "type": "Type de document",
+      "employee": "Bénéficiaire",
+      "department": "Département",
+      "signedAt": "Signé le",
+      "status": "Statut",
+      "actions": "Actions"
+    },
+    "modal": {
+      "title": "Signer : {{type}}",
+      "docLabel": "Document",
+      "beneficiary": "Bénéficiaire",
+      "department": "Département",
+      "ref": "Référence",
+      "canvasLabel": "Apposez votre signature ci-dessous",
+      "clear": "Effacer",
+      "canvasHint": "Signez ici en maintenant le clic",
+      "securityNote": "Signature numérique sécurisée",
+      "legalNotice": "En apposant votre signature électronique, vous certifiez avoir vérifié et validé le contenu de ce document. Cette signature a valeur juridique conformément aux dispositions légales en vigueur.",
+      "submit": "Apposer ma signature",
+      "noSignatureWarn": "Veuillez apposer votre signature avant de valider."
+    },
+    "toast": {
+      "signed": "Document \"{{type}}\" signé et transmis à {{employee}} !",
+      "downloaded": "Document signé téléchargé !",
+      "generating": "Génération du document signé..."
+    }
   },
   "dashboard": {
     "myWorkspace": "Mon Espace",
@@ -145,7 +449,46 @@
     "leaveApproved": "Congé approuvé",
     "leaveApprovedDesc": "Congé annuel par Sarah M. • il y a 4h",
     "policyUpdate": "Mise à jour de la politique",
-    "policyUpdateDesc": "Politique RH v2.0 publiée • il y a 6h"
+    "policyUpdateDesc": "Politique RH v2.0 publiée • il y a 6h",
+    "employee": {
+      "leavesRemaining": "Jours de congé restants",
+      "pendingRequests": "Demandes en cours",
+      "approvedRequests": "Demandes approuvées",
+      "quotaRemaining": "Quota autorisation restant",
+      "upToDate": "À jour",
+      "waitingApproval": "En attente",
+      "quickActions": "Actions Rapides",
+      "newRequest": "Nouvelle Demande",
+      "leaveRequest": "Demande de Congé",
+      "authorizationRequest": "Autorisation Absence",
+      "myAttestations": "Mes Attestations",
+      "recentRequests": "Mes Dernières Demandes",
+      "viewAll": "Voir tout →",
+      "quotaSection": "Quota Autorisations",
+      "quotaUsed": "Utilisées",
+      "quotaRemaining2": "Restantes",
+      "quotaTotal": "Quota total",
+      "quotaBtn": "Demander une autorisation",
+      "trainingsSection": "Formations à venir",
+      "viewAllTrainings": "Voir toutes les formations →",
+      "activitySection": "Activité récente",
+      "enrolled": "✓ Inscrit",
+      "available": "Disponible"
+    },
+    "secretaryGeneral": {
+      "title": "Espace Secrétaire Générale",
+      "subtitle": "Gérez les signatures et consultez les documents validés.",
+      "docsToSign": "Documents à signer",
+      "docsSigned": "Documents signés",
+      "workAttestations": "Attestations de travail",
+      "payslipsSigned": "Bulletins de paie signés",
+      "pendingDocs": "Documents en attente de signature",
+      "quickActions": "Actions rapides",
+      "signDocs": "Signer des documents",
+      "viewAttestations": "Consulter les attestations",
+      "viewAuthorizations": "Voir les autorisations",
+      "recentSignatures": "Dernières signatures"
+    }
   },
   "requests": {
     "title": "Gestion des Demandes RH",
@@ -323,6 +666,134 @@
       "slackDisconnected": "Slack déconnecté !",
       "googleConnected": "Google Workspace connecté avec succès !",
       "googleDisconnected": "Google Workspace déconnecté !"
+    }
+  },
+  "compliance": {
+    "title": "Suivi de la Conformité",
+    "subtitle": "Suivez la conformité de l'entreprise aux politiques et réglementations",
+    "exportReport": "Exporter Rapport",
+    "mandatoryTrainings": "Formations Obligatoires",
+    "codeOfConduct": "Code de Conduite",
+    "cybersecurity": "Sensibilisation Cybersécurité",
+    "antiHarassment": "Formation Anti-Harcèlement",
+    "legalRegulatory": "Légal & Réglementaire",
+    "gdpr": "RGPD / Protection des Données",
+    "safety": "Sécurité au Travail (SST)",
+    "equalOpportunity": "Égalité des Chances",
+    "nonCompliantEmployees": "Employés Non Conformes",
+    "table": {
+      "employee": "Employé",
+      "missingRequirement": "Exigence Manquante",
+      "deadline": "Date Limite",
+      "actions": "Actions",
+      "allCompliant": "Tous les employés sont conformes !"
+    },
+    "reminderModal": {
+      "title": "Envoyer un Rappel",
+      "submit": "Envoyer le rappel",
+      "recipient": "Destinataire",
+      "missingRequirement": "Exigence Manquante",
+      "messageLabel": "Message de rappel",
+      "messagePlaceholder": "Écrivez le message de rappel..."
+    },
+    "editModal": {
+      "title": "Mettre à jour la Conformité",
+      "submit": "Enregistrer",
+      "requirement": "Exigence",
+      "completionDate": "Date de réalisation",
+      "status": "Statut de conformité",
+      "statusOptions": {
+        "nonCompliant": "Non Conforme",
+        "compliant": "Conforme",
+        "inProgress": "En Cours"
+      },
+      "certificate": "Certificat / Justificatif (Optionnel)",
+      "certificatePlaceholder": "Déposez ou sélectionnez un fichier (PDF, PNG)"
+    },
+    "exportModal": {
+      "title": "Exporter le Rapport de Conformité",
+      "submit": "Générer & Télécharger",
+      "format": "Format d'exportation",
+      "pdf": "PDF Doc",
+      "excel": "Excel (.xlsx)",
+      "csv": "CSV Data",
+      "period": "Période du rapport",
+      "periods": {
+        "current": "Ce mois-ci (Mai 2026)",
+        "last3": "3 derniers mois",
+        "ytd": "Depuis le début de l'année (YTD)",
+        "custom": "Période personnalisée"
+      },
+      "options": "Options additionnelles",
+      "option1": "Inclure les taux globaux par formation",
+      "option2": "Inclure les détails des non-conformités",
+      "option3": "Signer numériquement le rapport"
+    },
+    "toast": {
+      "reminderSent": "Rappel envoyé avec succès à {{email}} !",
+      "statusCompliant": "Statut mis à jour : {{name}} est désormais conforme.",
+      "statusUpdated": "Statut mis à jour pour {{name}}.",
+      "generating": "Génération du rapport de conformité...",
+      "exported": "Rapport exporté avec succès !",
+      "errorPdf": "Erreur lors de la génération du PDF"
+    },
+    "pdf": {
+      "title": "Rapport de Conformite",
+      "generatedOn": "Généré le:",
+      "period": "Période:",
+      "format": "Format d'export:",
+      "nonCompliantTitle": "Employés non conformes",
+      "requirement": "Exigence:"
+    }
+  },
+  "users": {
+    "title": "Gestion des Utilisateurs",
+    "subtitle": "Gérez les accès au système et les rôles RBAC.",
+    "addBtn": "Nouvel Utilisateur",
+    "tableTitle": "Comptes Système",
+    "search": "Rechercher un utilisateur...",
+    "allRoles": "Tous les rôles",
+    "table": {
+      "user": "Utilisateur",
+      "email": "Email",
+      "department": "Département",
+      "phone": "Téléphone",
+      "role": "Rôle d'Accès",
+      "lastLogin": "Dernière Connexion",
+      "status": "Statut",
+      "actions": "Actions",
+      "noData": "Aucun utilisateur trouvé."
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "modal": {
+      "addTitle": "Ajouter un Utilisateur",
+      "editTitle": "Modifier l'Utilisateur",
+      "deleteTitle": "Supprimer l'Utilisateur",
+      "viewTitle": "Détails du Compte",
+      "fullName": "Nom Complet",
+      "email": "Adresse Email",
+      "systemRole": "Rôle Système",
+      "tempPassword": "Mot de passe provisoire",
+      "createBtn": "Créer le compte",
+      "saveBtn": "Enregistrer",
+      "cancelBtn": "Annuler",
+      "closeBtn": "Fermer",
+      "deleteBtn": "Supprimer le compte",
+      "areYouSure": "Êtes-vous sûr ?",
+      "deleteWarning": "Voulez-vous vraiment supprimer le compte de <strong>{{name}}</strong> ? Cette action révoquera immédiatement son accès au système.",
+      "department": "Département",
+      "phone": "Téléphone",
+      "hireDate": "Date d'embauche",
+      "contract": "Contrat",
+      "location": "Localisation"
+    },
+    "toast": {
+      "created": "L'utilisateur {{name}} a été créé avec succès.",
+      "updated": "Profil de {{name}} mis à jour.",
+      "deleted": "Utilisateur supprimé définitivement."
     }
   }
 }

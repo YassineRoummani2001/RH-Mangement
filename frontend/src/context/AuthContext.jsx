@@ -24,11 +24,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = (email, password, role = 'HR_MANAGER') => {
     const roleProfiles = {
-      HR_MANAGER:          { name: 'Sarah Connor',  title: 'Responsable RH', dept: 'Ressources Humaines' },
-      HR_AGENT:            { name: 'Marc Leblanc',  title: 'Agent RH', dept: 'Ressources Humaines' },
-      EMPLOYEE:            { name: 'Ali Benali',    title: 'Employé', dept: 'Ingénierie' },
-      DEPARTMENT_MANAGER:  { name: 'Leila Mansour', title: 'Chef de service', dept: 'Ingénierie' },
-      INTERIM_MANAGER:     { name: 'Hassan Alami',  title: 'Chef de service intérim', dept: 'Finance' },
+      HR_MANAGER:          { name: 'Sarah Connor',         title: 'Administrateur RH',      dept: 'Ressources Humaines',  bg: '2563EB' },
+      HR_AGENT:            { name: 'Marc Leblanc',         title: 'Agent RH',               dept: 'Ressources Humaines',  bg: '7C3AED' },
+      EMPLOYEE:            { name: 'Ali Benali',           title: 'Employé',                dept: 'Ingénierie',            bg: '059669' },
+      DEPARTMENT_MANAGER:  { name: 'Leila Mansour',        title: 'Chef de Service',        dept: 'Ingénierie',            bg: 'D97706' },
+      INTERIM_MANAGER:     { name: 'Hassan Alami',         title: 'Chef de Service Intérim',dept: 'Finance',               bg: 'DC2626' },
+      SECRETARY_GENERAL:   { name: 'Fatima Zahra Alaoui',  title: 'Secrétaire Générale',   dept: 'Direction Générale',    bg: 'BE185D' },
     };
     
     const profile = roleProfiles[role] ?? roleProfiles['HR_MANAGER'];
@@ -45,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       email,
       role,
       dept: profile.dept,
-      avatar: `https://ui-avatars.com/api/?name=${initials}&background=2563EB&color=fff`,
+      avatar: `https://ui-avatars.com/api/?name=${initials}&background=${profile.bg}&color=fff`,
       ...(role === 'INTERIM_MANAGER' ? { interimUntil: tomorrow.toISOString() } : {})
     };
     

@@ -27,7 +27,8 @@ const Login = () => {
     { id: 'HR_AGENT', label: t('auth.hrAgent') },
     { id: 'HR_MANAGER', label: t('auth.hrManager') },
     { id: 'DEPARTMENT_MANAGER', label: t('auth.manager') },
-    { id: 'INTERIM_MANAGER', label: t('auth.interimManager') }
+    { id: 'INTERIM_MANAGER', label: t('auth.interimManager') },
+    { id: 'SECRETARY_GENERAL', label: 'Secrétaire Générale' },
   ];
 
   const handleLogin = (e) => {
@@ -249,12 +250,7 @@ const Login = () => {
             </motion.button>
           </form>
 
-          <p style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: isDark ? '#94a3b8' : '#6b7280' }}>
-            {t('auth.noAccount')}{' '}
-            <Link to="/register" style={{ fontWeight: 700, color: '#2563eb', textDecoration: 'none' }}>
-              {t('auth.createAccount')}
-            </Link>
-          </p>
+
         </motion.div>
       </div>
 

@@ -26,11 +26,11 @@ const Profile = () => {
 
   const savedProfile = localStorage.getItem('hr_profile_data');
   let employeeDetails = {
-    phone: '+212 6 12 34 56 78',
-    department: user?.role === 'HR_MANAGER' ? t('profile.hrDept') : t('profile.engineeringDept'),
-    hireDate: t('profile.mockHireDate'),
-    contractType: t('profile.mockContractType'),
-    location: t('profile.mockLocation'),
+    phone: '+212 6 12 34 56 7777777777777',
+    department: 'Ressources Humaines',
+    hireDate: '12 Janvier 2024',
+    contractType: 'CDI (Temps Plein)',
+    location: 'Rabat, Maroc',
     annualLeavesUsed: 4,
     annualLeavesTotal: 22,
     sickLeavesUsed: 2,
@@ -142,7 +142,7 @@ const Profile = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.postTitle')}</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{user.role === 'HR_MANAGER' ? t('profile.mockHRRole') : t('profile.mockEngRole')}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>Directrice des Ressources Humaines</div>
               </div>
             </div>
 

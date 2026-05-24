@@ -11,11 +11,20 @@ import Settings from './pages/Settings';
 import Help from './pages/Help';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
-import Register from './pages/Register';
+
 import ForgotPassword from './pages/ForgotPassword';
 import Notifications from './pages/Notifications';
 import NotFound from './pages/NotFound';
 import ShareDocument from './pages/ShareDocument';
+// New pages
+import Authorizations from './pages/Authorizations';
+import Attestations from './pages/Attestations';
+import Trainings from './pages/Trainings';
+import Absences from './pages/Absences';
+import Assignments from './pages/Assignments';
+import Signature from './pages/Signature';
+import Users from './pages/Users';
+
 import { useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 
@@ -51,7 +60,7 @@ function App() {
         <Routes>
           {/* Guest Auth Routes */}
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-          <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+
           <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
           
           {/* Public Verification Sharing Link */}
@@ -72,6 +81,36 @@ function App() {
             <Route path="requests" element={<Requests />} />
             <Route path="leave" element={<LeaveManagement />} />
             
+            {/* Autorisations Exceptionnelles d'Absence - All roles */}
+            <Route path="authorizations" element={<Authorizations />} />
+
+            {/* Attestations & Bulletins de Paie - All roles + Secretary */}
+            <Route path="attestations" element={<Attestations />} />
+
+            {/* Gestion des Formations - All roles */}
+            <Route path="trainings" element={<Trainings />} />
+
+            {/* Absences & Retards - HR and Managers */}
+            <Route path="absences" element={
+              <ProtectedRoute allowedRoles={['HR_MANAGER', 'HR_AGENT', 'DEPARTMENT_MANAGER', 'INTERIM_MANAGER']}>
+                <Absences />
+              </ProtectedRoute>
+            } />
+
+            {/* Affectations - HR only */}
+            <Route path="assignments" element={
+              <ProtectedRoute allowedRoles={['HR_MANAGER', 'HR_AGENT']}>
+                <Assignments />
+              </ProtectedRoute>
+            } />
+
+            {/* Signature Électronique - Secretary General only */}
+            <Route path="signature" element={
+              <ProtectedRoute allowedRoles={['SECRETARY_GENERAL']}>
+                <Signature />
+              </ProtectedRoute>
+            } />
+
             {/* Calendar & Scheduling: Restricted to HR Managers and HR Agents */}
             <Route path="calendar" element={
               <ProtectedRoute allowedRoles={['HR_MANAGER', 'HR_AGENT']}>
@@ -93,10 +132,16 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Settings & Admin Console: Restricted exclusively to HR Manager */}
             <Route path="settings" element={
               <ProtectedRoute allowedRoles={['HR_MANAGER']}>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* System Users: Restricted exclusively to HR Manager */}
+            <Route path="users" element={
+              <ProtectedRoute allowedRoles={['HR_MANAGER']}>
+                <Users />
               </ProtectedRoute>
             } />
             

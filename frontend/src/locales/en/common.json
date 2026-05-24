@@ -31,11 +31,11 @@
     "password": "Password",
     "rememberMe": "Remember Me",
     "role": "Role",
-    "hrManager": "HR Manager",
+    "hrManager": "HR Administrator",
     "hrAgent": "HR Agent",
     "collaborator": "Collaborator",
     "employee": "Employee",
-    "manager": "Manager",
+    "manager": "Department Manager",
     "interimManager": "Interim Manager",
     "backToLogin": "Back to Login",
     "welcomeBack": "Welcome back home.",
@@ -81,6 +81,12 @@
     "hrRequests": "HR Requests",
     "myLeaves": "My Leaves",
     "leavesAndAbsences": "Leaves & Absences",
+    "authorizations": "Authorizations",
+    "attestations": "Attestations",
+    "trainings": "Trainings",
+    "absences": "Absences & Delays",
+    "assignments": "Assignments",
+    "signature": "Electronic Signature",
     "compliance": "Compliance",
     "calendar": "Planner & Events",
     "finance": "Finance & Payroll",
@@ -104,6 +110,304 @@
     "helpCenter": "Help Center",
     "logout": "Log Out",
     "switchLanguage": "Switch Language"
+  },
+  "authorizations": {
+    "title": "Exceptional Absence Authorizations",
+    "myTitle": "My Absence Authorizations",
+    "subtitle": "Validation and tracking of exceptional absence authorizations",
+    "mySubtitle": "Annual quota: {{quota}}h | Used: {{used}}h | Remaining: {{remaining}}h",
+    "newRequest": "New request",
+    "annualQuota": "Annual quota",
+    "usedHours": "Used hours",
+    "remainingHours": "Remaining hours",
+    "total": "Total requests",
+    "pending": "Pending",
+    "approved": "Approved",
+    "validatedByChef": "Validated by Manager",
+    "history": "Authorization History",
+    "ref": "Reference",
+    "employee": "Employee",
+    "department": "Department",
+    "date": "Date",
+    "duration": "Duration",
+    "reason": "Reason",
+    "status": "Status",
+    "actions": "Actions",
+    "details": "Details",
+    "noData": "No authorization found",
+    "filters": {
+      "all": "All",
+      "pending": "Pending",
+      "validatedChef": "Validated Manager",
+      "approved": "Approved",
+      "refused": "Refused"
+    },
+    "status_values": {
+      "pending": "Pending",
+      "validatedChef": "Validated Manager",
+      "approved": "Approved",
+      "refused": "Refused"
+    },
+    "modal": {
+      "newTitle": "New Absence Authorization",
+      "desiredDate": "Desired date",
+      "durationHours": "Duration (hours)",
+      "reasonLabel": "Reason for absence",
+      "reasonPlaceholder": "Describe the reason for your exceptional absence...",
+      "quotaInfo": "Remaining quota: {{remaining}}h / {{quota}}h",
+      "submit": "Submit request",
+      "detailTitle": "Authorization {{id}}",
+      "submittedAt": "Submitted on",
+      "validate": "Validate",
+      "refuse": "Refuse",
+      "approveDefinitive": "Approve definitely"
+    },
+    "toast": {
+      "submitted": "Authorization request submitted successfully!",
+      "validatedChef": "Authorization for {{name}} validated and sent to HR.",
+      "approvedRH": "Authorization for {{name}} definitely approved.",
+      "refused": "Request for {{name}} refused.",
+      "missingFields": "Please fill in all required fields."
+    }
+  },
+  "attestations": {
+    "title": "Attestations Management",
+    "myTitle": "My Attestations & Documents",
+    "sgTitle": "Documents to Sign",
+    "subtitle": "Manage work certificates, salary certificates and payslips",
+    "mySubtitle": "Request and download your certificates and payslips",
+    "sgSubtitle": "View and electronically sign validated documents",
+    "requestDoc": "Request a document",
+    "generateMonthly": "Generate monthly payslips",
+    "available": "Available",
+    "processing": "Processing",
+    "waitingSignature": "Waiting for signature",
+    "table": {
+      "ref": "Reference",
+      "type": "Document type",
+      "employee": "Employee",
+      "department": "Department",
+      "requestedAt": "Requested on",
+      "status": "Status",
+      "signature": "Signature",
+      "actions": "Actions",
+      "noSignature": "—",
+      "noData": "No document found"
+    },
+    "filters": {
+      "all": "All",
+      "work": "Work",
+      "salary": "Salary",
+      "payslip": "Payslip"
+    },
+    "modal": {
+      "requestTitle": "Request a Document",
+      "docType": "Document type",
+      "note": "Additional note (optional)",
+      "notePlaceholder": "Ex: Document required for a visa application...",
+      "delay": "Usual processing time: 24 to 48 business hours",
+      "submit": "Submit request"
+    },
+    "toast": {
+      "submitted": "Your attestation request has been submitted!",
+      "generating": "PDF generation in progress...",
+      "generated": "PDF document generated and downloaded!",
+      "processed": "Document processed, waiting for signature.",
+      "generateMonthly": "Generating monthly payslips in progress..."
+    }
+  },
+  "trainings": {
+    "title": "Trainings Management",
+    "myTitle": "My Trainings",
+    "subtitle": "Plan, manage and track company trainings",
+    "mySubtitle": "View and enroll in available trainings",
+    "newTraining": "New training",
+    "total": "Total trainings",
+    "inProgress": "In progress",
+    "participants": "Total participants",
+    "myEnrollments": "My enrollments",
+    "planned": "Planned",
+    "perMonth": "Trainings / Month",
+    "byDomain": "By domain",
+    "status": {
+      "planned": "Planned",
+      "inProgress": "In progress",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "filters": {
+      "all": "All",
+      "planned": "Planned",
+      "inProgress": "In progress",
+      "done": "Done"
+    },
+    "card": {
+      "trainer": "Trainer",
+      "location": "Location",
+      "participants": "Participants",
+      "enroll": "Enroll",
+      "enrolled": "✓ Enrolled",
+      "full": "Full"
+    },
+    "modal": {
+      "createTitle": "Create a Training",
+      "titleLabel": "Training title",
+      "titlePlaceholder": "Ex: Advanced ReactJS",
+      "domain": "Domain",
+      "trainer": "Trainer / Organization",
+      "trainerPlaceholder": "Trainer's name",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "location": "Location",
+      "locationPlaceholder": "Casablanca / Online",
+      "maxPart": "Max. participants",
+      "description": "Description",
+      "descPlaceholder": "Objectives, program, prerequisites...",
+      "submit": "Create training",
+      "participantsList": "List of participants",
+      "delete": "Delete training"
+    },
+    "toast": {
+      "created": "Training created successfully!",
+      "deleted": "Training deleted.",
+      "enrolled": "Enrollment in \"{{title}}\" confirmed!",
+      "alreadyEnrolled": "You are already enrolled in this training.",
+      "full": "This training is full.",
+      "missingFields": "Please fill in all required fields."
+    }
+  },
+  "absences": {
+    "title": "Absences & Delays",
+    "subtitle": "Tracking, justification and management of staff absences and delays",
+    "record": "Record an absence",
+    "totalAbsences": "Total absences",
+    "totalLate": "Recorded delays",
+    "unjustified": "Unjustified",
+    "withDoc": "With justification",
+    "registry": "Absences & Delays Registry",
+    "filters": {
+      "all": "All",
+      "absence": "Absence",
+      "late": "Delay"
+    },
+    "table": {
+      "ref": "Reference",
+      "employee": "Employee",
+      "department": "Department",
+      "type": "Type",
+      "date": "Date",
+      "duration": "Duration",
+      "status": "Status",
+      "warning": "Warning",
+      "actions": "Actions",
+      "noData": "No absence recorded",
+      "warningSent": "Sent",
+      "noWarning": "—",
+      "noJustif": "None"
+    },
+    "status_values": {
+      "unjustified": "Unjustified",
+      "justified": "Justified",
+      "justifiedMedical": "Medical Justified",
+      "inProgress": "In progress"
+    },
+    "modal": {
+      "createTitle": "Record an Absence / Delay",
+      "employeeName": "Employee name",
+      "type": "Type",
+      "absence": "Absence",
+      "late": "Delay",
+      "department": "Department",
+      "date": "Date",
+      "durationHours": "Duration (hours)",
+      "statusLabel": "Status",
+      "reason": "Reason / Remark",
+      "reasonPlaceholder": "Reason for absence...",
+      "warningAlert": "An automatic warning will be sent to the employee.",
+      "submit": "Record",
+      "detailTitle": "Details {{id}}",
+      "addJustif": "Add a medical certificate"
+    },
+    "toast": {
+      "recorded": "{{type}} recorded.",
+      "warningNote": "Warning sent to the employee",
+      "justifAdded": "Justification added — Status updated.",
+      "missingFields": "Please fill in all required fields."
+    }
+  },
+  "assignments": {
+    "title": "Assignments Management",
+    "subtitle": "Assign, modify and manage employee positions and services",
+    "listTitle": "Assignments List",
+    "allDepts": "All",
+    "table": {
+      "employee": "Employee",
+      "email": "Email",
+      "position": "Position",
+      "department": "Department",
+      "since": "Assigned since",
+      "status": "Status",
+      "actions": "Actions",
+      "noData": "No employee found"
+    },
+    "modal": {
+      "editTitle": "Modify assignment for {{name}}",
+      "department": "Department",
+      "position": "Position / Role",
+      "positionPlaceholder": "Ex: Senior Developer",
+      "dateNote": "The assignment date will be updated automatically.",
+      "saveBtn": "Save changes",
+      "deleteTitle": "Confirm deletion",
+      "deleteDesc": "Are you sure you want to delete the assignment for {{name}}?",
+      "deleteWarn": "This action is irreversible.",
+      "deleteBtn": "Delete"
+    },
+    "toast": {
+      "updated": "Assignment for {{name}} updated.",
+      "deleted": "Assignment for {{name}} deleted."
+    }
+  },
+  "signature": {
+    "title": "Electronic Signature",
+    "subtitle": "Affix your electronic signature on documents validated by the HR department",
+    "pending": "Waiting for signature",
+    "signed": "Signed",
+    "total": "Total processed",
+    "pendingTab": "Pending",
+    "signedTab": "Signed",
+    "allSigned": "All documents have been signed!",
+    "allSignedDesc": "No document waiting for signature.",
+    "validatedRH": "HR Validated — Waiting SG signature",
+    "sign": "Sign",
+    "historyTitle": "Signatures History",
+    "table": {
+      "ref": "Reference",
+      "type": "Document type",
+      "employee": "Beneficiary",
+      "department": "Department",
+      "signedAt": "Signed on",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "modal": {
+      "title": "Sign: {{type}}",
+      "docLabel": "Document",
+      "beneficiary": "Beneficiary",
+      "department": "Department",
+      "ref": "Reference",
+      "canvasLabel": "Affix your signature below",
+      "clear": "Clear",
+      "canvasHint": "Sign here by holding the click",
+      "securityNote": "Secure digital signature",
+      "legalNotice": "By affixing your electronic signature, you certify having verified and validated the content of this document. This signature has legal value in accordance with current legal provisions.",
+      "submit": "Affix my signature",
+      "noSignatureWarn": "Please affix your signature before submitting."
+    },
+    "toast": {
+      "signed": "Document \"{{type}}\" signed and sent to {{employee}}!",
+      "downloaded": "Signed document downloaded!",
+      "generating": "Generating signed document..."
+    }
   },
   "dashboard": {
     "myWorkspace": "My Workspace",
@@ -145,7 +449,46 @@
     "leaveApproved": "Leave Approved",
     "leaveApprovedDesc": "Annual leave by Sarah M. • 4h ago",
     "policyUpdate": "Policy Update",
-    "policyUpdateDesc": "HR Policy v2.0 published • 6h ago"
+    "policyUpdateDesc": "HR Policy v2.0 published • 6h ago",
+    "employee": {
+      "leavesRemaining": "Remaining leave days",
+      "pendingRequests": "Pending requests",
+      "approvedRequests": "Approved requests",
+      "quotaRemaining": "Remaining authorization quota",
+      "upToDate": "Up to date",
+      "waitingApproval": "Waiting",
+      "quickActions": "Quick Actions",
+      "newRequest": "New Request",
+      "leaveRequest": "Leave Request",
+      "authorizationRequest": "Absence Authorization",
+      "myAttestations": "My Attestations",
+      "recentRequests": "My Recent Requests",
+      "viewAll": "View all →",
+      "quotaSection": "Authorizations Quota",
+      "quotaUsed": "Used",
+      "quotaRemaining2": "Remaining",
+      "quotaTotal": "Total quota",
+      "quotaBtn": "Request an authorization",
+      "trainingsSection": "Upcoming trainings",
+      "viewAllTrainings": "View all trainings →",
+      "activitySection": "Recent activity",
+      "enrolled": "✓ Enrolled",
+      "available": "Available"
+    },
+    "secretaryGeneral": {
+      "title": "Secretary General Space",
+      "subtitle": "Manage signatures and view validated documents.",
+      "docsToSign": "Documents to sign",
+      "docsSigned": "Signed documents",
+      "workAttestations": "Work attestations",
+      "payslipsSigned": "Signed payslips",
+      "pendingDocs": "Documents waiting for signature",
+      "quickActions": "Quick actions",
+      "signDocs": "Sign documents",
+      "viewAttestations": "View attestations",
+      "viewAuthorizations": "View authorizations",
+      "recentSignatures": "Recent signatures"
+    }
   },
   "requests": {
     "title": "HR Requests Management",
@@ -323,6 +666,134 @@
       "slackDisconnected": "Slack disconnected!",
       "googleConnected": "Google Workspace connected successfully!",
       "googleDisconnected": "Google Workspace disconnected!"
+    }
+  },
+  "compliance": {
+    "title": "Compliance Tracking",
+    "subtitle": "Track company compliance with policies and regulations",
+    "exportReport": "Export Report",
+    "mandatoryTrainings": "Mandatory Trainings",
+    "codeOfConduct": "Code of Conduct",
+    "cybersecurity": "Cybersecurity Awareness",
+    "antiHarassment": "Anti-Harassment Training",
+    "legalRegulatory": "Legal & Regulatory",
+    "gdpr": "GDPR / Data Protection",
+    "safety": "Workplace Safety (OHS)",
+    "equalOpportunity": "Equal Opportunity",
+    "nonCompliantEmployees": "Non-Compliant Employees",
+    "table": {
+      "employee": "Employee",
+      "missingRequirement": "Missing Requirement",
+      "deadline": "Deadline",
+      "actions": "Actions",
+      "allCompliant": "All employees are compliant!"
+    },
+    "reminderModal": {
+      "title": "Send a Reminder",
+      "submit": "Send reminder",
+      "recipient": "Recipient",
+      "missingRequirement": "Missing Requirement",
+      "messageLabel": "Reminder message",
+      "messagePlaceholder": "Write the reminder message..."
+    },
+    "editModal": {
+      "title": "Update Compliance",
+      "submit": "Save",
+      "requirement": "Requirement",
+      "completionDate": "Completion date",
+      "status": "Compliance status",
+      "statusOptions": {
+        "nonCompliant": "Non-Compliant",
+        "compliant": "Compliant",
+        "inProgress": "In Progress"
+      },
+      "certificate": "Certificate / Proof (Optional)",
+      "certificatePlaceholder": "Drop or select a file (PDF, PNG)"
+    },
+    "exportModal": {
+      "title": "Export Compliance Report",
+      "submit": "Generate & Download",
+      "format": "Export format",
+      "pdf": "PDF Doc",
+      "excel": "Excel (.xlsx)",
+      "csv": "CSV Data",
+      "period": "Report period",
+      "periods": {
+        "current": "This month (May 2026)",
+        "last3": "Last 3 months",
+        "ytd": "Year to Date (YTD)",
+        "custom": "Custom period"
+      },
+      "options": "Additional options",
+      "option1": "Include global rates by training",
+      "option2": "Include non-compliance details",
+      "option3": "Digitally sign the report"
+    },
+    "toast": {
+      "reminderSent": "Reminder successfully sent to {{email}}!",
+      "statusCompliant": "Status updated: {{name}} is now compliant.",
+      "statusUpdated": "Status updated for {{name}}.",
+      "generating": "Generating compliance report...",
+      "exported": "Report successfully exported!",
+      "errorPdf": "Error generating PDF"
+    },
+    "pdf": {
+      "title": "Compliance Report",
+      "generatedOn": "Generated on:",
+      "period": "Period:",
+      "format": "Export format:",
+      "nonCompliantTitle": "Non-compliant employees",
+      "requirement": "Requirement:"
+    }
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "Manage system access and RBAC roles.",
+    "addBtn": "New User",
+    "tableTitle": "System Accounts",
+    "search": "Search for a user...",
+    "allRoles": "All Roles",
+    "table": {
+      "user": "User",
+      "email": "Email",
+      "department": "Department",
+      "phone": "Phone",
+      "role": "Access Role",
+      "lastLogin": "Last Login",
+      "status": "Status",
+      "actions": "Actions",
+      "noData": "No users found."
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "modal": {
+      "addTitle": "Add User",
+      "editTitle": "Edit User",
+      "deleteTitle": "Delete User",
+      "viewTitle": "Account Details",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "systemRole": "System Role",
+      "tempPassword": "Temporary Password",
+      "createBtn": "Create Account",
+      "saveBtn": "Save",
+      "cancelBtn": "Cancel",
+      "closeBtn": "Close",
+      "deleteBtn": "Delete Account",
+      "areYouSure": "Are you sure?",
+      "deleteWarning": "Are you sure you want to delete the account for <strong>{{name}}</strong>? This action will immediately revoke their access to the system.",
+      "department": "Department",
+      "phone": "Phone",
+      "hireDate": "Hire Date",
+      "contract": "Contract",
+      "location": "Location"
+    },
+    "toast": {
+      "created": "User {{name}} was successfully created.",
+      "updated": "Profile of {{name}} updated.",
+      "deleted": "User permanently deleted."
     }
   }
 }

@@ -21,11 +21,12 @@ export default function AppLayout() {
   const isHRManager = effectiveRole === 'HR_MANAGER';
 
   const roleLabel = {
-    HR_MANAGER: 'Responsable RH',
-    HR_AGENT: 'Agent RH',
-    DEPARTMENT_MANAGER: 'Chef de service',
-    INTERIM_MANAGER: 'Chef de service (Intérim)',
-    EMPLOYEE: 'Employé',
+    HR_MANAGER:        'Administrateur RH',
+    HR_AGENT:          'Agent RH',
+    DEPARTMENT_MANAGER:'Chef de Service',
+    INTERIM_MANAGER:   'Chef de Service (Intérim)',
+    EMPLOYEE:          'Employé',
+    SECRETARY_GENERAL: 'Secrétaire Générale',
   }[effectiveRole] || 'Collaborateur';
 
   const notifRef = useRef(null);

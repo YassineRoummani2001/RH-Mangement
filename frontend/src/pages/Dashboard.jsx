@@ -294,7 +294,120 @@ const Dashboard = () => {
   const [dashboardPage, setDashboardPage] = useState(1);
   const DASHBOARD_TOTAL = 452;
 
-  // If Employee, show simple dashboard
+  // ── SECRETARY GENERAL DASHBOARD ──────────────────────────────────────────
+  if (effectiveRole === 'SECRETARY_GENERAL') {
+    return (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        <header className="header">
+          <div className="header-title">
+            <h1><i className="fas fa-pen-fancy" style={{ color: '#BE185D', marginRight: '10px' }}></i>
+              Espace Secrétaire Générale
+            </h1>
+            <p>Bonjour <strong>{user?.name}</strong> — Gérez les signatures et consultez les documents validés.</p>
+          </div>
+        </header>
+
+        <div className="stats-grid" style={{ marginBottom: '24px' }}>
+          <div className="stat-card" style={{ borderTop: '3px solid #BE185D' }}>
+            <div className="stat-header"><div className="stat-icon" style={{ background: '#FDF2F8', color: '#BE185D' }}><i className="fas fa-clock"></i></div>
+              <div className="stat-trend negative"><i className="fas fa-circle" style={{ fontSize: '8px' }}></i> Urgent</div>
+            </div>
+            <div className="stat-value">3</div>
+            <div className="stat-label">Documents à signer</div>
+          </div>
+          <div className="stat-card emerald-card">
+            <div className="stat-header"><div className="stat-icon success"><i className="fas fa-check-circle"></i></div>
+              <div className="stat-trend positive"><i className="fas fa-arrow-up"></i> +5 ce mois</div>
+            </div>
+            <div className="stat-value">28</div>
+            <div className="stat-label">Documents signés</div>
+          </div>
+          <div className="stat-card blue-card">
+            <div className="stat-header"><div className="stat-icon primary"><i className="fas fa-file-alt"></i></div></div>
+            <div className="stat-value">12</div>
+            <div className="stat-label">Attestations de travail</div>
+          </div>
+          <div className="stat-card amber-card">
+            <div className="stat-header"><div className="stat-icon warning"><i className="fas fa-file-invoice-dollar"></i></div></div>
+            <div className="stat-value">16</div>
+            <div className="stat-label">Bulletins de paie signés</div>
+          </div>
+        </div>
+
+        <div className="middle-grid">
+          {/* Pending docs */}
+          <div className="card" style={{ gridColumn: 'span 2' }}>
+            <div className="card-title">
+              <i className="fas fa-clock" style={{ color: '#BE185D' }}></i>
+              Documents en attente de signature
+            </div>
+            {[
+              { id: 'DOC-004', type: 'Attestation de Travail', employee: 'Karim Ouali', dept: 'Finance', date: '2026-05-18' },
+              { id: 'DOC-007', type: 'Attestation de Salaire', employee: 'Nadia Benmoussa', dept: 'Ingénierie', date: '2026-05-19' },
+              { id: 'DOC-008', type: 'Attestation de Travail', employee: 'Youssef Tazi', dept: 'RH', date: '2026-05-20' },
+            ].map(doc => (
+              <div key={doc.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 0', borderBottom: '1px solid var(--border-color)' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#FDF2F8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#BE185D', fontSize: '1rem', flexShrink: 0 }}>
+                  <i className="fas fa-file-alt"></i>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{doc.type}</div>
+                  <div style={{ fontSize: '0.77rem', color: 'var(--text-gray)' }}>{doc.employee} — {doc.dept} — {doc.date}</div>
+                </div>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--text-light)' }}>{doc.id}</span>
+                <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 600, color: '#3B82F6', background: '#EFF6FF' }}>
+                  Validé RH
+                </span>
+              </div>
+            ))}
+            <div style={{ marginTop: '14px' }}>
+              <a href="/signature" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#BE185D', color: '#fff', borderRadius: '10px', textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem' }}>
+                <i className="fas fa-pen-fancy"></i> Aller à la page de signature
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="card">
+            <div className="card-title"><i className="fas fa-bolt" style={{ color: 'var(--primary)' }}></i> Actions rapides</div>
+            <a href="/signature" style={{ display: 'block', padding: '10px 14px', marginBottom: '8px', background: '#FDF2F8', color: '#BE185D', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
+              <i className="fas fa-pen-fancy" style={{ marginRight: '8px' }}></i> Signer des documents
+            </a>
+            <a href="/attestations" style={{ display: 'block', padding: '10px 14px', marginBottom: '8px', background: 'var(--primary-bg)', color: 'var(--primary)', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
+              <i className="fas fa-file-alt" style={{ marginRight: '8px' }}></i> Consulter les attestations
+            </a>
+            <a href="/authorizations" style={{ display: 'block', padding: '10px 14px', background: '#EFF6FF', color: '#2563EB', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
+              <i className="fas fa-user-check" style={{ marginRight: '8px' }}></i> Voir les autorisations
+            </a>
+          </div>
+
+          {/* Recent signed */}
+          <div className="card">
+            <div className="card-title"><i className="fas fa-history" style={{ color: '#10B981' }}></i> Dernières signatures</div>
+            <div className="timeline">
+              {[
+                { label: 'Attestation Travail — Ali Benali', time: 'Aujourd\'hui 14:32', color: '#BE185D' },
+                { label: 'Bulletin Paie (Avr) — Ali Benali', time: '01/05 09:15', color: '#10B981' },
+                { label: 'Bulletin Paie (Mar) — Sara Hamidi', time: '30/04 16:45', color: '#7C3AED' },
+              ].map((item, i) => (
+                <div key={i} className="timeline-item">
+                  <div className="timeline-icon" style={{ background: item.color + '20', color: item.color }}>
+                    <i className="fas fa-pen-fancy"></i>
+                  </div>
+                  <div className="timeline-content">
+                    <h4 style={{ fontSize: '0.8rem' }}>{item.label}</h4>
+                    <p style={{ fontSize: '0.73rem' }}>{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ── EMPLOYEE DASHBOARD ────────────────────────────────────────────────────
   if (effectiveRole === 'EMPLOYEE') {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -310,29 +423,198 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="stats-grid">
+        {/* ── STAT CARDS ── */}
+        <div className="stats-grid" style={{ marginBottom: '24px' }}>
           <div className="stat-card blue-card">
             <div className="stat-header">
-              <div className="stat-icon primary"><i className="fas fa-calendar"></i></div>
+              <div className="stat-icon primary"><i className="fas fa-umbrella-beach"></i></div>
+              <div className="stat-trend positive"><i className="fas fa-check"></i> {t('dashboard.employee.upToDate')}</div>
             </div>
-            <div className="stat-value">{t('dashboard.stats.days', { count: 18 })}</div>
-            <div className="stat-label">{t('dashboard.stats.leavesBalance')}</div>
+            <div className="stat-value">18</div>
+            <div className="stat-label">{t('dashboard.employee.leavesRemaining')}</div>
           </div>
           <div className="stat-card amber-card">
             <div className="stat-header">
               <div className="stat-icon warning"><i className="fas fa-clock"></i></div>
+              <div className="stat-trend negative"><i className="fas fa-circle" style={{ fontSize: '8px' }}></i> {t('dashboard.employee.waitingApproval')}</div>
             </div>
             <div className="stat-value">2</div>
-            <div className="stat-label">{t('dashboard.stats.pendingRequests')}</div>
+            <div className="stat-label">{t('dashboard.employee.pendingRequests')}</div>
           </div>
           <div className="stat-card emerald-card">
             <div className="stat-header">
-              <div className="stat-icon success"><i className="fas fa-check"></i></div>
+              <div className="stat-icon success"><i className="fas fa-check-circle"></i></div>
+              <div className="stat-trend positive"><i className="fas fa-arrow-up"></i> +2</div>
             </div>
             <div className="stat-value">4</div>
-            <div className="stat-label">{t('dashboard.stats.approvedRequests')}</div>
+            <div className="stat-label">{t('dashboard.employee.approvedRequests')}</div>
+          </div>
+          <div className="stat-card" style={{ borderTop: '3px solid #7C3AED' }}>
+            <div className="stat-header">
+              <div className="stat-icon" style={{ background: '#F5F3FF', color: '#7C3AED' }}><i className="fas fa-user-clock"></i></div>
+            </div>
+            <div className="stat-value">3h</div>
+            <div className="stat-label">{t('dashboard.employee.quotaRemaining')}</div>
           </div>
         </div>
+
+        {/* ── QUICK ACTIONS ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+          {[
+            { label: t('dashboard.employee.newRequest'), icon: 'fas fa-file-alt', color: '#7C3AED', bg: '#F5F3FF', action: () => setIsRequestModalOpen(true) },
+            { label: t('dashboard.employee.leaveRequest'), icon: 'fas fa-calendar-plus', color: '#2563EB', bg: '#EFF6FF', link: '/leave' },
+            { label: t('dashboard.employee.authorizationRequest'), icon: 'fas fa-user-check', color: '#059669', bg: '#ECFDF5', link: '/authorizations' },
+            { label: t('dashboard.employee.myAttestations'), icon: 'fas fa-file-contract', color: '#D97706', bg: '#FFFBEB', link: '/attestations' },
+          ].map((btn, i) => (
+            <div
+              key={i}
+              onClick={btn.action || (() => window.location.href = btn.link)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '18px 12px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s', borderTop: `3px solid ${btn.color}` }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: btn.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: btn.color, fontSize: '1.1rem' }}>
+                <i className={btn.icon}></i>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-dark)', textAlign: 'center', lineHeight: 1.3 }}>{btn.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* ── MIDDLE GRID ── */}
+        <div className="middle-grid">
+
+          {/* Recent Requests */}
+          <div className="card" style={{ gridColumn: 'span 2', padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="card-title" style={{ margin: 0, padding: 0 }}>
+                <i className="fas fa-list-alt" style={{ color: 'var(--primary)' }}></i> {t('dashboard.employee.recentRequests')}
+              </div>
+              <a href="/requests" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>{t('dashboard.employee.viewAll')}</a>
+            </div>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { type: 'Attestation de Travail', date: '2026-05-10', status: 'Disponible',   color: '#10B981', bg: '#ECFDF5', icon: 'fas fa-check-circle' },
+                    { type: 'Congé Annuel (5j)',       date: '2026-05-14', status: 'En attente',   color: '#F59E0B', bg: '#FFFBEB', icon: 'fas fa-clock' },
+                    { type: 'Attestation de Salaire',  date: '2026-05-18', status: 'En cours',     color: '#3B82F6', bg: '#EFF6FF', icon: 'fas fa-hourglass-half' },
+                    { type: 'Autorisation Absence',    date: '2026-05-20', status: 'Approuvée',    color: '#10B981', bg: '#ECFDF5', icon: 'fas fa-check-double' },
+                  ].map((row, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600, fontSize: '0.85rem' }}>{row.type}</td>
+                      <td style={{ fontSize: '0.82rem', color: 'var(--text-gray)' }}>{row.date}</td>
+                      <td>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '0.73rem', fontWeight: 600, color: row.color, backgroundColor: row.bg }}>
+                          <i className={row.icon}></i> {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Quota d'autorisations */}
+          <div className="card">
+            <div className="card-title">
+              <i className="fas fa-user-clock" style={{ color: '#7C3AED' }}></i> {t('dashboard.employee.quotaSection')}
+            </div>
+            <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+              <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 12px' }}>
+                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border-color)" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#7C3AED" strokeWidth="3"
+                    strokeDasharray="60 100" strokeLinecap="round" />
+                </svg>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-dark)' }}>3h</div>
+                  <div style={{ fontSize: '0.6rem', color: 'var(--text-gray)' }}>/ 5h</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-gray)', marginBottom: '12px' }}>Heures disponibles cette année</div>
+              <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                {[[t('dashboard.employee.quotaUsed'), '2h', '#EF4444'], [t('dashboard.employee.quotaRemaining2'), '3h', '#7C3AED'], [t('dashboard.employee.quotaTotal'), '5h', 'var(--text-gray)']].map(([label, val, color]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '4px 0', borderBottom: '1px solid var(--border-color)' }}>
+                    <span style={{ color: 'var(--text-gray)' }}>{label}</span>
+                    <span style={{ fontWeight: 700, color }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="/authorizations" style={{ display: 'block', marginTop: '12px', padding: '8px', background: '#F5F3FF', color: '#7C3AED', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '0.82rem' }}>
+                <i className="fas fa-plus" style={{ marginRight: '6px' }}></i>{t('dashboard.employee.quotaBtn')}
+              </a>
+            </div>
+          </div>
+
+          {/* Upcoming Trainings */}
+          <div className="card">
+            <div className="card-title">
+              <i className="fas fa-graduation-cap" style={{ color: '#059669' }}></i> {t('dashboard.employee.trainingsSection')}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { title: 'ReactJS Avancé', date: '10 Jun 2026', location: 'Casablanca', enrolled: true },
+                { title: 'Sécurité SI',    date: '01 Jul 2026', location: 'En ligne',   enrolled: false },
+              ].map((f, i) => (
+                <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '10px', borderRadius: '10px', background: 'var(--sidebar-bg)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: f.enrolled ? '#ECFDF5' : '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.enrolled ? '#059669' : '#2563EB', flexShrink: 0 }}>
+                    <i className={f.enrolled ? 'fas fa-check' : 'fas fa-book'}></i>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-dark)' }}>{f.title}</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-gray)', marginTop: '2px' }}>
+                      <i className="fas fa-calendar" style={{ marginRight: '4px' }}></i>{f.date}
+                      <span style={{ margin: '0 6px' }}>·</span>
+                      <i className="fas fa-map-marker-alt" style={{ marginRight: '4px' }}></i>{f.location}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', color: f.enrolled ? '#059669' : '#2563EB', background: f.enrolled ? '#ECFDF5' : '#EFF6FF', whiteSpace: 'nowrap', marginTop: '2px' }}>
+                    {f.enrolled ? t('dashboard.employee.enrolled') : t('dashboard.employee.available')}
+                  </span>
+                </div>
+              ))}
+              <a href="/trainings" style={{ display: 'block', padding: '8px', background: '#ECFDF5', color: '#059669', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '0.82rem', textAlign: 'center' }}>
+                {t('dashboard.employee.viewAllTrainings')}
+              </a>
+            </div>
+          </div>
+
+          {/* Activité Récente */}
+          <div className="card">
+            <div className="card-title">
+              <i className="far fa-clock" style={{ color: 'var(--primary)' }}></i> {t('dashboard.employee.activitySection')}
+            </div>
+            <div className="timeline">
+              {[
+                { icon: 'fas fa-check',         color: '#10B981', label: 'Attestation de travail disponible',    sub: 'Téléchargement disponible · Il y a 2j' },
+                { icon: 'fas fa-user-check',     color: '#7C3AED', label: 'Autorisation approuvée par le RH',    sub: '2 heures · 20 mai 2026' },
+                { icon: 'fas fa-graduation-cap', color: '#2563EB', label: 'Inscription formation ReactJS',        sub: 'Confirmée · 15 mai 2026' },
+                { icon: 'fas fa-file-alt',       color: '#F59E0B', label: 'Demande de congé soumise',            sub: 'En attente validation · 14 mai 2026' },
+              ].map((item, i) => (
+                <div key={i} className="timeline-item">
+                  <div className="timeline-icon" style={{ background: item.color + '20', color: item.color }}>
+                    <i className={item.icon}></i>
+                  </div>
+                  <div className="timeline-content">
+                    <h4 style={{ fontSize: '0.82rem' }}>{item.label}</h4>
+                    <p style={{ fontSize: '0.73rem' }}>{item.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
 
         <Modal 
           isOpen={isRequestModalOpen} 
