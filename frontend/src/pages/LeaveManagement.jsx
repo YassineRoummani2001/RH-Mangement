@@ -159,6 +159,13 @@ const LeaveManagement = () => {
               <div className="stat-value">12</div>
               <div className="stat-label">{i18n.language === 'fr' ? 'Jours Pris Cette Année' : 'Days Taken This Year'}</div>
             </div>
+            <div className="stat-card red-card">
+              <div className="stat-header">
+                <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
+              </div>
+              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
+            </div>
           </>
         ) : (
           <>
@@ -178,10 +185,17 @@ const LeaveManagement = () => {
             </div>
             <div className="stat-card purple-card">
               <div className="stat-header">
-                <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-briefcase-medical"></i></div>
+                <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-briefcase-medical"></i></div>
               </div>
               <div className="stat-value">{filteredAbsences.filter(a => a.type === 'Maladie').length}</div>
               <div className="stat-label">{i18n.language === 'fr' ? 'Arrêts Maladie' : 'Sick Leaves'}</div>
+            </div>
+            <div className="stat-card red-card">
+              <div className="stat-header">
+                <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
+              </div>
+              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
+              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
             </div>
           </>
         )}
