@@ -59,6 +59,12 @@ const Settings = () => {
       contractType: 'CDI (Temps Plein)',
       hireDate: '2024-01-12',
       department: 'Ressources Humaines',
+      companyName: 'Acme Corp',
+      industry: 'Technologies',
+      companySize: '201-500 employés',
+      weeklySummary: true,
+      employeeRequests: true,
+      complianceAlerts: false
     };
   });
 
@@ -77,6 +83,21 @@ const Settings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+
+  const handlePasswordUpdate = () => {
+    if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
+      showToast(t('settings.toast.missingFields') || 'Veuillez remplir tous les champs de mot de passe', 'warning');
+      return;
+    }
+    if (passwordForm.new !== passwordForm.confirm) {
+      showToast(t('settings.toast.passwordMismatch') || 'Les mots de passe ne correspondent pas', 'error');
+      return;
+    }
+    showToast(t('settings.toast.passwordSuccess') || 'Mot de passe mis à jour !', 'success');
+    setPasswordForm({ current: '', new: '', confirm: '' });
+  };
 
   const [slackConnected, setSlackConnected] = useState(true);
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -195,8 +216,8 @@ const Settings = () => {
                 <img src={user?.avatar || "https://ui-avatars.com/api/?name=Sarah+Connor&background=2563EB&color=fff&size=128"} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="action-btn">{t('settings.profile.uploadPhoto')}</button>
-                    <button className="action-btn" style={{ color: 'var(--danger)' }}>{t('settings.profile.delete')}</button>
+                    <button className="action-btn" onClick={() => showToast('Photo de profil mise à jour', 'success')}>{t('settings.profile.uploadPhoto')}</button>
+                    <button className="action-btn" style={{ color: 'var(--danger)' }} onClick={() => showToast('Photo de profil supprimée', 'success')}>{t('settings.profile.delete')}</button>
                   </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-gray)' }}>{t('settings.profile.photoLimits')}</p>
                 </div>
@@ -511,7 +532,8 @@ const Settings = () => {
                     <Briefcase style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#2563eb', zIndex: 5 }} />
                     <input 
                       type="text" 
-                      defaultValue="Acme Corp" 
+                      value={formData.companyName || ''}
+                      onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                       style={inputStyle} 
                       onFocus={onFocus}
                       onBlur={onBlur}
@@ -527,7 +549,8 @@ const Settings = () => {
                     <Globe style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#9333ea', zIndex: 5 }} />
                     <input 
                       type="text" 
-                      defaultValue="Technologies" 
+                      value={formData.industry || ''}
+                      onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                       style={inputStyle} 
                       onFocus={onFocus}
                       onBlur={onBlur}
@@ -544,7 +567,8 @@ const Settings = () => {
                 <div style={{ position: 'relative' }}>
                   <Users style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#10b981', zIndex: 5 }} />
                   <select 
-                    defaultValue="201-500 employés" 
+                    value={formData.companySize || '201-500 employés'} 
+                    onChange={(e) => setFormData({ ...formData, companySize: e.target.value })}
                     style={{ ...inputStyle, paddingRight: '36px', appearance: 'none', WebkitAppearance: 'none' }}
                     onFocus={onFocus}
                     onBlur={onBlur}
@@ -570,7 +594,7 @@ const Settings = () => {
                     <Mail style={{ width: 18, height: 18 }} />
                   </span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', flex: 1, margin: 0, color: isDark ? '#cbd5e1' : '#374151' }}>
-                    <input type="checkbox" defaultChecked style={{ accentColor: '#2563eb', width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={formData.weeklySummary ?? true} onChange={(e) => setFormData({ ...formData, weeklySummary: e.target.checked })} style={{ accentColor: '#2563eb', width: '18px', height: '18px', cursor: 'pointer' }} />
                     {t('settings.notificationsTab.weeklySummary')}
                   </label>
                 </div>
@@ -580,7 +604,7 @@ const Settings = () => {
                     <Bell style={{ width: 18, height: 18 }} />
                   </span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', flex: 1, margin: 0, color: isDark ? '#cbd5e1' : '#374151' }}>
-                    <input type="checkbox" defaultChecked style={{ accentColor: '#f59e0b', width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={formData.employeeRequests ?? true} onChange={(e) => setFormData({ ...formData, employeeRequests: e.target.checked })} style={{ accentColor: '#f59e0b', width: '18px', height: '18px', cursor: 'pointer' }} />
                     {t('settings.notificationsTab.employeeRequests')}
                   </label>
                 </div>
@@ -590,7 +614,7 @@ const Settings = () => {
                     <AlertTriangle style={{ width: 18, height: 18 }} />
                   </span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer', flex: 1, margin: 0, color: isDark ? '#cbd5e1' : '#374151' }}>
-                    <input type="checkbox" style={{ accentColor: '#ef4444', width: '18px', height: '18px', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={formData.complianceAlerts ?? false} onChange={(e) => setFormData({ ...formData, complianceAlerts: e.target.checked })} style={{ accentColor: '#ef4444', width: '18px', height: '18px', cursor: 'pointer' }} />
                     {t('settings.notificationsTab.complianceAlerts')}
                   </label>
                 </div>
@@ -614,6 +638,8 @@ const Settings = () => {
                     <input 
                       type={showCurrentPassword ? "text" : "password"} 
                       placeholder="••••••••" 
+                      value={passwordForm.current}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
                       style={{ ...inputStyle, paddingRight: '44px' }} 
                       onFocus={onFocus}
                       onBlur={onBlur}
@@ -637,6 +663,8 @@ const Settings = () => {
                       <Key style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#f59e0b', zIndex: 5 }} />
                       <input 
                         type={showNewPassword ? "text" : "password"} 
+                        value={passwordForm.new}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
                         style={{ ...inputStyle, paddingRight: '44px' }} 
                         onFocus={onFocus}
                         onBlur={onBlur}
@@ -659,6 +687,8 @@ const Settings = () => {
                       <Key style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#10b981', zIndex: 5 }} />
                       <input 
                         type={showConfirmPassword ? "text" : "password"} 
+                        value={passwordForm.confirm}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
                         style={{ ...inputStyle, paddingRight: '44px' }} 
                         onFocus={onFocus}
                         onBlur={onBlur}
@@ -674,7 +704,7 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
-              <button className="action-btn primary" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => showToast(t('settings.toast.passwordSuccess') || 'Mot de passe mis à jour !', 'success')}>
+              <button className="action-btn primary" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }} onClick={handlePasswordUpdate}>
                 <Key style={{ width: 16, height: 16 }} /> {t('settings.securityTab.updateBtn')}
               </button>
               
@@ -687,7 +717,7 @@ const Settings = () => {
                   <div style={{ fontWeight: 600, color: isDark ? '#f1f5f9' : '#0f172a' }}>{t('settings.securityTab.secureAccount')}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginTop: '4px' }}>{t('settings.securityTab.secureAccountDesc')}</div>
                 </div>
-                <button className="action-btn" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>{t('settings.securityTab.enableBtn')}</button>
+                <button className="action-btn" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }} onClick={() => showToast('Authentification à deux facteurs activée', 'success')}>{t('settings.securityTab.enableBtn')}</button>
               </div>
             </div>
           )}

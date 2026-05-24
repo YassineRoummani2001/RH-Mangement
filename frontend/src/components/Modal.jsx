@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const Modal = ({ isOpen, onClose, title, icon, iconColor = 'var(--primary)', iconBg = 'var(--primary-bg)', submitColor = 'var(--primary)', children, onSubmit, submitText = 'Enregistrer', showFooter = true }) => {
+const Modal = ({ isOpen, onClose, title, icon, iconColor = 'var(--primary)', iconBg = 'var(--primary-bg)', submitColor = 'var(--primary)', children, onSubmit, submitText = 'Enregistrer', showFooter = true, isSubmitDisabled = false }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, title, icon, iconColor = 'var(--primary)', ico
             <button className="btn-modal-cancel" onClick={onClose}>
               Annuler
             </button>
-            <button className="btn-modal-submit" onClick={onSubmit} style={{ backgroundColor: submitColor }}>
+            <button className="btn-modal-submit" onClick={onSubmit} style={{ backgroundColor: submitColor, opacity: isSubmitDisabled ? 0.5 : 1, cursor: isSubmitDisabled ? 'not-allowed' : 'pointer' }} disabled={isSubmitDisabled}>
               {submitText}
             </button>
           </div>

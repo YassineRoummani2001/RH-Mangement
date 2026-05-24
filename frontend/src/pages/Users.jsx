@@ -295,7 +295,7 @@ const Users = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('users.modal.createBtn')}</button>
+            <button type="submit" className="action-btn primary" disabled={!addForm.name || !addForm.email || !addForm.password} style={{ flex: 2, height: '42px', opacity: (!addForm.name || !addForm.email || !addForm.password) ? 0.5 : 1, cursor: (!addForm.name || !addForm.email || !addForm.password) ? 'not-allowed' : 'pointer' }}>{t('users.modal.createBtn')}</button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsAddModalOpen(false)}>{t('users.modal.cancelBtn')}</button>
           </div>
         </form>
@@ -372,7 +372,7 @@ const Users = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('users.modal.saveBtn')}</button>
+              <button type="submit" className="action-btn primary" disabled={!editForm.name || !editForm.email} style={{ flex: 2, height: '42px', opacity: (!editForm.name || !editForm.email) ? 0.5 : 1, cursor: (!editForm.name || !editForm.email) ? 'not-allowed' : 'pointer' }}>{t('users.modal.saveBtn')}</button>
               <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>{t('users.modal.cancelBtn')}</button>
             </div>
           </form>

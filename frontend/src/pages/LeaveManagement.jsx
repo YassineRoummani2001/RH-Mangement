@@ -45,6 +45,7 @@ const LeaveManagement = () => {
 
   // New leave form state
   const [leaveForm, setLeaveForm] = useState({ type: 'Congé Annuel', start: '', end: '', motif: '' });
+  const [editForm, setEditForm] = useState({ type: '', period: '' });
 
   const filteredAbsences = absences.filter(abs => {
     if (isEmployee) return abs.name === user?.name;
@@ -60,7 +61,10 @@ const LeaveManagement = () => {
   const handleAction = (type, absence) => {
     setSelectedAbsence(absence);
     if (type === 'view') setIsViewModalOpen(true);
-    if (type === 'edit') setIsEditModalOpen(true);
+    if (type === 'edit') {
+      setEditForm({ type: absence.type, period: absence.period });
+      setIsEditModalOpen(true);
+    }
   };
 
   const calculateDuration = (start, end) => {
@@ -116,6 +120,7 @@ const LeaveManagement = () => {
   };
 
   const onEditSubmit = () => {
+    setAbsences(prev => prev.map(abs => abs.id === selectedAbsence.id ? { ...abs, type: editForm.type, period: editForm.period } : abs));
     showToast(i18n.language === 'fr' ? 'Absence mise à jour !' : 'Absence updated!', 'info');
     setIsEditModalOpen(false);
   };
@@ -410,7 +415,7 @@ const LeaveManagement = () => {
             <textarea className="form-input" rows="2" placeholder={i18n.language === 'fr' ? "Raison de la demande..." : "Reason for request..."} value={leaveForm.motif} onChange={(e) => setLeaveForm({...leaveForm, motif: e.target.value})}></textarea>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>
+            <button type="submit" className="action-btn primary" disabled={!leaveForm.start || !leaveForm.end} style={{ flex: 2, height: '42px', opacity: (!leaveForm.start || !leaveForm.end) ? 0.5 : 1, cursor: (!leaveForm.start || !leaveForm.end) ? 'not-allowed' : 'pointer' }}>
               {i18n.language === 'fr' ? "Soumettre" : "Submit"}
             </button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsLeaveModalOpen(false)}>
@@ -505,7 +510,7 @@ const LeaveManagement = () => {
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Umbrella size={12} color="var(--primary)" /> Type d'absence
               </label>
-              <select className="form-input" defaultValue={selectedAbsence.type}>
+              <select className="form-input" value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })}>
                 <option>Congé Annuel</option>
                 <option>Maladie</option>
                 <option>Télétravail</option>
@@ -515,10 +520,10 @@ const LeaveManagement = () => {
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Calendar size={12} color="var(--c-purple)" /> Période
               </label>
-              <input type="text" className="form-input" defaultValue={selectedAbsence.period} />
+              <input type="text" className="form-input" value={editForm.period} onChange={e => setEditForm({ ...editForm, period: e.target.value })} />
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" className="action-btn primary" style={{ flex: 2, height: '42px' }} onClick={onEditSubmit}>Mettre à jour</button>
+              <button type="button" className="action-btn primary" disabled={!editForm.type || !editForm.period} style={{ flex: 2, height: '42px', opacity: (!editForm.type || !editForm.period) ? 0.5 : 1, cursor: (!editForm.type || !editForm.period) ? 'not-allowed' : 'pointer' }} onClick={onEditSubmit}>Mettre à jour</button>
               <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>Annuler</button>
             </div>
           </form>

@@ -394,6 +394,7 @@ const Compliance = () => {
         iconBg="var(--primary-bg)"
         submitText={t('compliance.reminderModal.submit')}
         onSubmit={handleReminderSubmit}
+        isSubmitDisabled={!reminderMessage}
       >
         {selectedEmployee && (
           <form onSubmit={(e) => { e.preventDefault(); handleReminderSubmit(); }} style={{ padding: '4px 0' }}>
@@ -441,6 +442,7 @@ const Compliance = () => {
         iconBg="#FEF3C7"
         submitText={t('compliance.editModal.submit')}
         onSubmit={handleEditSubmit}
+        isSubmitDisabled={!complianceStatus}
       >
         {selectedEmployee && (
           <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(); }} style={{ padding: '4px 0' }}>
@@ -507,6 +509,7 @@ const Compliance = () => {
         iconBg="var(--primary-bg)"
         submitText={t('compliance.exportModal.submit')}
         onSubmit={handleExportSubmit}
+        isSubmitDisabled={!exportFormat || !exportRange}
       >
         <form onSubmit={(e) => { e.preventDefault(); handleExportSubmit(); }} style={{ padding: '0' }}>
           <div className="form-group" style={{ marginBottom: '12px' }}>

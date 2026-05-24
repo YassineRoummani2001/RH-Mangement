@@ -44,6 +44,9 @@ export default function Absences() {
   const [form, setForm] = useState({
     employee: '', dept: 'Ingénierie', type: 'absence', date: '', hours: 8, reason: '', status: 'unjustified'
   });
+  const [isEmployeeSearchOpen, setIsEmployeeSearchOpen] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  
   const handleFormChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleCreate = () => {
@@ -207,22 +210,64 @@ export default function Absences() {
       {/* Create Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}
         title={t('absences.modal.createTitle')} icon="fas fa-user-times" iconColor="#EF4444" iconBg="#FEF2F2"
-        submitColor="#EF4444" onSubmit={handleCreate} submitText={t('absences.modal.submit')}>
-        <form onSubmit={e => { e.preventDefault(); handleCreate(); }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
-              <label className="form-label">{t('absences.modal.employeeName')} *</label>
-              <input type="text" name="employee" className="form-input" placeholder={t('absences.modal.employeeName')} value={form.employee} onChange={handleFormChange} required />
+        submitColor="#EF4444" onSubmit={handleCreate} submitText={t('absences.modal.submit')}
+        isSubmitDisabled={!form.employee || !form.date}>
+        <form onSubmit={e => { e.preventDefault(); handleCreate(); }} style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div className="form-group" style={{ marginBottom: 0, position: 'relative', zIndex: 100 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-user" style={{ color: 'var(--primary)' }}></i> {t('absences.modal.employeeName')} *
+              </label>
+              <div 
+                className="form-input" 
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: 'var(--main-bg)' }}
+                onClick={() => setIsEmployeeSearchOpen(!isEmployeeSearchOpen)}
+              >
+                <span style={{ color: form.employee ? 'inherit' : 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {form.employee ? <i className="fas fa-user-circle" style={{ color: 'var(--primary)' }}></i> : null}
+                  {form.employee || t('absences.modal.employeeName')}
+                </span>
+                <i className="fas fa-chevron-down" style={{ fontSize: '0.8rem', color: 'var(--text-gray)' }}></i>
+              </div>
+              {isEmployeeSearchOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'var(--main-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', marginTop: '4px', zIndex: 9999, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+                  <div style={{ padding: '8px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--sidebar-bg)', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Rechercher..." 
+                      value={employeeSearch} 
+                      onChange={e => setEmployeeSearch(e.target.value)} 
+                      style={{ padding: '6px 10px', minHeight: '32px', marginBottom: 0, backgroundColor: 'var(--main-bg)' }}
+                      autoFocus
+                    />
+                  </div>
+                  <div style={{ maxHeight: '120px', overflowY: 'auto', backgroundColor: 'var(--main-bg)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                    {['Ali Benali', 'Sara Hamidi', 'Karim Ouali', 'Nadia Benmoussa', 'Youssef Tazi', 'Emma Wilson', 'David Chen', 'Sarah Miller', 'Marcus Rowe'].filter(e => e.toLowerCase().includes(employeeSearch.toLowerCase())).map(emp => (
+                      <div 
+                        key={emp} 
+                        style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background-color 0.1s' }}
+                        onClick={() => { setForm(p => ({ ...p, employee: emp })); setIsEmployeeSearchOpen(false); setEmployeeSearch(''); }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--primary-bg)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                          {emp.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{emp}</span>
+                      </div>
+                    ))}
+                    {['Ali Benali', 'Sara Hamidi', 'Karim Ouali', 'Nadia Benmoussa', 'Youssef Tazi', 'Emma Wilson', 'David Chen', 'Sarah Miller', 'Marcus Rowe'].filter(e => e.toLowerCase().includes(employeeSearch.toLowerCase())).length === 0 && (
+                      <div style={{ padding: '12px', fontSize: '0.85rem', color: 'var(--text-gray)', textAlign: 'center' }}>Aucun trouvé</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('absences.modal.type')} *</label>
-              <select name="type" className="form-input" value={form.type} onChange={handleFormChange}>
-                <option value="absence">{t('absences.modal.absence')}</option>
-                <option value="late">{t('absences.modal.late')}</option>
-              </select>
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('absences.modal.department')}</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-building" style={{ color: 'var(--c-orange)' }}></i> {t('absences.modal.department')}
+              </label>
               <select name="dept" className="form-input" value={form.dept} onChange={handleFormChange}>
                 <option>Ingénierie</option>
                 <option>Marketing</option>
@@ -231,28 +276,45 @@ export default function Absences() {
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('absences.modal.date')} *</label>
-              <input type="date" name="date" className="form-input" value={form.date} onChange={handleFormChange} required />
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-tag" style={{ color: 'var(--c-purple)' }}></i> {t('absences.modal.type')} *
+              </label>
+              <select name="type" className="form-input" value={form.type} onChange={handleFormChange}>
+                <option value="absence">{t('absences.modal.absence')}</option>
+                <option value="late">{t('absences.modal.late')}</option>
+              </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('absences.modal.durationHours')}</label>
-              <input type="number" name="hours" className="form-input" min="0.5" max="8" step="0.5" value={form.hours} onChange={handleFormChange} />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('absences.modal.statusLabel')}</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-info-circle" style={{ color: 'var(--primary)' }}></i> {t('absences.modal.statusLabel')}
+              </label>
               <select name="status" className="form-input" value={form.status} onChange={handleFormChange}>
                 <option value="unjustified">{t('absences.status_values.unjustified')}</option>
                 <option value="justified">{t('absences.status_values.justified')}</option>
                 <option value="justifiedMedical">{t('absences.status_values.justifiedMedical')}</option>
               </select>
             </div>
-          </div>
-          <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label">{t('absences.modal.reason')}</label>
-            <textarea name="reason" className="form-input" rows="2" placeholder={t('absences.modal.reasonPlaceholder')} value={form.reason} onChange={handleFormChange}></textarea>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="far fa-calendar-alt" style={{ color: 'var(--success)' }}></i> {t('absences.modal.date')} *
+              </label>
+              <input type="date" name="date" className="form-input" value={form.date} onChange={handleFormChange} required />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-clock" style={{ color: '#E11D48' }}></i> {t('absences.modal.durationHours')}
+              </label>
+              <input type="number" name="hours" className="form-input" min="0.5" max="8" step="0.5" value={form.hours} onChange={handleFormChange} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-align-left" style={{ color: 'var(--text-gray)' }}></i> {t('absences.modal.reason')}
+              </label>
+              <input type="text" name="reason" className="form-input" placeholder={t('absences.modal.reasonPlaceholder')} value={form.reason} onChange={handleFormChange} />
+            </div>
           </div>
           {form.status === 'unjustified' && form.type === 'absence' && (
-            <div style={{ background: '#FEF2F2', borderRadius: '10px', padding: '12px 16px', fontSize: '0.85rem', color: '#B91C1C', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: '#FEF2F2', borderRadius: '10px', padding: '10px 14px', fontSize: '0.75rem', color: '#B91C1C', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <i className="fas fa-exclamation-triangle"></i>
               {t('absences.modal.warningAlert')}
             </div>

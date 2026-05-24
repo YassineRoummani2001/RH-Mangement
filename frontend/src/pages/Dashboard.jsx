@@ -626,11 +626,14 @@ const Dashboard = () => {
           submitColor="var(--c-purple)"
           onSubmit={handleRequestSubmit}
           submitText="Soumettre la demande"
+          isSubmitDisabled={!requestForm.type || !requestForm.priorite || !requestForm.description.trim()}
         >
-          <form onSubmit={e => { e.preventDefault(); handleRequestSubmit(); }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+          <form onSubmit={e => { e.preventDefault(); handleRequestSubmit(); }} style={{ padding: '4px 0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
               <div className="form-group" style={{ marginBottom: '0' }}>
-                <label className="form-label">Type de demande</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FileText size={12} color="var(--primary)" /> Type de demande
+                </label>
                 <select name="type" className="form-input" value={requestForm.type} onChange={handleRequestChange}>
                   <option>Attestation de Travail</option>
                   <option>Attestation de Salaire</option>
@@ -640,7 +643,9 @@ const Dashboard = () => {
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: '0' }}>
-                <label className="form-label">Priorité</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <AlertTriangle size={12} color="var(--warning)" /> Priorité
+                </label>
                 <select name="priorite" className="form-input" value={requestForm.priorite} onChange={handleRequestChange}>
                   <option>Normale (Délai 48h)</option>
                   <option>Haute (Délai 24h)</option>
@@ -648,15 +653,16 @@ const Dashboard = () => {
                 </select>
               </div>
             </div>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">Description ou détails additionnels</label>
+            <div className="form-group" style={{ marginBottom: '10px' }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-align-left" style={{ color: 'var(--text-gray)' }}></i> Description ou détails additionnels
+              </label>
               <textarea name="description" className="form-input" rows="2" placeholder="Précisez la langue souhaitée, la période, ou toute information utile pour l'équipe RH..." value={requestForm.description} onChange={handleRequestChange}></textarea>
             </div>
             <div className="form-group" style={{ marginBottom: '0' }}>
-              <label className="form-label">Pièces jointes (Optionnel)</label>
-              <div style={{ border: '2px dashed var(--border-color)', padding: '16px', textAlign: 'center', borderRadius: 'var(--radius-md)', color: 'var(--text-gray)', cursor: 'pointer' }} onClick={() => document.getElementById('fileInputEmployee').click()}>
-                <i className="fas fa-cloud-upload-alt" style={{ fontSize: '1.5rem', marginBottom: '4px', color: 'var(--primary)' }}></i>
-                <div style={{ fontSize: '0.85rem' }}>{requestForm.fichier ? requestForm.fichier.name : 'Cliquez pour ajouter un fichier (PDF, JPG, PNG)'}</div>
+              <div style={{ border: '1px dashed var(--border-color)', padding: '12px', textAlign: 'center', borderRadius: 'var(--radius-md)', color: 'var(--text-gray)', cursor: 'pointer', backgroundColor: 'var(--sidebar-bg)' }} onClick={() => document.getElementById('fileInputEmployee').click()}>
+                <Download size={14} color="var(--primary)" style={{ marginBottom: '2px' }} />
+                <div style={{ fontSize: '0.75rem' }}>{requestForm.fichier ? requestForm.fichier.name : 'Cliquez pour ajouter un fichier (PDF, JPG, PNG)'}</div>
                 <input id="fileInputEmployee" type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={e => setRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
               </div>
             </div>
@@ -674,29 +680,38 @@ const Dashboard = () => {
           submitColor="var(--c-blue)"
           onSubmit={handleEmployeeSubmit}
           submitText="Ajouter l'employé"
+          isSubmitDisabled={!employeeForm.prenom || !employeeForm.nom || !employeeForm.email || !employeeForm.poste || !employeeForm.departement}
         >
-          <form onSubmit={e => { e.preventDefault(); handleEmployeeSubmit(); }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+          <form onSubmit={e => { e.preventDefault(); handleEmployeeSubmit(); }} style={{ padding: '4px 0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Prénom</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <User size={12} color="var(--primary)" /> Prénom
+                </label>
                 <input type="text" name="prenom" className="form-input" placeholder="Ex: Jean" value={employeeForm.prenom} onChange={handleEmployeeChange} required />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Nom</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <User size={12} color="var(--primary)" /> Nom
+                </label>
                 <input type="text" name="nom" className="form-input" placeholder="Ex: Dupont" value={employeeForm.nom} onChange={handleEmployeeChange} required />
               </div>
-            </div>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">Adresse Email</label>
-              <input type="email" name="email" className="form-input" placeholder="jean.dupont@entreprise.com" value={employeeForm.email} onChange={handleEmployeeChange} required />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Mail size={12} color="var(--c-purple)" /> Adresse Email
+                </label>
+                <input type="email" name="email" className="form-input" placeholder="jean.dupont@entreprise.com" value={employeeForm.email} onChange={handleEmployeeChange} required />
+              </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Poste</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Briefcase size={12} color="var(--c-orange)" /> Poste
+                </label>
                 <input type="text" name="poste" className="form-input" placeholder="Développeur Front-end" value={employeeForm.poste} onChange={handleEmployeeChange} required />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Département</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Building2 size={12} color="var(--success)" /> Département
+                </label>
                 <select name="departement" className="form-input" value={employeeForm.departement} onChange={handleEmployeeChange}>
                   <option>Ingénierie</option>
                   <option>Marketing</option>
@@ -719,32 +734,41 @@ const Dashboard = () => {
           submitColor="var(--c-orange)"
           onSubmit={handleLeaveSubmit}
           submitText="Enregistrer l'absence"
+          isSubmitDisabled={!leaveForm.employe || !leaveForm.type || !leaveForm.dateDebut || !leaveForm.dateFin}
         >
-          <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }}>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">Employé</label>
-              <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
-                <option value="">Sélectionnez un employé...</option>
-                <option value="john-davis">John Davis (Opérations)</option>
-                <option value="maria-chen">Maria Chen (Conformité)</option>
-              </select>
-            </div>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label">Type de congé</label>
-              <select name="type" className="form-input" value={leaveForm.type} onChange={handleLeaveChange}>
-                <option>Congé Annuel</option>
-                <option>Congé Maladie</option>
-                <option>Télétravail Exceptionnel</option>
-                <option>Absence Non Justifiée</option>
-              </select>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+          <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }} style={{ padding: '4px 0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <User size={12} color="var(--primary)" /> Employé
+                </label>
+                <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
+                  <option value="">Sélectionnez un employé...</option>
+                  <option value="john-davis">John Davis (Opérations)</option>
+                  <option value="maria-chen">Maria Chen (Conformité)</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Umbrella size={12} color="var(--c-purple)" /> Type de congé
+                </label>
+                <select name="type" className="form-input" value={leaveForm.type} onChange={handleLeaveChange}>
+                  <option>Congé Annuel</option>
+                  <option>Congé Maladie</option>
+                  <option>Télétravail Exceptionnel</option>
+                  <option>Absence Non Justifiée</option>
+                </select>
+              </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Date de début</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={12} color="var(--success)" /> Date de début
+                </label>
                 <input type="date" name="dateDebut" className="form-input" value={leaveForm.dateDebut} onChange={handleLeaveChange} required />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Date de fin</label>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={12} color="var(--success)" /> Date de fin
+                </label>
                 <input type="date" name="dateFin" className="form-input" value={leaveForm.dateFin} onChange={handleLeaveChange} required />
               </div>
             </div>

@@ -259,6 +259,7 @@ export default function Authorizations() {
         submitColor="var(--primary)"
         onSubmit={handleCreate}
         submitText={t('authorizations.modal.submit')}
+        isSubmitDisabled={!form.date || !form.reason}
       >
         <form onSubmit={e => { e.preventDefault(); handleCreate(); }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>

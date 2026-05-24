@@ -382,7 +382,8 @@ export default function Signature() {
         <Modal isOpen={isSignModalOpen} onClose={() => { setIsSignModalOpen(false); clearSignature(); }}
           title={`Signer : ${selectedDoc?.type}`}
           icon="fas fa-pen-fancy" iconColor="#BE185D" iconBg="#FDF2F8"
-          submitColor="#BE185D" onSubmit={handleSign} submitText="Apposer ma signature">
+          submitColor="#BE185D" onSubmit={handleSign} submitText="Apposer ma signature"
+          isSubmitDisabled={!hasSignature}>
           <div>
             {/* Document Info */}
             <div style={{ background: 'var(--sidebar-bg)', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px' }}>

@@ -182,7 +182,8 @@ export default function Assignments() {
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}
         title={t('assignments.modal.editTitle', { name: selectedEmp?.name })}
         icon="fas fa-edit" iconColor="#2563EB" iconBg="#EFF6FF"
-        submitColor="#2563EB" onSubmit={handleSaveEdit} submitText={t('assignments.modal.saveBtn')}>
+        submitColor="#2563EB" onSubmit={handleSaveEdit} submitText={t('assignments.modal.saveBtn')}
+        isSubmitDisabled={!editForm.dept || !editForm.poste}>
         <form onSubmit={e => { e.preventDefault(); handleSaveEdit(); }}>
           <div className="form-group" style={{ marginBottom: '12px' }}>
             <label className="form-label">{t('assignments.modal.department')}</label>

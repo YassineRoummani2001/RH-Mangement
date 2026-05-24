@@ -239,33 +239,34 @@ export default function Trainings() {
       {/* Create Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}
         title={t('trainings.modal.createTitle')} icon="fas fa-graduation-cap" iconColor="var(--primary)" iconBg="var(--primary-bg)"
-        submitColor="var(--primary)" onSubmit={handleCreate} submitText={t('trainings.modal.submit')}>
-        <form onSubmit={e => { e.preventDefault(); handleCreate(); }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
-              <label className="form-label">{t('trainings.modal.titleLabel')} *</label>
+        submitColor="var(--primary)" onSubmit={handleCreate} submitText={t('trainings.modal.submit')}
+        isSubmitDisabled={!form.title || !form.startDate || !form.endDate || !form.trainer}>
+        <form onSubmit={e => { e.preventDefault(); handleCreate(); }} style={{ padding: '4px 0' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-heading" style={{ color: 'var(--primary)' }}></i> {t('trainings.modal.titleLabel')} *
+              </label>
               <input type="text" name="title" className="form-input" placeholder={t('trainings.modal.titlePlaceholder')} value={form.title} onChange={handleFormChange} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.domain')}</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-layer-group" style={{ color: 'var(--c-purple)' }}></i> {t('trainings.modal.domain')}
+              </label>
               <select name="domain" className="form-input" value={form.domain} onChange={handleFormChange}>
                 {DOMAINS.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.trainer')} *</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-chalkboard-teacher" style={{ color: 'var(--c-orange)' }}></i> {t('trainings.modal.trainer')} *
+              </label>
               <input type="text" name="trainer" className="form-input" placeholder={t('trainings.modal.trainerPlaceholder')} value={form.trainer} onChange={handleFormChange} required />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.startDate')} *</label>
-              <input type="date" name="startDate" className="form-input" value={form.startDate} onChange={handleFormChange} required />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.endDate')} *</label>
-              <input type="date" name="endDate" className="form-input" value={form.endDate} onChange={handleFormChange} required />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.location')}</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-map-marker-alt" style={{ color: '#E11D48' }}></i> {t('trainings.modal.location')}
+              </label>
               <select name="location" className="form-input" value={form.location} onChange={handleFormChange}>
                 <option value="">Sélectionner...</option>
                 {MOROCCAN_CITIES.map(city => (
@@ -274,13 +275,29 @@ export default function Trainings() {
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">{t('trainings.modal.maxPart')}</label>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="far fa-calendar-alt" style={{ color: 'var(--success)' }}></i> {t('trainings.modal.startDate')} *
+              </label>
+              <input type="date" name="startDate" className="form-input" value={form.startDate} onChange={handleFormChange} required />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="far fa-calendar-check" style={{ color: 'var(--success)' }}></i> {t('trainings.modal.endDate')} *
+              </label>
+              <input type="date" name="endDate" className="form-input" value={form.endDate} onChange={handleFormChange} required />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-users" style={{ color: 'var(--primary)' }}></i> {t('trainings.modal.maxPart')}
+              </label>
               <input type="number" name="maxParticipants" className="form-input" min="1" max="100" value={form.maxParticipants} onChange={handleFormChange} />
             </div>
-          </div>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">{t('trainings.modal.description')}</label>
-            <textarea name="description" className="form-input" rows="3" placeholder={t('trainings.modal.descPlaceholder')} value={form.description} onChange={handleFormChange}></textarea>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <i className="fas fa-align-left" style={{ color: 'var(--text-gray)' }}></i> {t('trainings.modal.description')}
+              </label>
+              <input type="text" name="description" className="form-input" placeholder={t('trainings.modal.descPlaceholder')} value={form.description} onChange={handleFormChange} />
+            </div>
           </div>
         </form>
       </Modal>

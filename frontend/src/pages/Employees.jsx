@@ -234,72 +234,36 @@ const Employees = () => {
         showFooter={false}
       >
         <form onSubmit={onAddSubmit} style={{ padding: '4px 0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.form.firstName')}
               </label>
-              <input 
-                type="text" 
-                required
-                value={addForm.firstName} 
-                onChange={(e) => setAddForm({ ...addForm, firstName: e.target.value })}
-                className="form-input" 
-                placeholder="Jean" 
-              />
+              <input type="text" required value={addForm.firstName} onChange={(e) => setAddForm({ ...addForm, firstName: e.target.value })} className="form-input" placeholder="Jean" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.form.lastName')}
               </label>
-              <input 
-                type="text" 
-                required
-                value={addForm.lastName} 
-                onChange={(e) => setAddForm({ ...addForm, lastName: e.target.value })}
-                className="form-input" 
-                placeholder="Dupont" 
-              />
+              <input type="text" required value={addForm.lastName} onChange={(e) => setAddForm({ ...addForm, lastName: e.target.value })} className="form-input" placeholder="Dupont" />
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Mail size={12} color="var(--c-purple)" /> {t('employees.form.email')}
               </label>
-              <input 
-                type="email" 
-                required
-                value={addForm.email} 
-                onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
-                className="form-input" 
-                placeholder="jean.d@comp.com" 
-              />
+              <input type="email" required value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} className="form-input" placeholder="jean.d@comp.com" />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
               </label>
-              <input 
-                type="text" 
-                required
-                value={addForm.role} 
-                onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
-                className="form-input" 
-                placeholder="Développeur" 
-              />
+              <input type="text" required value={addForm.role} onChange={(e) => setAddForm({ ...addForm, role: e.target.value })} className="form-input" placeholder="Développeur" />
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Building2 size={12} color="var(--success)" /> {t('employees.form.department')}
               </label>
-              <select 
-                className="form-input"
-                value={addForm.dept}
-                onChange={(e) => setAddForm({ ...addForm, dept: e.target.value })}
-              >
+              <select className="form-input" value={addForm.dept} onChange={(e) => setAddForm({ ...addForm, dept: e.target.value })}>
                 <option value="Ingénierie">Ingénierie</option>
                 <option value="Marketing">Marketing</option>
                 <option value="Finance">Finance</option>
@@ -310,11 +274,7 @@ const Employees = () => {
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ShieldCheck size={12} color="var(--c-blue)" /> {t('employees.form.contract')}
               </label>
-              <select 
-                className="form-input"
-                value={addForm.contract}
-                onChange={(e) => setAddForm({ ...addForm, contract: e.target.value })}
-              >
+              <select className="form-input" value={addForm.contract} onChange={(e) => setAddForm({ ...addForm, contract: e.target.value })}>
                 <option value="CDI">CDI</option>
                 <option value="CDD">CDD</option>
                 <option value="Freelance">Freelance</option>
@@ -322,7 +282,7 @@ const Employees = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('employees.form.createProfile')}</button>
+            <button type="submit" className="action-btn primary" disabled={!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role} style={{ flex: 2, height: '42px', opacity: (!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role) ? 0.5 : 1, cursor: (!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role) ? 'not-allowed' : 'pointer' }}>{t('employees.form.createProfile')}</button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsAddModalOpen(false)}>{t('employees.form.cancel')}</button>
           </div>
         </form>
@@ -409,26 +369,28 @@ const Employees = () => {
       >
         {selectedEmployee && (
           <form onSubmit={onEditSubmit} style={{ padding: '4px 0' }}>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <User size={12} color="var(--primary)" /> {t('employees.table.employee')}
-              </label>
-              <input type="text" className="form-input" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-            </div>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Mail size={12} color="var(--c-purple)" /> {t('employees.form.email')}
-              </label>
-              <input type="email" className="form-input" required value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-            </div>
-            <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
-              </label>
-              <input type="text" className="form-input" required value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <User size={12} color="var(--primary)" /> {t('employees.table.employee')}
+                </label>
+                <input type="text" className="form-input" required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Mail size={12} color="var(--c-purple)" /> {t('employees.form.email')}
+                </label>
+                <input type="email" className="form-input" required value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
+                </label>
+                <input type="text" className="form-input" required value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>{t('employees.form.saveChanges')}</button>
+              <button type="submit" className="action-btn primary" disabled={!editForm.name || !editForm.email || !editForm.role} style={{ flex: 2, height: '42px', opacity: (!editForm.name || !editForm.email || !editForm.role) ? 0.5 : 1, cursor: (!editForm.name || !editForm.email || !editForm.role) ? 'not-allowed' : 'pointer' }}>{t('employees.form.saveChanges')}</button>
               <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsEditModalOpen(false)}>{t('employees.form.cancel')}</button>
             </div>
           </form>

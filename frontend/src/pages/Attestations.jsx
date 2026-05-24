@@ -210,7 +210,23 @@ export default function Attestations() {
             </button>
           )}
           {isHR && (
-            <button className="action-btn primary" onClick={() => showToast(t('attestations.toast.generateMonthly'), 'info')}>
+            <button className="action-btn primary" onClick={() => {
+              showToast(t('attestations.toast.generateMonthly'), 'info');
+              setTimeout(() => {
+                const employees = ['Ali Benali', 'Sara Hamidi', 'Karim Ouali', 'Nadia Benmoussa'];
+                const newDocs = employees.map((emp, index) => ({
+                  id: `DOC-${Date.now() + index}`,
+                  type: 'Bulletin de Paie (Mai)',
+                  employee: emp,
+                  dept: ['Ingénierie', 'Marketing', 'Finance', 'RH'][index],
+                  requestedAt: new Date().toISOString().split('T')[0],
+                  status: 'available',
+                  signedBy: 'Fatima Zahra Alaoui'
+                }));
+                setDocs(prev => [...newDocs, ...prev]);
+                showToast(t('attestations.toast.generated'), 'success');
+              }, 1500);
+            }}>
               <i className="fas fa-file-invoice-dollar"></i> {t('attestations.generateMonthly')}
             </button>
           )}
@@ -319,6 +335,7 @@ export default function Attestations() {
         submitColor="#7C3AED"
         onSubmit={handleRequest}
         submitText={t('attestations.modal.submit')}
+        isSubmitDisabled={!form.type}
       >
         <form onSubmit={e => { e.preventDefault(); handleRequest(); }}>
           <div className="form-group" style={{ marginBottom: '12px' }}>

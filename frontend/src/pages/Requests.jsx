@@ -401,7 +401,7 @@ const Requests = () => {
         showFooter={false}
       >
         <form onSubmit={e => { e.preventDefault(); handleNewRequestSubmit(); }} style={{ padding: '4px 0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
             <div className="form-group" style={{ marginBottom: '0' }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <FileText size={12} color="var(--primary)" /> Type
@@ -424,19 +424,21 @@ const Requests = () => {
               </select>
             </div>
           </div>
-          <div className="form-group" style={{ marginBottom: '12px' }}>
-            <label className="form-label" style={{ fontSize: '0.7rem' }}>Description</label>
-            <textarea name="description" className="form-input" rows="2" style={{ minHeight: '60px' }} placeholder="Détails du besoin..." value={newRequestForm.description} onChange={handleNewRequestChange}></textarea>
+          <div className="form-group" style={{ marginBottom: '10px' }}>
+            <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <i className="fas fa-align-left" style={{ color: 'var(--text-gray)' }}></i> Description
+            </label>
+            <textarea name="description" className="form-input" rows="2" style={{ minHeight: '40px' }} placeholder="Détails du besoin..." value={newRequestForm.description} onChange={handleNewRequestChange}></textarea>
           </div>
-          <div className="form-group" style={{ marginBottom: '20px' }}>
-            <div style={{ border: '1px dashed var(--border-color)', padding: '12px', textAlign: 'center', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sidebar-bg)' }} onClick={() => document.getElementById('fileInputRequests').click()}>
-              <Download size={16} color="var(--primary)" style={{ marginBottom: '4px' }} />
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{newRequestForm.fichier ? newRequestForm.fichier.name : 'Ajouter un document (PDF, Image)'}</div>
+          <div className="form-group" style={{ marginBottom: '12px' }}>
+            <div style={{ border: '1px dashed var(--border-color)', padding: '8px', textAlign: 'center', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sidebar-bg)', cursor: 'pointer' }} onClick={() => document.getElementById('fileInputRequests').click()}>
+              <Download size={14} color="var(--primary)" style={{ marginBottom: '2px' }} />
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-gray)' }}>{newRequestForm.fichier ? newRequestForm.fichier.name : 'Ajouter un document (PDF, Image)'}</div>
               <input id="fileInputRequests" type="file" style={{ display: 'none' }} onChange={e => setNewRequestForm(p => ({ ...p, fichier: e.target.files[0] }))} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="action-btn primary" style={{ flex: 2, height: '42px' }}>
+            <button type="submit" className="action-btn primary" disabled={!newRequestForm.type || !newRequestForm.priorite || !newRequestForm.description.trim()} style={{ flex: 2, height: '42px', opacity: (!newRequestForm.type || !newRequestForm.priorite || !newRequestForm.description.trim()) ? 0.5 : 1, cursor: (!newRequestForm.type || !newRequestForm.priorite || !newRequestForm.description.trim()) ? 'not-allowed' : 'pointer' }}>
               Soumettre la demande
             </button>
             <button type="button" className="action-btn" style={{ flex: 1, height: '42px' }} onClick={() => setIsModalOpen(false)}>
