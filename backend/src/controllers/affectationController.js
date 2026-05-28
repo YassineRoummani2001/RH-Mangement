@@ -13,7 +13,7 @@ export const getAll = async (req, res) => {
       }
     }
 
-    const items = await Affectation.find(query).populate('employe');
+    const items = await Affectation.find(query).populate('employe').populate('service');
     res.json({ success: true, message: 'Liste récupérée', data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -22,7 +22,7 @@ export const getAll = async (req, res) => {
 
 export const getById = async (req, res) => {
   try {
-    const item = await Affectation.findById(req.params.id).populate('employe');
+    const item = await Affectation.findById(req.params.id).populate('employe').populate('service');
     if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
     res.json({ success: true, data: item });
   } catch (error) {
@@ -32,7 +32,11 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const item = new Affectation(req.body);
+    const data = { ...req.body };
+    if (data.employe_id) { data.employe = data.employe_id; delete data.employe_id; }
+    if (data.service_id) { data.service = data.service_id; delete data.service_id; }
+
+    const item = new Affectation(data);
     await item.save();
     res.status(201).json({ success: true, message: 'Créé avec succès', data: item });
   } catch (error) {

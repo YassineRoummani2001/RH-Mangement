@@ -12,11 +12,6 @@ import { MOROCCAN_CITIES } from '../utils/cities';
 
 
 
-const chartData = [
-  { month: 'Jan', formations: 2 }, { month: 'Fév', formations: 1 },
-  { month: 'Mar', formations: 3 }, { month: 'Avr', formations: 2 },
-  { month: 'Mai', formations: 4 }, { month: 'Jun', formations: 2 },
-];
 
 const statusConfig = {
   'planned': { color: '#3B82F6', bg: '#EFF6FF', icon: 'fas fa-calendar' },
@@ -30,11 +25,12 @@ const DOMAINS = ['Informatique', 'Management', 'Finance', 'RH', 'Commercial', 'T
 export default function Trainings() {
   const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [trainings, setTrainings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [showParticipantsDropdown, setShowParticipantsDropdown] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [page, setPage] = useState(1);
@@ -55,11 +51,12 @@ export default function Trainings() {
         if (t.statut === 'ANNULEE') status = 'cancelled';
         
         return {
-          id: `FRM-00${t.id}`,
-          rawId: t.id,
+          id: `FRM-${(t._id || t.id).toString().slice(-6).toUpperCase()}`,
+          rawId: t._id || t.id,
           title: t.titre,
           domain: 'Général',
           trainer: 'Formateur Interne',
+          rawDateDebut: t.dateDebut,
           startDate: new Date(t.dateDebut).toLocaleDateString('fr-FR'),
           endDate: new Date(t.dateFin).toLocaleDateString('fr-FR'),
           location: t.lieu || 'Non spécifié',
@@ -142,6 +139,23 @@ export default function Trainings() {
   const filtered = trainings.filter(t => activeFilter === 'all' || t.status === activeFilter);
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const chartData = React.useMemo(() => {
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const data = months.map(m => ({ month: m, formations: 0 }));
+    trainings.forEach(t => {
+      if (t.rawDateDebut) {
+        const d = new Date(t.rawDateDebut);
+        const monthIndex = d.getMonth();
+        if (monthIndex >= 0 && monthIndex <= 11) {
+          data[monthIndex].formations += 1;
+        }
+      }
+    });
+    // Return only months from Jan to current month + 1 for cleaner display, or just all if there are formations
+    const lastMonthWithData = data.reduce((acc, curr, idx) => curr.formations > 0 ? idx : acc, new Date().getMonth());
+    return data.slice(0, Math.max(lastMonthWithData + 1, 6));
+  }, [trainings]);
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -350,39 +364,68 @@ export default function Trainings() {
         <Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)}
           title={selectedTraining.title} icon="fas fa-graduation-cap" iconColor="var(--primary)" iconBg="var(--primary-bg)"
           submitColor={null} onSubmit={null} submitText={null}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             {[
-              [t('common.ref', 'Référence'), selectedTraining.id],
-              [t('trainings.modal.domain'), selectedTraining.domain],
-              [t('trainings.modal.trainer'), selectedTraining.trainer],
-              [t('trainings.modal.location'), selectedTraining.location],
-              [t('trainings.modal.startDate'), selectedTraining.startDate],
-              [t('trainings.modal.endDate'), selectedTraining.endDate],
-              [t('trainings.modal.participantsList'), `${selectedTraining.participants.length} / ${selectedTraining.maxParticipants}`],
-              [t('trainings.status.planned', 'Statut'), t(`trainings.status.${selectedTraining.status}`)],
-            ].map(([label, value]) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
-                <span style={{ color: 'var(--text-gray)', fontSize: '0.85rem' }}>{label}</span>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{value}</span>
-              </div>
-            ))}
-            {selectedTraining.participants.length > 0 && (
-              <div>
-                <div style={{ color: 'var(--text-gray)', fontSize: '0.85rem', marginBottom: '8px' }}>{t('trainings.modal.participantsList')}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {selectedTraining.participants.map(p => (
-                    <span key={p} style={{ padding: '4px 10px', background: 'var(--primary-bg)', color: 'var(--primary)', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>{p}</span>
-                  ))}
+              { icon: 'fas fa-hashtag', color: '#64748B', bg: '#F8FAFC', label: t('common.ref', 'Référence'), value: selectedTraining.id },
+              { icon: 'fas fa-layer-group', color: '#8B5CF6', bg: '#F5F3FF', label: t('trainings.modal.domain'), value: selectedTraining.domain },
+              { icon: 'fas fa-chalkboard-teacher', color: '#0EA5E9', bg: '#F0F9FF', label: t('trainings.modal.trainer'), value: selectedTraining.trainer },
+              { icon: 'fas fa-map-marker-alt', color: '#F59E0B', bg: '#FFFBEB', label: t('trainings.modal.location'), value: selectedTraining.location },
+              { icon: 'far fa-calendar-alt', color: '#10B981', bg: '#ECFDF5', label: t('trainings.modal.startDate'), value: selectedTraining.startDate },
+              { icon: 'far fa-calendar-check', color: '#10B981', bg: '#ECFDF5', label: t('trainings.modal.endDate'), value: selectedTraining.endDate },
+              { icon: 'fas fa-users', color: '#2563EB', bg: '#EFF6FF', label: t('trainings.modal.participantsList'), value: `${selectedTraining.participants.length} / ${selectedTraining.maxParticipants}` },
+              { icon: 'fas fa-info-circle', color: '#D97706', bg: '#FEF3C7', label: t('trainings.status.planned', 'Statut'), value: t(`trainings.status.${selectedTraining.status}`) },
+            ].map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 10px', backgroundColor: 'var(--sidebar-bg)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: item.bg, color: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.9rem' }}>
+                  <i className={item.icon}></i>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <span style={{ color: 'var(--text-gray)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</span>
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-dark)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.value}>{item.value}</span>
                 </div>
               </div>
-            )}
-            {canManage && (
-              <button onClick={() => handleDelete(selectedTraining.id, selectedTraining.rawId)}
-                style={{ marginTop: '8px', padding: '10px', background: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>
-                <i className="fas fa-trash"></i> {t('trainings.modal.delete')}
-              </button>
-            )}
+            ))}
           </div>
+
+          {selectedTraining.participants.length > 0 && (
+            <div style={{ marginTop: '12px', padding: '10px', backgroundColor: 'var(--sidebar-bg)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+              <div style={{ color: 'var(--text-gray)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <i className="fas fa-user-friends" style={{ marginRight: '4px' }}></i> {t('trainings.modal.participantsList')}
+              </div>
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={() => setShowParticipantsDropdown(!showParticipantsDropdown)}
+                  style={{ width: '100%', padding: '10px 14px', fontSize: '0.8rem', backgroundColor: 'var(--main-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-dark)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 500, transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="fas fa-list-ul" style={{ color: 'var(--primary)', fontSize: '0.85rem' }}></i>
+                    {i18n.language === 'fr' ? `Voir les ${selectedTraining.participants.length} participants...` : `View ${selectedTraining.participants.length} participants...`}
+                  </span>
+                  <i className={`fas fa-chevron-${showParticipantsDropdown ? 'up' : 'down'}`} style={{ color: 'var(--text-gray)', fontSize: '0.75rem' }}></i>
+                </div>
+                
+                {showParticipantsDropdown && (
+                  <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: '6px', backgroundColor: 'var(--main-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', boxShadow: '0 -10px 25px rgba(0,0,0,0.1)', zIndex: 50, maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                    {selectedTraining.participants.map((p, i) => (
+                      <div key={i} style={{ padding: '10px 14px', fontSize: '0.8rem', color: 'var(--text-dark)', borderBottom: i === selectedTraining.participants.length - 1 ? 'none' : '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background-color 0.15s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--sidebar-bg)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                        <div style={{ width: '26px', height: '26px', borderRadius: '50%', backgroundColor: 'var(--primary-bg)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 700, border: '1px solid rgba(37,99,235,0.1)' }}>
+                          {typeof p === 'string' && p.trim() !== '' ? p.trim().split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'}
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{p}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {canManage && (
+            <button onClick={() => handleDelete(selectedTraining.id, selectedTraining.rawId)}
+              style={{ marginTop: '12px', width: '100%', padding: '10px', background: '#FEF2F2', color: '#EF4444', border: '1px dashed #FECACA', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+              <i className="fas fa-trash"></i> {t('trainings.modal.delete')}
+            </button>
+          )}
         </Modal>
       )}
     </motion.div>

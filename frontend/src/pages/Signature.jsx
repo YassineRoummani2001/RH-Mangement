@@ -28,8 +28,8 @@ export default function Signature() {
       const res = await api.get('/attestations');
       const all = res.data.data || [];
       const pending = all.filter(a => a.statut === 'GENEREE').map(a => ({
-        id: `DOC-${String(a.id).padStart(3, '0')}`,
-        rawId: a.id,
+        id: `DOC-${(a._id || a.id).toString().slice(-6).toUpperCase()}`,
+        rawId: a._id || a.id,
         type: a.type === 'travail' ? 'Attestation de Travail' : a.type === 'salaire' ? 'Attestation de Salaire' : 'Bulletin de Paie',
         employee: a.employe ? `${a.employe.prenom} ${a.employe.nom}` : 'Inconnu',
         dept: a.employe?.service?.nom || 'Général',
@@ -38,8 +38,8 @@ export default function Signature() {
         status: 'En attente signature',
       }));
       const signed = all.filter(a => a.statut === 'SIGNEE').map(a => ({
-        id: `DOC-${String(a.id).padStart(3, '0')}`,
-        rawId: a.id,
+        id: `DOC-${(a._id || a.id).toString().slice(-6).toUpperCase()}`,
+        rawId: a._id || a.id,
         type: a.type === 'travail' ? 'Attestation de Travail' : a.type === 'salaire' ? 'Attestation de Salaire' : 'Bulletin de Paie',
         employee: a.employe ? `${a.employe.prenom} ${a.employe.nom}` : 'Inconnu',
         dept: a.employe?.service?.nom || 'Général',
@@ -170,90 +170,103 @@ export default function Signature() {
   const downloadSignedPDF = (doc) => {
     showToast('Génération du document signé...', 'info');
     setTimeout(() => {
-      const pdf = new jsPDF();
-      const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+      const img = new Image();
+      img.src = '/logo.png';
+      img.onload = () => {
+        const pdf = new jsPDF();
+        const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-      // Header
-      pdf.setFillColor(190, 24, 93);
-      pdf.rect(0, 0, 210, 35, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(18);
-      pdf.text('RH MANAGEMENT', 105, 14, { align: 'center' });
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Document signé électroniquement par la Secrétaire Générale', 105, 24, { align: 'center' });
+        // Header Logo
+        pdf.addImage(img, 'PNG', 20, 15, 40, 18);
 
-      // Type strip
-      pdf.setFillColor(37, 99, 235);
-      pdf.rect(0, 35, 210, 8, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(doc.type.toUpperCase(), 105, 40.5, { align: 'center' });
+        // Header Text Right
+        pdf.setTextColor(15, 23, 42); // Dark blue-gray
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.text('RH MANAGEMENT S.A.', 190, 20, { align: 'right' });
 
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(16);
-      pdf.text(doc.type.toUpperCase(), 105, 70, { align: 'center' });
+        pdf.setTextColor(100, 116, 139); // Slate gray
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.text('Quartier des Affaires, Casablanca, Maroc', 190, 27, { align: 'right' });
+        pdf.text('Tél : +212 5 22 00 00 00', 190, 33, { align: 'right' });
+        pdf.text('Email : contact@rh-management.com', 190, 39, { align: 'right' });
 
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(12);
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Je soussigné(e), Secrétaire Générale de la société RH MANAGEMENT S.A.,', 20, 90, { maxWidth: 170 });
-      pdf.text('atteste que le présent document a été dûment vérifié et signé électroniquement.', 20, 103, { maxWidth: 170 });
+        // Separator Line
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.5);
+        pdf.line(20, 48, 190, 48);
 
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(20, 115, 170, 40, 4, 4, 'F');
+        // Date
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFontSize(11);
+        pdf.text(`Fait à Casablanca, le ${today}`, 190, 65, { align: 'right' });
 
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bénéficiaire :', 25, 127);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.employee, 75, 127);
+        // Title
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.text(doc.type.toUpperCase(), 105, 80, { align: 'center' });
 
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Département :', 25, 139);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.dept, 75, 139);
+        // Body
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(12);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text('Je soussigné(e), Secrétaire Générale de la société RH MANAGEMENT S.A.,', 20, 100, { maxWidth: 170 });
+        pdf.text('atteste que le présent document a été dûment vérifié et signé électroniquement.', 20, 113, { maxWidth: 170 });
 
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Réf :', 25, 151);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.id, 75, 151);
+        pdf.setFillColor(248, 250, 252);
+        pdf.roundedRect(20, 125, 170, 40, 4, 4, 'F');
 
-      // Signature section
-      pdf.setFillColor(253, 242, 248);
-      pdf.roundedRect(20, 175, 170, 50, 4, 4, 'F');
-      pdf.setDrawColor(190, 24, 93);
-      pdf.setLineWidth(0.5);
-      pdf.roundedRect(20, 175, 170, 50, 4, 4, 'S');
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Bénéficiaire :', 25, 137);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(doc.employee, 75, 137);
 
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(190, 24, 93);
-      pdf.setFontSize(11);
-      pdf.text('✦ SIGNATURE ÉLECTRONIQUE', 105, 188, { align: 'center' });
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Département :', 25, 149);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(doc.dept, 75, 149);
 
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text(`Signé par : ${user?.name}`, 105, 200, { align: 'center' });
-      pdf.text(`Titre : Secrétaire Générale`, 105, 208, { align: 'center' });
-      pdf.text(`Date et heure : ${doc.signedAt || today}`, 105, 216, { align: 'center' });
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Réf :', 25, 161);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(doc.id, 75, 161);
 
-      // Footer
-      const ph = pdf.internal.pageSize.height;
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(0, ph - 20, 210, 20, 'F');
-      pdf.setDrawColor(226, 232, 240);
-      pdf.line(0, ph - 20, 210, ph - 20);
-      pdf.setTextColor(148, 163, 184);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7);
-      pdf.text('Document signé électroniquement — Valeur juridique reconnue — RH MANAGEMENT S.A.', 105, ph - 12, { align: 'center' });
-      pdf.text(`Réf: ${doc.id} | Signé le ${doc.signedAt || today}`, 105, ph - 6, { align: 'center' });
+        // Signature section
+        pdf.setFillColor(253, 242, 248);
+        pdf.roundedRect(20, 185, 170, 50, 4, 4, 'F');
+        pdf.setDrawColor(190, 24, 93);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(20, 185, 170, 50, 4, 4, 'S');
 
-      pdf.save(`${doc.type.replace(/\s+/g, '_')}_SIGNE_${doc.id}.pdf`);
-      showToast('Document signé téléchargé !', 'success');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(190, 24, 93);
+        pdf.setFontSize(11);
+        pdf.text('✦ SIGNATURE ÉLECTRONIQUE', 105, 198, { align: 'center' });
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(`Signé par : ${user?.name}`, 105, 210, { align: 'center' });
+        pdf.text(`Titre : Secrétaire Générale`, 105, 218, { align: 'center' });
+        pdf.text(`Date et heure : ${doc.signedAt || today}`, 105, 226, { align: 'center' });
+
+        // Footer
+        const ph = pdf.internal.pageSize.height;
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(0, ph - 20, 210, 20, 'F');
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(0, ph - 20, 210, ph - 20);
+        pdf.setTextColor(148, 163, 184);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.text('Document signé électroniquement — Valeur juridique reconnue — RH MANAGEMENT S.A.', 105, ph - 12, { align: 'center' });
+        pdf.text(`Réf: ${doc.id} | Signé le ${doc.signedAt || today}`, 105, ph - 6, { align: 'center' });
+
+        pdf.save(`${doc.type.replace(/\s+/g, '_')}_SIGNE_${doc.id}.pdf`);
+        showToast('Document signé téléchargé !', 'success');
+      }; // end of img.onload
     }, 800);
   };
 

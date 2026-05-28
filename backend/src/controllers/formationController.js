@@ -7,13 +7,13 @@ export const getAll = async (req, res) => {
     if (req.user && !req.user.roles.includes('ROLE_AGENT_RH') && !req.user.roles.includes('ROLE_ADMIN_RH') && true) {
       const employe = await Employe.findOne({ user: req.user._id });
       if (employe) {
-        query.employe = employe._id;
+        query.participants = employe._id;
       } else {
         return res.json({ success: true, message: 'Liste vide', data: [] });
       }
     }
 
-    const items = await Formation.find(query).populate('employe');
+    const items = await Formation.find(query).populate('participants');
     res.json({ success: true, message: 'Liste récupérée', data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -22,7 +22,7 @@ export const getAll = async (req, res) => {
 
 export const getById = async (req, res) => {
   try {
-    const item = await Formation.findById(req.params.id).populate('employe');
+    const item = await Formation.findById(req.params.id).populate('participants');
     if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
     res.json({ success: true, data: item });
   } catch (error) {

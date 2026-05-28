@@ -58,7 +58,7 @@ const Notifications = () => {
       const res = await api.get('/notifications');
       const data = res.data.data || [];
       const mapped = data.map(item => ({
-        id: item.id,
+        id: item._id || item.id,
         title: item.titre || 'Notification RH',
         message: item.message || '',
         time: item.createdAt ? new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Récemment',
@@ -68,16 +68,7 @@ const Notifications = () => {
         category: item.type || 'system'
       }));
       
-      // Fallback if empty to look rich and premium
-      if (mapped.length === 0) {
-        setNotifications([
-          { id: 'f-1', title: 'Nouvelle demande de congé', message: 'Ali Benali a soumis une demande de congé annuel pour la période du 20 au 25 mai.', time: 'Il y a 10 min', date: '16 Mai 2026', type: 'request', unread: true, category: 'conge' },
-          { id: 'f-2', title: 'Document expiré', message: 'Le contrat de travail de Marc Leblanc arrive à échéance dans 15 jours. Veuillez prévoir le renouvellement.', time: 'Il y a 2h', date: '16 Mai 2026', type: 'alert', unread: true, category: 'document' },
-          { id: 'f-3', title: 'Mise à jour du système', message: 'La plateforme RH Management a été mise à jour vers la version 2.4.0. Découvrez les nouveautés.', time: 'Hier', date: '15 Mai 2026', type: 'info', unread: false, category: 'system' }
-        ]);
-      } else {
-        setNotifications(mapped);
-      }
+      setNotifications(mapped);
     } catch (err) {
       console.error(err);
     } finally {
@@ -95,7 +86,7 @@ const Notifications = () => {
 
   const markAllRead = async () => {
     try {
-      await api.put('/notifications/read-all');
+      await api.put('/notifications/mark-all-read');
       setNotifications(notifications.map(n => ({ ...n, unread: false })));
       showToast('Toutes les notifications marquées comme lues', 'success');
     } catch (err) {
@@ -103,9 +94,15 @@ const Notifications = () => {
     }
   };
 
-  const deleteNotif = (id) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-    showToast('Notification supprimée');
+  const deleteNotif = async (id) => {
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(notifications.filter(n => n.id !== id));
+      showToast('Notification supprimée');
+    } catch (err) {
+      // Even if API fails, remove from UI
+      setNotifications(notifications.filter(n => n.id !== id));
+    }
   };
 
   const toggleRead = async (id) => {

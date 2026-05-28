@@ -34,7 +34,7 @@ const Requests = () => {
         // if rejected, well we don't have rejection in backend yet, but we'll leave it as is
         
         return {
-          id: req.id,
+          id: req._id || req.id,
           title: req.type || 'Attestation',
           sub: 'Document RH',
           dept: req.employe?.service?.nom || 'Général',
@@ -261,15 +261,16 @@ const Requests = () => {
     setIsDetailsModalOpen(true);
   };
 
-  const onApprove = async () => {
-    if (!selectedRequest) return;
+  const onApprove = async (reqToApprove) => {
+    const target = reqToApprove && reqToApprove.id ? reqToApprove : selectedRequest;
+    if (!target) return;
     try {
-      if (selectedRequest.status === 'attente') {
+      if (target.status === 'attente') {
         // HR generates it
-        await api.post(`/attestations/${selectedRequest.id}/generate`);
-      } else if (selectedRequest.status === 'cours') {
+        await api.post(`/attestations/${target.id}/generate`);
+      } else if (target.status === 'cours') {
         // Secretary or HR signs it
-        await api.post(`/attestations/${selectedRequest.id}/sign`);
+        await api.post(`/attestations/${target.id}/sign`);
       }
       showToast('Demande approuvée avec succès', 'success');
       setIsDetailsModalOpen(false);
@@ -280,11 +281,18 @@ const Requests = () => {
     }
   };
 
-  const onReject = async () => {
-    if (!selectedRequest) return;
-    // The backend doesn't have a reject endpoint yet, but we can do a mock update for now
-    showToast('Rejet de la demande n\'est pas encore supporté par l\'API', 'info');
-    setIsDetailsModalOpen(false);
+  const onReject = async (reqToReject) => {
+    const target = reqToReject && reqToReject.id ? reqToReject : selectedRequest;
+    if (!target) return;
+    try {
+      await api.post(`/attestations/${target.id}/refuse`);
+      showToast('Demande rejetée', 'error');
+      setIsDetailsModalOpen(false);
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du rejet', 'error');
+    }
   };
 
   return (
@@ -368,7 +376,7 @@ const Requests = () => {
                     )}
                   </td>
                 </tr>
-              ) : filteredByTab.map((req) => (
+              ) : filteredByTab.slice((currentPage - 1) * 5, currentPage * 5).map((req) => (
                 <tr key={req.id}>
                   <td>
                     <div className="user-cell">
@@ -403,15 +411,15 @@ const Requests = () => {
                       
                       {!isEmployee && req.status === 'attente' && (
                         <>
-                          <button className="modern-action-btn" title="Approuver" onClick={() => { setSelectedRequest(req); onApprove(); }}><Check size={16} /></button>
-                          <button className="modern-action-btn" title="Rejeter" onClick={() => { setSelectedRequest(req); onReject(); }}><X size={16} /></button>
+                          <button className="modern-action-btn" title="Approuver" onClick={() => onApprove(req)}><Check size={16} /></button>
+                          <button className="modern-action-btn" title="Rejeter" onClick={() => onReject(req)}><X size={16} /></button>
                         </>
                       )}
                       
                       {!isEmployee && req.status === 'cours' && isHR && (
                          <>
-                         <button className="modern-action-btn" title="Approuver définitivement" onClick={() => { setSelectedRequest(req); onApprove(); }}><Check size={16} /></button>
-                         <button className="modern-action-btn" title="Rejeter" onClick={() => { setSelectedRequest(req); onReject(); }}><X size={16} /></button>
+                         <button className="modern-action-btn" title="Approuver définitivement" onClick={() => onApprove(req)}><Check size={16} /></button>
+                         <button className="modern-action-btn" title="Rejeter" onClick={() => onReject(req)}><X size={16} /></button>
                        </>
                       )}
 

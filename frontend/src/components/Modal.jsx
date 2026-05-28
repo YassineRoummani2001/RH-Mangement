@@ -36,11 +36,13 @@ const Modal = ({ isOpen, onClose, title, icon, iconColor = 'var(--primary)', ico
         {showFooter && (
           <div className="modal-footer">
             <button className="btn-modal-cancel" onClick={onClose}>
-              Annuler
+              {onSubmit ? 'Annuler' : 'Fermer'}
             </button>
-            <button className="btn-modal-submit" onClick={onSubmit} style={{ backgroundColor: submitColor, opacity: isSubmitDisabled ? 0.5 : 1, cursor: isSubmitDisabled ? 'not-allowed' : 'pointer' }} disabled={isSubmitDisabled}>
-              {submitText}
-            </button>
+            {onSubmit && (
+              <button className="btn-modal-submit" onClick={onSubmit} style={{ backgroundColor: submitColor, opacity: isSubmitDisabled ? 0.5 : 1, cursor: isSubmitDisabled ? 'not-allowed' : 'pointer' }} disabled={isSubmitDisabled}>
+                {submitText}
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -28,10 +28,7 @@ const Pagination = ({ currentPage, totalItems, itemsPerPage = 5, onPageChange })
   };
 
   return (
-    <div className="pagination-bar">
-      <span className="pagination-info">
-        {t('common.showingEntries', { first: firstItem, last: lastItem, total: totalItems })}
-      </span>
+    <div className="pagination-bar" style={{ justifyContent: 'flex-end' }}>
 
       <div className="pagination-controls">
         <button

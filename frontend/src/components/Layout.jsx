@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
+import api from '../services/api';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(true);
@@ -47,11 +48,28 @@ export default function AppLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Nouvelle demande', message: 'Ali Benali a soumis une demande de congé.', time: 'Il y a 10 min', type: 'request', unread: true },
-    { id: 2, title: 'Document expiré', message: 'Le contrat de Marc Leblanc expire bientôt.', time: 'Il y a 2h', type: 'alert', unread: true },
-    { id: 3, title: 'Bienvenue', message: 'Bienvenue sur la plateforme RH Management.', time: 'Hier', type: 'info', unread: false },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await api.get('/notifications');
+        const data = res.data.data || [];
+        const mapped = data.map(item => ({
+          id: item._id || item.id,
+          title: item.titre || 'Notification RH',
+          message: item.message || '',
+          time: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : 'Récemment',
+          type: item.type === 'info' ? 'info' : (item.type === 'alert' ? 'alert' : 'request'),
+          unread: !item.isRead
+        }));
+        setNotifications(mapped.slice(0, 5)); // show top 5 in dropdown
+      } catch (err) {
+        console.error('Failed to fetch notifications', err);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -142,7 +160,13 @@ export default function AppLayout() {
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-dark)' }}>{t('topbar.notifications')}</span>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); setNotifications(notifications.map(n => ({...n, unread: false}))); }}
+                        onClick={async (e) => { 
+                          e.stopPropagation(); 
+                          try {
+                            await api.put('/notifications/mark-all-read');
+                            setNotifications(notifications.map(n => ({...n, unread: false}))); 
+                          } catch(err) { console.error(err); }
+                        }}
                         style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
                       >
                         {t('topbar.markAllRead')}
@@ -155,7 +179,7 @@ export default function AppLayout() {
                             <div style={{ display: 'flex', gap: '12px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: notif.type === 'alert' ? 'var(--danger)' : 'var(--primary)', marginTop: '6px', flexShrink: 0 }}></div>
                               <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '2px' }}>{t(`dashboard.${notif.type === 'request' ? 'newRequest' : (notif.type === 'alert' ? 'stats.complianceRate' : 'welcome')}`)}</div>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '2px' }}>{notif.title}</div>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-gray)', lineHeight: '1.4' }}>{notif.message}</div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '6px' }}>{notif.time}</div>
                               </div>

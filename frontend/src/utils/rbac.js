@@ -159,21 +159,15 @@ export const logSystemActivity = async (action, userName, details = '') => {
 /**
  * Triggers state-persisted notifications for actions in request workflow.
  */
-export const triggerWorkflowNotification = (recipientName, title, message, type = 'info') => {
+export const triggerWorkflowNotification = async (recipientName, title, message, type = 'info') => {
   try {
-    const notifs = JSON.parse(localStorage.getItem('user_notifications')) || [];
-    const newNotif = {
-      id: Date.now() + Math.random().toString(36).substr(2, 5),
-      recipientName,
-      title,
-      message,
-      time: 'À l\'instant',
-      timestamp: new Date().toISOString(),
-      type,
-      unread: true,
-    };
-    notifs.unshift(newNotif);
-    localStorage.setItem('user_notifications', JSON.stringify(notifs));
+    // Send directly to the backend to ensure the notification center picks it up
+    await api.post('/notifications', {
+      titre: title,
+      message: message,
+      type: type,
+      isRead: false
+    });
   } catch (error) {
     console.error('Notification Trigger Error:', error);
   }

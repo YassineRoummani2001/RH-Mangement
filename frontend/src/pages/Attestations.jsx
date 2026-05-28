@@ -45,8 +45,8 @@ export default function Attestations() {
       setIsLoading(true);
       const res = await api.get('/attestations');
       const mapped = (res.data.data || []).map(att => ({
-        id: `DOC-${String(att.id).padStart(3, '0')}`,
-        rawId: att.id,
+        id: `DOC-${(att._id || att.id).toString().slice(-6).toUpperCase()}`,
+        rawId: att._id || att.id,
         type: DOC_TYPES.find(d => d.value === att.type)?.label || att.type,
         typeValue: att.type,
         employee: att.employe ? `${att.employe.prenom} ${att.employe.nom}` : 'Inconnu',
@@ -88,111 +88,126 @@ export default function Attestations() {
   const generatePDF = (doc) => {
     showToast(t('attestations.toast.generating'), 'info');
     setTimeout(() => {
-      const pdf = new jsPDF();
-      const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+      const img = new Image();
+      img.src = '/logo.png';
+      img.onload = () => {
+        const pdf = new jsPDF();
+        const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-      // Header
-      pdf.setFillColor(37, 99, 235);
-      pdf.rect(0, 0, 210, 35, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(20);
-      pdf.text('RH MANAGEMENT', 105, 15, { align: 'center' });
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Gestion des Ressources Humaines', 105, 25, { align: 'center' });
+        // Header Logo
+        pdf.addImage(img, 'PNG', 20, 15, 40, 18);
 
-      // Document type strip
-      const typeColor = doc.type.includes('Salaire') ? [5, 150, 105] : doc.type.includes('Bulletin') ? [124, 58, 237] : [37, 99, 235];
-      pdf.setFillColor(...typeColor);
-      pdf.rect(0, 35, 210, 8, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(doc.type.toUpperCase(), 105, 40.5, { align: 'center' });
+        // Header Text Right
+        pdf.setTextColor(15, 23, 42); // Dark blue-gray
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.text('RH MANAGEMENT S.A.', 190, 20, { align: 'right' });
 
-      // Date
-      pdf.setTextColor(100, 116, 139);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.text(`Casablanca, le ${today}`, 170, 55, { align: 'right' });
-
-      // Title
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(18);
-      pdf.text(doc.type.toUpperCase(), 105, 75, { align: 'center' });
-      pdf.setDrawColor(...typeColor);
-      pdf.setLineWidth(0.8);
-      const tw = pdf.getTextWidth(doc.type.toUpperCase());
-      pdf.line(105 - tw / 2, 78, 105 + tw / 2, 78);
-
-      // Body
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(12);
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Je soussigné(e), Directeur des Ressources Humaines de la société RH MANAGEMENT S.A.,', 20, 95, { maxWidth: 170 });
-      pdf.text('certifie et atteste par la présente que :', 20, 108);
-
-      // Info box
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(20, 118, 170, 40, 4, 4, 'F');
-      pdf.setDrawColor(226, 232, 240);
-      pdf.setLineWidth(0.3);
-      pdf.roundedRect(20, 118, 170, 40, 4, 4, 'S');
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Nom complet :', 25, 130);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.employee, 75, 130);
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Département :', 25, 142);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.dept, 75, 142);
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Réf. Document :', 25, 154);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(doc.id, 75, 154);
-
-      pdf.text('Est régulièrement employé(e) au sein de notre établissement.', 20, 175);
-      pdf.text('La présente attestation est délivrée à l\'intéressé(e) pour servir et valoir ce que de droit.', 20, 185, { maxWidth: 170 });
-
-      // Signature block
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('La Direction RH', 140, 215);
-      if (doc.signedBy) {
-        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(100, 116, 139); // Slate gray
+        pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(10);
-        pdf.setTextColor(190, 24, 93);
-        pdf.text(`Signé électroniquement par : ${doc.signedBy}`, 105, 225, { align: 'center' });
-      }
+        pdf.text('Quartier des Affaires, Casablanca, Maroc', 190, 27, { align: 'right' });
+        pdf.text('Tél : +212 5 22 00 00 00', 190, 33, { align: 'right' });
+        pdf.text('Email : contact@rh-management.com', 190, 39, { align: 'right' });
 
-      // Seal
-      pdf.setDrawColor(...typeColor);
-      pdf.setTextColor(...typeColor);
-      pdf.setLineWidth(0.5);
-      pdf.circle(155, 230, 14);
-      pdf.setFontSize(7);
-      pdf.text('CACHET', 155, 228, { align: 'center' });
-      pdf.text('OFFICIEL', 155, 233, { align: 'center' });
+        // Separator Line
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.5);
+        pdf.line(20, 48, 190, 48);
 
-      // Footer
-      const ph = pdf.internal.pageSize.height;
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(0, ph - 20, 210, 20, 'F');
-      pdf.setDrawColor(226, 232, 240);
-      pdf.line(0, ph - 20, 210, ph - 20);
-      pdf.setTextColor(148, 163, 184);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7);
-      pdf.text('RH MANAGEMENT S.A. — Document généré électroniquement — Valeur juridique garantie', 105, ph - 12, { align: 'center' });
-      pdf.text(`Réf: ${doc.id} | Généré le ${today}`, 105, ph - 6, { align: 'center' });
+        // Date
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFontSize(11);
+        pdf.text(`Fait à Casablanca, le ${today}`, 190, 65, { align: 'right' });
 
-      pdf.save(`${doc.type.replace(/\s+/g, '_')}_${doc.employee.replace(/\s+/g, '_')}_${doc.id}.pdf`);
-      showToast(t('attestations.toast.generated'), 'success');
-      logSystemActivity('Génération PDF', user?.name, `Document ${doc.id} – ${doc.type} généré pour ${doc.employee}`);
+        // Title
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(18);
+        pdf.text(doc.type.toUpperCase(), 105, 85, { align: 'center' });
+        const typeColor = doc.type.includes('Salaire') ? [5, 150, 105] : doc.type.includes('Bulletin') ? [124, 58, 237] : [37, 99, 235];
+        pdf.setDrawColor(...typeColor);
+        pdf.setLineWidth(0.8);
+        const tw = pdf.getTextWidth(doc.type.toUpperCase());
+        pdf.line(105 - tw / 2, 88, 105 + tw / 2, 88);
+
+        // Body
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(12);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text('Je soussigné(e), Directeur des Ressources Humaines de la société RH MANAGEMENT S.A.,', 20, 105, { maxWidth: 170 });
+        pdf.text('certifie et atteste par la présente que :', 20, 118);
+
+        // Info box
+        pdf.setFillColor(248, 250, 252);
+        pdf.roundedRect(20, 128, 170, 40, 4, 4, 'F');
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(20, 128, 170, 40, 4, 4, 'S');
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(11);
+        pdf.text('Collaborateur :', 25, 140);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(doc.employee, 65, 140);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Département :', 25, 152);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(doc.dept, 65, 152);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Statut :', 25, 164);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Employé Actif', 65, 164);
+
+        pdf.text('Est régulièrement employé(e) au sein de notre établissement.', 20, 175);
+        // Footer Text
+        pdf.setFontSize(11);
+        pdf.text('Ce document est délivré pour servir et valoir ce que de droit.', 20, 185);
+
+        // Signatures area
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Signature RH', 40, 205);
+        pdf.text('Signature Direction', 140, 205);
+
+        pdf.setFont('helvetica', 'normal');
+        if (doc.statut === 'SIGNEE' && doc.signedBy) {
+          pdf.setTextColor(190, 24, 93);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`Approuvé par: ${doc.signedBy}`, 130, 225);
+          pdf.setFont('helvetica', 'normal');
+        } else {
+          pdf.setTextColor(148, 163, 184);
+          pdf.text('(En attente)', 143, 215);
+        }
+
+        // Seal
+        pdf.setDrawColor(...typeColor);
+        pdf.setTextColor(...typeColor);
+        pdf.setLineWidth(0.5);
+        pdf.circle(155, 235, 14);
+        pdf.setFontSize(7);
+        pdf.text('CACHET', 155, 233, { align: 'center' });
+        pdf.text('OFFICIEL', 155, 238, { align: 'center' });
+
+        // Footer
+        const ph = pdf.internal.pageSize.height;
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(0, ph - 20, 210, 20, 'F');
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(0, ph - 20, 210, ph - 20);
+        pdf.setTextColor(148, 163, 184);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.text('RH MANAGEMENT S.A. — Document généré électroniquement — Valeur juridique garantie', 105, ph - 12, { align: 'center' });
+        pdf.text(`Réf: ${doc.id} | Généré le ${today}`, 105, ph - 6, { align: 'center' });
+
+        pdf.save(`${doc.type.replace(/\s+/g, '_')}_${doc.employee.replace(/\s+/g, '_')}_${doc.id}.pdf`);
+        showToast(t('attestations.toast.generated'), 'success');
+        logSystemActivity('Génération PDF', user?.name, `Document ${doc.id} – ${doc.type} généré pour ${doc.employee}`);
+      }; // end of img.onload
     }, 800);
   };
 
@@ -236,22 +251,26 @@ export default function Attestations() {
             </button>
           )}
           {isHR && (
-            <button className="action-btn primary" onClick={() => {
+            <button className="action-btn primary" onClick={async () => {
               showToast(t('attestations.toast.generateMonthly'), 'info');
-              setTimeout(() => {
-                const employees = ['Ali Benali', 'Sara Hamidi', 'Karim Ouali', 'Nadia Benmoussa'];
+              try {
+                const empRes = await api.get('/employes');
+                const employees = empRes.data.data;
                 const newDocs = employees.map((emp, index) => ({
-                  id: `DOC-${Date.now() + index}`,
+                  employe: emp._id,
                   type: 'Bulletin de Paie (Mai)',
-                  employee: emp,
-                  dept: ['Ingénierie', 'Marketing', 'Finance', 'RH'][index],
-                  requestedAt: new Date().toISOString().split('T')[0],
-                  status: 'available',
-                  signedBy: 'Fatima Zahra Alaoui'
+                  statut: 'SIGNEE',
+                  dateDemande: new Date(),
+                  dateGeneration: new Date(),
+                  signatureChef: true,
+                  signatureRH: true
                 }));
-                setDocs(prev => [...newDocs, ...prev]);
+                await Promise.all(newDocs.map(doc => api.post('/attestations', doc)));
+                fetchAttestations();
                 showToast(t('attestations.toast.generated'), 'success');
-              }, 1500);
+              } catch (e) {
+                showToast('Erreur génération', 'error');
+              }
             }}>
               <i className="fas fa-file-invoice-dollar"></i> {t('attestations.generateMonthly')}
             </button>
@@ -316,7 +335,7 @@ export default function Attestations() {
                     {!isEmployee && <td><span className="filter-tag blue">{doc.dept}</span></td>}
                     <td>{doc.requestedAt}</td>
                     <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, color: cfg.color, backgroundColor: cfg.bg }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, color: cfg.color, backgroundColor: cfg.bg, whiteSpace: 'nowrap' }}>
                         <i className={cfg.icon}></i> {cfg.label || doc.statut}
                       </span>
                     </td>

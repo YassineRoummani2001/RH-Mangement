@@ -5,13 +5,16 @@ import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
-import { User, Mail, ShieldCheck, Key, Lock, AlertTriangle } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { User, Mail, ShieldCheck, Key, Lock, AlertTriangle, Check } from 'lucide-react';
 import { MOROCCAN_CITIES } from '../utils/cities';
 import { TableRowSkeleton } from '../components/SkeletonLoader';
 
 const Users = () => {
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 5;
 
@@ -27,6 +30,15 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [locationSearch, setLocationSearch] = useState('');
+
+  const filteredCities = MOROCCAN_CITIES.filter(city => 
+    city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(
+      locationSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    )
+  );
 
   const fetchUsers = async () => {
     try {
@@ -82,7 +94,8 @@ const Users = () => {
       setEditForm({ 
         name: user.name, email: user.email, role: user.role,
         jobTitle: user.jobTitle || '', department: user.department || '', phone: user.phone || '',
-        hireDate: user.hireDate || '', contractType: user.contractType || '', location: user.location || ''
+        hireDate: user.hireDate && user.hireDate !== '-' ? user.hireDate.split('/').reverse().join('-') : '', 
+        contractType: user.contractType || '', location: user.location || ''
       });
       setIsEditModalOpen(true);
     }
@@ -96,7 +109,13 @@ const Users = () => {
         email: addForm.email,
         password: addForm.password,
         role: addForm.role,
-        name: addForm.name
+        name: addForm.name,
+        jobTitle: addForm.jobTitle,
+        department: addForm.department,
+        phone: addForm.phone,
+        hireDate: addForm.hireDate,
+        contractType: addForm.contractType,
+        location: addForm.location
       });
       showToast(t('users.toast.created', { name: addForm.name }), 'success');
       setIsAddModalOpen(false);
@@ -113,7 +132,13 @@ const Users = () => {
     try {
       await api.put(`/users/${selectedUser.id}`, {
         email: editForm.email,
-        role: editForm.role
+        role: editForm.role,
+        jobTitle: editForm.jobTitle,
+        department: editForm.department,
+        phone: editForm.phone,
+        hireDate: editForm.hireDate,
+        contractType: editForm.contractType,
+        location: editForm.location
       });
       showToast(t('users.toast.updated', { name: editForm.name }), 'success');
       setIsEditModalOpen(false);
@@ -313,12 +338,127 @@ const Users = () => {
             </div>
             <div className="form-group" style={{ marginBottom: '8px' }}>
               <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}><i className="fas fa-map-marker-alt" style={{ color: 'var(--text-gray)' }}></i> {t('users.modal.location')}</label>
-              <select className="form-input" value={addForm.location} onChange={e => setAddForm({...addForm, location: e.target.value})}>
-                <option value="">Sélectionner...</option>
-                {MOROCCAN_CITIES.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setShowLocationDropdown(!showLocationDropdown);
+                    setLocationSearch('');
+                  }}
+                  className="form-input"
+                  style={{ 
+                    textAlign: 'left', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    paddingRight: '36px',
+                    userSelect: 'none',
+                    width: '100%',
+                    height: '42px',
+                    backgroundColor: 'var(--bg-color)',
+                    borderColor: 'var(--border-color)',
+                    color: addForm.location ? 'var(--text-dark)' : 'var(--text-gray)'
+                  }}
+                >
+                  <span>{addForm.location || 'Sélectionner...'}</span>
+                  <i className="fas fa-chevron-down" style={{ color: 'var(--text-gray)', pointerEvents: 'none' }}></i>
+                </button>
+
+                {showLocationDropdown && (
+                  <>
+                    <div 
+                      onClick={() => setShowLocationDropdown(false)} 
+                      style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'transparent' }} 
+                    />
+                    <div 
+                      style={{ 
+                        position: 'absolute', 
+                        top: '100%', 
+                        left: 0, 
+                        right: 0, 
+                        marginTop: '6px', 
+                        background: isDark ? '#1e293b' : '#ffffff', 
+                        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
+                        borderRadius: '12px', 
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', 
+                        zIndex: 9999,
+                        maxHeight: '260px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <div style={{ padding: '8px', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, background: isDark ? '#1e293b' : '#ffffff' }}>
+                        <input 
+                          type="text"
+                          placeholder="Rechercher une ville..."
+                          value={locationSearch}
+                          onChange={(e) => setLocationSearch(e.target.value)}
+                          autoFocus
+                          style={{
+                            width: '100%',
+                            padding: '8px 12px',
+                            fontSize: '13px',
+                            borderRadius: '8px',
+                            border: `1px solid ${isDark ? '#475569' : '#cbd5e1'}`,
+                            backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                            color: isDark ? '#f1f5f9' : '#0f172a',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                      <div style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
+                        {['Siège Social', ...MOROCCAN_CITIES].filter(city => 
+                            city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(
+                              locationSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                            )
+                          ).map((city) => {
+                          const isSelected = addForm.location === city;
+                          return (
+                            <div 
+                              key={city}
+                              onClick={() => {
+                                setAddForm({ ...addForm, location: city });
+                                setShowLocationDropdown(false);
+                              }}
+                              style={{
+                                padding: '10px 14px',
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                borderRadius: '8px',
+                                color: isSelected ? '#ffffff' : (isDark ? '#cbd5e1' : '#334155'),
+                                background: isSelected ? '#2563eb' : 'transparent',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                transition: 'all 0.15s'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(37,99,235,0.05)';
+                                  e.currentTarget.style.color = isDark ? '#ffffff' : '#2563eb';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = 'transparent';
+                                  e.currentTarget.style.color = isDark ? '#cbd5e1' : '#334155';
+                                }
+                              }}
+                            >
+                              <span>{city}</span>
+                              {isSelected && <Check style={{ width: 14, height: 14 }} />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             <div className="form-group" style={{ marginBottom: '10px', gridColumn: 'span 3' }}>
               <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Key size={14} color="var(--success)"/> {t('users.modal.tempPassword')}</label>
@@ -394,12 +534,127 @@ const Users = () => {
               </div>
               <div className="form-group" style={{ marginBottom: '10px', gridColumn: 'span 3' }}>
                 <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}><i className="fas fa-map-marker-alt" style={{ color: 'var(--text-gray)' }}></i> {t('users.modal.location')}</label>
-                <select className="form-input" value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})}>
-                  <option value="">Sélectionner...</option>
-                  {MOROCCAN_CITIES.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowLocationDropdown(!showLocationDropdown);
+                      setLocationSearch('');
+                    }}
+                    className="form-input"
+                    style={{ 
+                      textAlign: 'left', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      paddingRight: '36px',
+                      userSelect: 'none',
+                      width: '100%',
+                      height: '42px',
+                      backgroundColor: 'var(--bg-color)',
+                      borderColor: 'var(--border-color)',
+                      color: editForm.location ? 'var(--text-dark)' : 'var(--text-gray)'
+                    }}
+                  >
+                    <span>{editForm.location || 'Sélectionner...'}</span>
+                    <i className="fas fa-chevron-down" style={{ color: 'var(--text-gray)', pointerEvents: 'none' }}></i>
+                  </button>
+
+                  {showLocationDropdown && (
+                    <>
+                      <div 
+                        onClick={() => setShowLocationDropdown(false)} 
+                        style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'transparent' }} 
+                      />
+                      <div 
+                        style={{ 
+                          position: 'absolute', 
+                          top: '100%', 
+                          left: 0, 
+                          right: 0, 
+                          marginTop: '6px', 
+                          background: isDark ? '#1e293b' : '#ffffff', 
+                          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
+                          borderRadius: '12px', 
+                          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)', 
+                          zIndex: 9999,
+                          maxHeight: '260px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div style={{ padding: '8px', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, background: isDark ? '#1e293b' : '#ffffff' }}>
+                          <input 
+                            type="text"
+                            placeholder="Rechercher une ville..."
+                            value={locationSearch}
+                            onChange={(e) => setLocationSearch(e.target.value)}
+                            autoFocus
+                            style={{
+                              width: '100%',
+                              padding: '8px 12px',
+                              fontSize: '13px',
+                              borderRadius: '8px',
+                              border: `1px solid ${isDark ? '#475569' : '#cbd5e1'}`,
+                              backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                              color: isDark ? '#f1f5f9' : '#0f172a',
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+                        <div style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
+                          {['Siège Social', ...MOROCCAN_CITIES].filter(city => 
+                              city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(
+                                locationSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                              )
+                            ).map((city) => {
+                            const isSelected = editForm.location === city;
+                            return (
+                              <div 
+                                key={city}
+                                onClick={() => {
+                                  setEditForm({ ...editForm, location: city });
+                                  setShowLocationDropdown(false);
+                                }}
+                                style={{
+                                  padding: '10px 14px',
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  borderRadius: '8px',
+                                  color: isSelected ? '#ffffff' : (isDark ? '#cbd5e1' : '#334155'),
+                                  background: isSelected ? '#2563eb' : 'transparent',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(37,99,235,0.05)';
+                                    e.currentTarget.style.color = isDark ? '#ffffff' : '#2563eb';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isSelected) {
+                                    e.currentTarget.style.background = 'transparent';
+                                    e.currentTarget.style.color = isDark ? '#cbd5e1' : '#334155';
+                                  }
+                                }}
+                              >
+                                <span>{city}</span>
+                                {isSelected && <Check style={{ width: 14, height: 14 }} />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>

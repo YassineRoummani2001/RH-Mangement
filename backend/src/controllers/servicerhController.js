@@ -13,7 +13,7 @@ export const getAll = async (req, res) => {
       }
     }
 
-    const items = await ServiceRH.find(query).populate('employe');
+    const items = await ServiceRH.find(query);
     res.json({ success: true, message: 'Liste récupérée', data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -22,7 +22,7 @@ export const getAll = async (req, res) => {
 
 export const getById = async (req, res) => {
   try {
-    const item = await ServiceRH.findById(req.params.id).populate('employe');
+    const item = await ServiceRH.findById(req.params.id);
     if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
     res.json({ success: true, data: item });
   } catch (error) {

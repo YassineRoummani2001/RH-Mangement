@@ -480,7 +480,7 @@ const Settings = () => {
                           <div style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
                             {filteredCities.length > 0 ? (
                               filteredCities.map((city) => {
-                                const fullCityStr = `${city}, Maroc`;
+                                const fullCityStr = city;
                                 const isSelected = formData.location === fullCityStr;
                                 return (
                                   <div 

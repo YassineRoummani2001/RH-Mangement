@@ -46,8 +46,8 @@ export default function Authorizations() {
         if (item.statut === 'REFUSE') status = 'refused';
 
         return {
-          id: `AUTH-00${item.id}`,
-          rawId: item.id,
+          id: `AUTH-${(item._id || item.id).toString().slice(-6).toUpperCase()}`,
+          rawId: item._id || item.id,
           employee: item.employe ? `${item.employe.prenom} ${item.employe.nom}` : 'Collaborateur',
           dept: item.employe?.service?.nom || 'Général',
           date: item.dateDebut ? new Date(item.dateDebut).toISOString().split('T')[0] : '',
@@ -347,9 +347,7 @@ export default function Authorizations() {
           icon="fas fa-file-alt"
           iconColor="var(--primary)"
           iconBg="var(--primary-bg)"
-          submitColor={null}
-          onSubmit={null}
-          submitText={null}
+          showFooter={false}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[

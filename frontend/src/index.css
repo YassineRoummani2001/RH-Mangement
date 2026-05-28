@@ -1243,6 +1243,7 @@ body {
     border-radius: var(--radius-pill);
     font-size: 0.75rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .filter-tag.blue {
@@ -1278,7 +1279,7 @@ body {
 /* Table Styles */
 .table-container {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 table {
@@ -1296,6 +1297,7 @@ th {
     border-bottom: 1px solid var(--border-color);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 td {
@@ -1304,6 +1306,9 @@ td {
     color: var(--text-dark);
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    white-space: normal;
+    word-break: normal;
+    max-width: 250px;
 }
 
 tr:last-child td {
@@ -1535,8 +1540,10 @@ tr:hover {
 /* ===================== Pagination ===================== */
 .pagination-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
     padding: 14px 20px;
     border-top: 1px solid var(--border-color);
     background: var(--main-bg);
@@ -1551,6 +1558,7 @@ tr:hover {
 
 .pagination-controls {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 4px;
 }

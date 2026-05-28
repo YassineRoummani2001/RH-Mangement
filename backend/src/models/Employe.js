@@ -20,6 +20,8 @@ const employeSchema = new mongoose.Schema({
   dateRecrutement: { type: Date },
   statut: { type: String },
   salaire: { type: Number },
+  contrat: { type: String, default: 'CDI' },
+  localisation: { type: String, default: 'Siège Social' },
 
   // Informations familiales
   conjoint: { type: String },

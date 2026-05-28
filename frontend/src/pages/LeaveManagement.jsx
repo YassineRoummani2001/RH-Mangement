@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -71,6 +72,7 @@ const LeaveManagement = () => {
   // New leave form state
   const [leaveForm, setLeaveForm] = useState({ type: 'Congé Annuel', start: '', end: '', motif: '' });
   const [editForm, setEditForm] = useState({ type: '', period: '' });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredAbsences = absences.filter(abs => {
     if (isEmployee) return abs.name === user?.name;
@@ -249,7 +251,7 @@ const LeaveManagement = () => {
           {/* Calendar Preview Section */}
           <div className="card" style={{ height: '100%' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{i18n.language === 'fr' ? "Calendrier de l'Équipe (Novembre 2026)" : "Team Calendar (November 2026)"}</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{i18n.language === 'fr' ? `Calendrier de l'Équipe (${new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })})` : `Team Calendar (${new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })})`}</h3>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button className="action-btn" style={{ padding: '6px', border: 'none' }}><i className="fas fa-chevron-left"></i></button>
                 <button className="action-btn" style={{ padding: '6px', border: 'none' }}><i className="fas fa-chevron-right"></i></button>
@@ -266,10 +268,22 @@ const LeaveManagement = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
                 {Array(6).fill(null).map((_, i) => <div key={`empty-${i}`}></div>)}
                 
-                {Array.from({ length: 30 }, (_, i) => i + 1).map(day => {
-                  const isToday = day === 16;
-                  const hasAbsence = [3, 8, 12, 13, 20, 24].includes(day);
-                  const isWeekend = (day + 6) % 7 === 6 || (day + 6) % 7 === 0;
+                {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() }, (_, i) => i + 1).map(day => {
+                  const today = new Date();
+                  const isToday = day === today.getDate();
+                  const currentDayDate = new Date(today.getFullYear(), today.getMonth(), day);
+                  
+                  let dayStatus = null; // null | 'approved' | 'alert'
+                  absences.forEach(abs => {
+                    const start = new Date(abs.raw.dateDebut);
+                    const end = abs.raw.dateFin ? new Date(abs.raw.dateFin) : start;
+                    if (currentDayDate >= start && currentDayDate <= end) {
+                      if (abs.raw.statut === 'APPROUVE' || abs.raw.statut === 'APPROUVE_CHEF') dayStatus = 'approved';
+                      if (abs.raw.statut === 'REFUSE') dayStatus = 'alert';
+                    }
+                  });
+                  const hasAbsence = !!dayStatus;
+                  const isWeekend = currentDayDate.getDay() === 0 || currentDayDate.getDay() === 6;
 
                   return (
                     <div key={day} style={{ 
@@ -293,7 +307,7 @@ const LeaveManagement = () => {
                           width: '3px', 
                           height: '3px', 
                           borderRadius: '50%', 
-                          background: day === 13 ? '#EF4444' : 'var(--primary)' 
+                          background: dayStatus === 'alert' ? '#EF4444' : 'var(--primary)' 
                         }}></div>
                       )}
                     </div>
@@ -376,7 +390,7 @@ const LeaveManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAbsences.map((abs) => (
+              {filteredAbsences.slice((currentPage - 1) * 5, currentPage * 5).map((abs) => (
                 <tr key={abs.id}>
                   <td>
                     <div className="user-cell">
@@ -414,6 +428,13 @@ const LeaveManagement = () => {
               )}
             </tbody>
           </table>
+          
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredAbsences.length}
+            itemsPerPage={5}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

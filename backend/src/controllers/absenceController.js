@@ -32,7 +32,14 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const item = new Absence(req.body);
+    const data = { ...req.body };
+    // Auto-link to logged-in user's employe if not provided
+    if (!data.employe && req.user) {
+      const emp = await Employe.findOne({ user: req.user._id });
+      if (emp) data.employe = emp._id;
+    }
+    if (!data.statut) data.statut = 'INJUSTIFIEE';
+    const item = new Absence(data);
     await item.save();
     res.status(201).json({ success: true, message: 'Créé avec succès', data: item });
   } catch (error) {

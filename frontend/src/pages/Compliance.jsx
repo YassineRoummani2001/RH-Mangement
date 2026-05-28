@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import { useToast } from '../context/ToastContext';
 import { jsPDF } from 'jspdf';
 import { GraduationCap, Scale } from 'lucide-react';
@@ -16,7 +17,7 @@ const Compliance = () => {
     try {
       const res = await api.get('/employes');
       const data = res.data.data || [];
-      const mapped = data.slice(0, 5).map((emp, index) => {
+      const mapped = data.map((emp, index) => {
         const requirements = ['Formation Anti-Harcèlement', 'Cybersécurité', 'Protection des Données (RGPD)'];
         return {
           id: emp.id,
@@ -43,6 +44,7 @@ const Compliance = () => {
   }, []);
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -357,7 +359,7 @@ const Compliance = () => {
                   </td>
                 </tr>
               ) : (
-                employees.map((emp) => (
+                employees.slice((currentPage - 1) * 5, currentPage * 5).map((emp) => (
                   <tr key={emp.id}>
                     <td>
                       <div className="user-cell">
@@ -385,6 +387,13 @@ const Compliance = () => {
               )}
             </tbody>
           </table>
+          
+          <Pagination
+            currentPage={currentPage}
+            totalItems={employees.length}
+            itemsPerPage={5}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
 

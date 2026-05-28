@@ -8,7 +8,7 @@ import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { logSystemActivity } from '../utils/rbac';
 
-const DEPARTMENTS = ['Ingénierie', 'Marketing', 'Finance', 'Ressources Humaines', 'Commercial', 'Direction'];
+
 
 const DEPT_COLORS = {
   'Ingénierie':         '#2563EB',
@@ -24,6 +24,7 @@ export default function Assignments() {
   const { showToast } = useToast();
   const { t } = useTranslation();
   const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -39,18 +40,23 @@ export default function Assignments() {
   const fetchAssignments = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/affectations');
-      const data = res.data.data || [];
+      const [affRes, srvRes] = await Promise.all([
+        api.get('/affectations'),
+        api.get('/services')
+      ]);
+      const data = affRes.data.data || [];
+      const servicesData = srvRes.data.data || [];
+      setDepartments(servicesData.map(s => s.nom));
       const mapped = data.map(item => ({
-        id: item.id,
+        id: item._id || item.id,
         name: item.employe ? `${item.employe.prenom} ${item.employe.nom}` : 'Non spécifié',
         email: item.employe?.cin ? `${item.employe.prenom.toLowerCase()}@rh.ma` : 'inconnu@rh.ma',
         poste: item.poste || item.employe?.poste || 'Collaborateur',
         dept: item.service?.nom || 'Général',
         assignedSince: item.dateDebut ? new Date(item.dateDebut).toLocaleDateString('fr-FR') : 'Non définie',
         status: item.employe?.statut || 'Actif',
-        serviceId: item.service?.id,
-        employeId: item.employe?.id
+        serviceId: item.service?._id || item.service?.id,
+        employeId: item.employe?._id || item.employe?.id
       }));
       setEmployees(mapped);
     } catch (err) {
@@ -81,7 +87,7 @@ export default function Assignments() {
         employe_id: selectedEmp.employeId,
         poste: editForm.poste,
         dateDebut: new Date().toISOString().split('T')[0],
-        service_id: matchedService ? matchedService.id : null
+        service_id: matchedService ? (matchedService._id || matchedService.id) : null
       });
 
       logSystemActivity('Modification Affectation', user?.name, `${selectedEmp.name} → ${editForm.dept} (${editForm.poste})`);
@@ -107,7 +113,7 @@ export default function Assignments() {
     }
   };
 
-  const deptCounts = DEPARTMENTS.reduce((acc, dept) => {
+  const deptCounts = departments.reduce((acc, dept) => {
     acc[dept] = employees.filter(e => e.dept === dept).length;
     return acc;
   }, {});
@@ -132,7 +138,7 @@ export default function Assignments() {
 
       {/* Dept Overview */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-        {DEPARTMENTS.map(dept => {
+        {departments.map(dept => {
           const color = DEPT_COLORS[dept] || 'var(--primary)';
           const count = deptCounts[dept] || 0;
           return (
@@ -232,7 +238,7 @@ export default function Assignments() {
               <i className="fas fa-building" style={{ color: 'var(--c-purple)' }}></i> {t('assignments.modal.department')}
             </label>
             <select name="dept" className="form-input" value={editForm.dept} onChange={handleEditChange}>
-              {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
+              {departments.map(d => <option key={d}>{d}</option>)}
             </select>
           </div>
           <div className="form-group" style={{ marginBottom: '12px' }}>

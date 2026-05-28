@@ -32,10 +32,10 @@ const Dashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
   const [statsState, setStatsState] = useState({
-    activeEmployees: '...',
-    pendingVal: '...',
-    onLeaveToday: '...',
-    complianceRate: '87%'
+    activeEmployees: '0',
+    pendingVal: '0',
+    onLeaveToday: '0',
+    complianceRate: '0%'
   });
   const [recentRequestsList, setRecentRequestsList] = useState([]);
   const [chartData, setChartData] = useState([
@@ -148,7 +148,8 @@ const Dashboard = () => {
         setDeptList(mappedDepts);
       }
 
-      // Calculate Dynamic Recent Activity from Audit Logs
+      // Calculate Dynamic Recent Activity:
+      // First try from audit logs; if empty, derive from real conges + attestations + absences
       if (auditLogs.length > 0) {
         const mappedActivity = auditLogs.slice(0, 3).map(log => {
           let icon = 'fa-sync';
@@ -176,6 +177,48 @@ const Dashboard = () => {
           };
         });
         setRecentActivityList(mappedActivity);
+      } else {
+        // Build activity feed from real DB records
+        const activities = [];
+
+        conges.slice(0, 2).forEach(c => {
+          const name = c.employe ? `${c.employe.prenom} ${c.employe.nom}` : 'Employé';
+          let icon = 'fa-calendar-plus'; let bg = '#EFF6FF'; let color = '#2563EB';
+          if (c.statut === 'APPROUVE') { icon = 'fa-check'; bg = '#DCFCE7'; color = '#059669'; }
+          if (c.statut === 'REFUSE') { icon = 'fa-times'; bg = '#FEF2F2'; color = '#EF4444'; }
+          activities.push({
+            id: c._id,
+            icon, bg, color,
+            title: `Demande de congé — ${name}`,
+            desc: `${c.motif || 'Congé'} • ${c.nombreJours || '?'} jours • ${c.statut || 'EN_ATTENTE'}`
+          });
+        });
+
+        attestations.slice(0, 2).forEach(a => {
+          const name = a.employe ? `${a.employe.prenom} ${a.employe.nom}` : 'Employé';
+          let icon = 'fa-file-alt'; let bg = '#F5F3FF'; let color = '#7C3AED';
+          if (a.statut === 'SIGNEE') { icon = 'fa-check-circle'; bg = '#DCFCE7'; color = '#059669'; }
+          activities.push({
+            id: a._id,
+            icon, bg, color,
+            title: `Attestation ${a.type || ''} — ${name}`,
+            desc: `Statut: ${a.statut || 'EN_ATTENTE'} • ${a.dateDemande ? new Date(a.dateDemande).toLocaleDateString('fr-FR') : 'Aujourd\'hui'}`
+          });
+        });
+
+        absences.slice(0, 1).forEach(ab => {
+          const name = ab.employe ? `${ab.employe.prenom} ${ab.employe.nom}` : 'Employé';
+          activities.push({
+            id: ab._id,
+            icon: 'fa-user-times',
+            bg: '#FEF2F2',
+            color: '#EF4444',
+            title: `Absence enregistrée — ${name}`,
+            desc: `${ab.type || 'Absence'} • ${ab.statut || 'INJUSTIFIEE'}`
+          });
+        });
+
+        if (activities.length > 0) setRecentActivityList(activities.slice(0, 3));
       }
 
       // Calculate Dynamic Evolution Chart Data (Requests & Absences per month)
@@ -222,7 +265,7 @@ const Dashboard = () => {
       });
 
       // Recent requests list mapping
-      const mappedRecent = attestations.slice(0, 4).map(att => {
+      const mappedRecent = attestations.map(att => {
         let status = 'En attente';
         if (att.statut === 'SIGNE' || att.statut === 'SIGNEE' || att.statut === 'GENEREE') status = 'Approuvé';
         if (att.statut === 'REJETE' || att.statut === 'REFUSE') status = 'Rejeté';
@@ -503,34 +546,98 @@ const Dashboard = () => {
 
   // --- Employee Form State ---
   const [employeeForm, setEmployeeForm] = useState({ prenom: '', nom: '', email: '', poste: '', departement: 'Ingénierie' });
+  const [dashboardServices, setDashboardServices] = useState([]);
+  const [dashboardEmployees, setDashboardEmployees] = useState([]);
+
+  // Fetch services + employees for Quick Action modals once
+  useEffect(() => {
+    api.get('/services').then(r => setDashboardServices(r.data?.data || [])).catch(() => {});
+    api.get('/employes').then(r => setDashboardEmployees(r.data?.data || [])).catch(() => {});
+  }, []);
+
   const handleEmployeeChange = e => setEmployeeForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleEmployeeSubmit = () => {
-    showToast('Employé ajouté avec succès !', 'success');
-    setEmployeeForm({ prenom: '', nom: '', email: '', poste: '', departement: 'Ingénierie' });
-    setIsEmployeeModalOpen(false);
+
+  const handleEmployeeSubmit = async () => {
+    try {
+      const matchedService = dashboardServices.find(s => s.nom === employeeForm.departement);
+      await api.post('/employes', {
+        prenom: employeeForm.prenom,
+        nom: employeeForm.nom,
+        poste: employeeForm.poste,
+        statut: 'ACTIF',
+        service_id: matchedService?._id || matchedService?.id || undefined
+      });
+      showToast(`Employé ${employeeForm.prenom} ${employeeForm.nom} ajouté avec succès !`, 'success');
+      setEmployeeForm({ prenom: '', nom: '', email: '', poste: '', departement: 'Ingénierie' });
+      setIsEmployeeModalOpen(false);
+      // Refresh employee count in stats
+      api.get('/employes').then(r => {
+        setStatsState(prev => ({ ...prev, activeEmployees: r.data?.data?.length || prev.activeEmployees }));
+        setDashboardEmployees(r.data?.data || []);
+      }).catch(() => {});
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Erreur lors de la création de l\'employé', 'error');
+    }
   };
 
   // --- Request Form State (Manager) ---
   const [requestForm, setRequestForm] = useState({ type: 'Attestation de Travail', priorite: 'Normale (Délai 48h)', description: '', fichier: null });
   const handleRequestChange = e => setRequestForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleRequestSubmit = () => {
-    showToast('Votre demande a été soumise à l\'équipe RH.', 'info');
-    setRequestForm({ type: 'Attestation de Travail', priorite: 'Normale (Délai 48h)', description: '', fichier: null });
-    setIsRequestModalOpen(false);
+
+  const handleRequestSubmit = async () => {
+    try {
+      await api.post('/attestations', { type: requestForm.type });
+      showToast('Votre demande a été soumise à l\'équipe RH.', 'success');
+      setRequestForm({ type: 'Attestation de Travail', priorite: 'Normale (Délai 48h)', description: '', fichier: null });
+      setIsRequestModalOpen(false);
+      // Refresh pending count
+      api.get('/attestations').then(r => {
+        const pending = (r.data?.data || []).filter(a => a.statut === 'EN_ATTENTE').length;
+        api.get('/conges').then(rc => {
+          const pendingC = (rc.data?.data || []).filter(c => c.statut === 'EN_ATTENTE').length;
+          setStatsState(prev => ({ ...prev, pendingVal: pending + pendingC }));
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Erreur lors de la soumission', 'error');
+    }
   };
 
   // --- Leave Form State ---
   const [leaveForm, setLeaveForm] = useState({ employe: '', type: 'Congé Annuel', dateDebut: '', dateFin: '' });
   const handleLeaveChange = e => setLeaveForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleLeaveSubmit = () => {
-    showToast('Absence enregistrée dans le système.', 'success');
-    setLeaveForm({ employe: '', type: 'Congé Annuel', dateDebut: '', dateFin: '' });
-    setIsLeaveModalOpen(false);
+
+  const handleLeaveSubmit = async () => {
+    try {
+      const d1 = new Date(leaveForm.dateDebut);
+      const d2 = new Date(leaveForm.dateFin);
+      const nombreJours = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+      await api.post('/conges', {
+        employe: leaveForm.employe || undefined,
+        motif: leaveForm.type,
+        dateDebut: leaveForm.dateDebut,
+        dateFin: leaveForm.dateFin,
+        nombreJours,
+        statut: 'EN_ATTENTE'
+      });
+      showToast('Demande de congé enregistrée avec succès !', 'success');
+      setLeaveForm({ employe: '', type: 'Congé Annuel', dateDebut: '', dateFin: '' });
+      setIsLeaveModalOpen(false);
+      // Refresh pending count
+      api.get('/conges').then(r => {
+        const pending = (r.data?.data || []).filter(c => c.statut === 'EN_ATTENTE').length;
+        setStatsState(prev => ({ ...prev, pendingVal: Number(prev.pendingVal) + (pending > 0 ? 1 : 0) }));
+      }).catch(() => {});
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Erreur lors de l\'enregistrement', 'error');
+    }
   };
 
   // --- Dashboard Table Pagination ---
   const [dashboardPage, setDashboardPage] = useState(1);
-  const DASHBOARD_TOTAL = 452;
 
   // ── SECRETARY GENERAL DASHBOARD ──────────────────────────────────────────
   if (effectiveRole === 'SECRETARY_GENERAL') {
@@ -951,10 +1058,19 @@ const Dashboard = () => {
                   <Building2 size={12} color="var(--success)" /> Département
                 </label>
                 <select name="departement" className="form-input" value={employeeForm.departement} onChange={handleEmployeeChange}>
-                  <option>Ingénierie</option>
-                  <option>Marketing</option>
-                  <option>Ventes</option>
-                  <option>Ressources Humaines</option>
+                  {dashboardServices.length > 0
+                    ? dashboardServices.map(s => (
+                        <option key={s._id || s.id} value={s.nom}>{s.nom}</option>
+                      ))
+                    : (
+                      <>
+                        <option>Ingénierie</option>
+                        <option>Ressources Humaines</option>
+                        <option>Commercial</option>
+                        <option>Finance</option>
+                      </>
+                    )
+                  }
                 </select>
               </div>
             </div>
@@ -982,8 +1098,11 @@ const Dashboard = () => {
                 </label>
                 <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
                   <option value="">Sélectionnez un employé...</option>
-                  <option value="john-davis">John Davis (Opérations)</option>
-                  <option value="maria-chen">Maria Chen (Conformité)</option>
+                  {dashboardEmployees.map(emp => (
+                    <option key={emp._id || emp.id} value={emp._id || emp.id}>
+                      {emp.prenom} {emp.nom}{emp.service?.nom ? ` (${emp.service.nom})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
@@ -1308,12 +1427,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {(recentRequestsList.length > 0 ? recentRequestsList : [
-                { icon: 'fa-file-invoice', iconBg: '#DBEAFE', iconColor: '#2563EB', title: t('dashboard.salaryCertificate'), sub: `PDF • ${t('requests.table.request')}`, dept: 'Finance', initials: 'SM', avatarBg: '#2563EB', owner: 'Sarah Miller', status: t('requests.tabs.completed'), statusBg: '#DCFCE7', statusColor: '#16A34A', date: '10 Nov, 2026' },
-                { icon: 'fa-plane-departure', iconBg: '#ECFCCB', iconColor: '#65A30D', title: t('requests.table.leave'), sub: `14 ${t('employees.stats.onLeave')} • Formulaire`, dept: 'Opérations', initials: 'JD', avatarBg: '#0D9488', owner: 'John Davis', status: t('requests.tabs.pending'), statusBg: '#FEF3C7', statusColor: '#D97706', date: '12 Nov, 2026' },
-                { icon: 'fa-briefcase-medical', iconBg: '#F3E8FF', iconColor: '#9333EA', title: t('requests.table.medical'), sub: `Médical • PDF`, dept: 'RH', initials: 'AK', avatarBg: '#9333EA', owner: 'Alex Kim', status: t('requests.tabs.completed'), statusBg: '#DCFCE7', statusColor: '#16A34A', date: '08 Nov, 2026' },
-                { icon: 'fa-shield-alt', iconBg: '#CCFBF1', iconColor: '#0D9488', title: t('requests.table.complianceChecklist'), sub: 'v1.5 • XLSX', dept: 'Conformité', initials: 'MC', avatarBg: '#10B981', owner: 'Maria Chen', status: t('requests.tabs.inProgress'), statusBg: '#FEF3C7', statusColor: '#D97706', date: '11 Nov, 2026' },
-              ]).map((row, i) => (
+              {(recentRequestsList.length > 0 ? recentRequestsList : []).slice((dashboardPage - 1) * 4, dashboardPage * 4).map((row, i) => (
                 <tr key={i}>
                   <td>
                     <div className="user-cell">
@@ -1349,7 +1463,7 @@ const Dashboard = () => {
         </div>
         <Pagination
           currentPage={dashboardPage}
-          totalItems={DASHBOARD_TOTAL}
+          totalItems={recentRequestsList.length}
           itemsPerPage={4}
           onPageChange={setDashboardPage}
         />

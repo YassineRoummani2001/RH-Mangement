@@ -14,6 +14,8 @@ export default function Finance() {
   const [bonus, setBonus] = useState(1500);
   const [allowance, setAllowance] = useState(800); // Prime de transport/logement
   const [isSigned, setIsSigned] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchFinanceEmployees = async () => {
     try {
@@ -40,7 +42,7 @@ export default function Finance() {
     fetchFinanceEmployees();
   }, []);
 
-  const currentEmp = mockEmployees.find(e => e.id === Number(selectedEmpId)) || mockEmployees[0] || { name: 'Chargement...', role: 'HR', baseSalary: 8500, department: 'RH', contractType: 'CDI' };
+  const currentEmp = mockEmployees.find(e => String(e.id) === String(selectedEmpId)) || mockEmployees[0] || { name: 'Chargement...', role: 'HR', baseSalary: 8500, department: 'RH', contractType: 'CDI' };
 
   // Moroccan Tax Deductions Logic
   const baseSalary = currentEmp.baseSalary;
@@ -131,25 +133,100 @@ export default function Finance() {
               <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(37,99,235,.1)', color: '#2563eb' }}><User style={{ width: 12, height: 12 }} /></span>
               {i18n.language === 'fr' ? 'Sélectionner un collaborateur' : 'Select Employee'}
             </label>
-            <select 
-              value={selectedEmpId}
-              onChange={(e) => setSelectedEmpId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                fontSize: '14px',
-                borderRadius: '10px',
-                border: `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-                color: isDark ? '#f1f5f9' : '#0f172a',
-                outline: 'none',
-                fontFamily: 'inherit'
-              }}
-            >
-              {mockEmployees.map(emp => (
-                <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  borderRadius: '10px',
+                  border: `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                  backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                  color: isDark ? '#f1f5f9' : '#0f172a',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <span>{currentEmp ? `${currentEmp.name} (${currentEmp.role})` : (i18n.language === 'fr' ? 'Sélectionner...' : 'Select...')}</span>
+                <i className={`fas fa-chevron-${isDropdownOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-gray)' }}></i>
+              </div>
+              
+              {isDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '8px',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                  borderRadius: '10px',
+                  boxShadow: isDark ? '0 10px 25px rgba(0,0,0,0.5)' : '0 10px 25px rgba(0,0,0,0.1)',
+                  zIndex: 50,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ padding: '8px', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}>
+                    <div style={{ position: 'relative' }}>
+                      <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-gray)', fontSize: '0.85rem' }}></i>
+                      <input 
+                        type="text" 
+                        placeholder={i18n.language === 'fr' ? 'Rechercher un employé...' : 'Search employee...'}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px 8px 36px',
+                          borderRadius: '8px',
+                          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                          backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                          color: isDark ? '#f1f5f9' : '#0f172a',
+                          outline: 'none',
+                          fontSize: '13px'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ overflowY: 'auto', maxHeight: '220px' }}>
+                    {mockEmployees.filter(emp => emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.role.toLowerCase().includes(searchTerm.toLowerCase())).map(emp => (
+                      <div 
+                        key={emp.id}
+                        onClick={() => {
+                          setSelectedEmpId(emp.id);
+                          setIsDropdownOpen(false);
+                          setSearchTerm('');
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          cursor: 'pointer',
+                          color: isDark ? '#cbd5e1' : '#374151',
+                          backgroundColor: String(selectedEmpId) === String(emp.id) ? (isDark ? 'rgba(37,99,235,0.2)' : '#EFF6FF') : 'transparent',
+                          borderLeft: String(selectedEmpId) === String(emp.id) ? '3px solid #2563EB' : '3px solid transparent',
+                          transition: 'background-color 0.2s',
+                          fontSize: '13px',
+                          fontWeight: String(selectedEmpId) === String(emp.id) ? 600 : 400
+                        }}
+                        onMouseEnter={(e) => { if(String(selectedEmpId) !== String(emp.id)) e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#F8FAFC' }}
+                        onMouseLeave={(e) => { if(String(selectedEmpId) !== String(emp.id)) e.currentTarget.style.backgroundColor = 'transparent' }}
+                      >
+                        <span style={{ color: String(selectedEmpId) === String(emp.id) ? '#2563EB' : 'inherit' }}>{emp.name}</span> <span style={{ color: 'var(--text-gray)', fontSize: '0.9em' }}>({emp.role})</span>
+                      </div>
+                    ))}
+                    {mockEmployees.filter(emp => emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || emp.role.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                      <div style={{ padding: '20px 16px', color: 'var(--text-gray)', fontSize: '13px', textAlign: 'center', fontStyle: 'italic' }}>
+                        {i18n.language === 'fr' ? 'Aucun collaborateur trouvé' : 'No employees found'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Baseline Salary Show */}
