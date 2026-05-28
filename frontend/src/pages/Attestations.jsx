@@ -1,38 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { jsPDF } from 'jspdf';
 import { triggerWorkflowNotification, logSystemActivity } from '../utils/rbac';
 
-const MOCK_DOCS = [
-  { id: 'DOC-001', type: 'Attestation de Travail', employee: 'Ali Benali', dept: 'Ingénierie', requestedAt: '2026-05-10', status: 'available', signedBy: null },
-  { id: 'DOC-002', type: 'Attestation de Salaire', employee: 'Sara Hamidi', dept: 'Marketing', requestedAt: '2026-05-14', status: 'processing', signedBy: null },
-  { id: 'DOC-003', type: 'Bulletin de Paie (Avril)', employee: 'Ali Benali', dept: 'Ingénierie', requestedAt: '2026-05-01', status: 'available', signedBy: 'Fatima Zahra Alaoui' },
-  { id: 'DOC-004', type: 'Attestation de Travail', employee: 'Karim Ouali', dept: 'Finance', requestedAt: '2026-05-18', status: 'waitingSignature', signedBy: null },
-  { id: 'DOC-005', type: 'Bulletin de Paie (Mars)', employee: 'Sara Hamidi', dept: 'Marketing', requestedAt: '2026-04-30', status: 'available', signedBy: 'Fatima Zahra Alaoui' },
-];
-
 const DOC_TYPES = [
-  { value: 'Attestation de Travail', icon: 'fas fa-briefcase', color: '#2563EB', bg: '#EFF6FF', filterValue: 'work' },
-  { value: 'Attestation de Salaire', icon: 'fas fa-money-bill-wave', color: '#059669', bg: '#ECFDF5', filterValue: 'salary' },
-  { value: 'Bulletin de Paie', icon: 'fas fa-file-invoice-dollar', color: '#7C3AED', bg: '#F5F3FF', filterValue: 'payslip' },
+  { value: 'travail',       label: 'Attestation de Travail',   icon: 'fas fa-briefcase',          color: '#2563EB', bg: '#EFF6FF', filterValue: 'work' },
+  { value: 'salaire',       label: 'Attestation de Salaire',   icon: 'fas fa-money-bill-wave',    color: '#059669', bg: '#ECFDF5', filterValue: 'salary' },
+  { value: 'administratif', label: 'Bulletin de Paie',         icon: 'fas fa-file-invoice-dollar', color: '#7C3AED', bg: '#F5F3FF', filterValue: 'payslip' },
 ];
 
 const statusConfig = {
-  'available':        { color: '#10B981', bg: '#ECFDF5', icon: 'fas fa-check-circle' },
-  'processing':       { color: '#F59E0B', bg: '#FFFBEB', icon: 'fas fa-hourglass-half' },
-  'waitingSignature': { color: '#3B82F6', bg: '#EFF6FF', icon: 'fas fa-pen' },
+  'EN_ATTENTE':   { color: '#F59E0B', bg: '#FFFBEB', icon: 'fas fa-hourglass-half',  label: 'En attente' },
+  'GENEREE':      { color: '#3B82F6', bg: '#EFF6FF', icon: 'fas fa-pen',             label: 'En traitement' },
+  'SIGNEE':       { color: '#10B981', bg: '#ECFDF5', icon: 'fas fa-check-circle',    label: 'Disponible' },
+  'REFUSEE':      { color: '#EF4444', bg: '#FEF2F2', icon: 'fas fa-times-circle',    label: 'Refusée' },
 };
 
 export default function Attestations() {
   const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [docs, setDocs] = useState(MOCK_DOCS);
+  const [docs, setDocs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [page, setPage] = useState(1);
@@ -42,24 +37,52 @@ export default function Attestations() {
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
   const isSecretary = effectiveRole === 'SECRETARY_GENERAL';
 
-  const [form, setForm] = useState({ type: 'Attestation de Travail', note: '' });
+  const [form, setForm] = useState({ type: 'travail', note: '' });
   const handleFormChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleRequest = () => {
-    const newDoc = {
-      id: `DOC-${Date.now()}`,
-      type: form.type,
-      employee: user?.name,
-      dept: user?.dept,
-      requestedAt: new Date().toISOString().split('T')[0],
-      status: 'processing',
-      signedBy: null,
-    };
-    setDocs(prev => [newDoc, ...prev]);
-    triggerWorkflowNotification('Agent RH', 'Nouvelle demande d\'attestation', `${user?.name} a demandé : ${form.type}.`, 'request');
-    showToast(t('attestations.toast.submitted'), 'success');
-    setIsRequestModalOpen(false);
-    setForm({ type: 'Attestation de Travail', note: '' });
+  const fetchAttestations = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/attestations');
+      const mapped = (res.data.data || []).map(att => ({
+        id: `DOC-${String(att.id).padStart(3, '0')}`,
+        rawId: att.id,
+        type: DOC_TYPES.find(d => d.value === att.type)?.label || att.type,
+        typeValue: att.type,
+        employee: att.employe ? `${att.employe.prenom} ${att.employe.nom}` : 'Inconnu',
+        dept: att.employe?.service?.nom || 'Général',
+        requestedAt: att.dateDemande ? new Date(att.dateDemande).toLocaleDateString('fr-FR') : '',
+        status: att.statut === 'SIGNEE' ? 'available' : att.statut === 'GENEREE' ? 'waitingSignature' : att.statut === 'REFUSEE' ? 'refused' : 'processing',
+        statut: att.statut,
+        signedBy: att.signatureRH ? user?.name : null,
+      }));
+      setDocs(mapped.reverse());
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur chargement attestations', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttestations();
+  }, []);
+
+
+
+  const handleRequest = async () => {
+    try {
+      await api.post('/attestations', { type: form.type, note: form.note });
+      triggerWorkflowNotification('Agent RH', 'Nouvelle demande d\'attestation', `${user?.name} a demandé une attestation de type ${form.type}.`, 'request');
+      showToast(t('attestations.toast.submitted'), 'success');
+      setIsRequestModalOpen(false);
+      setForm({ type: 'travail', note: '' });
+      fetchAttestations();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la soumission', 'error');
+    }
   };
 
   const generatePDF = (doc) => {
@@ -175,17 +198,20 @@ export default function Attestations() {
 
   const tabs = ['all', 'work', 'salary', 'payslip'];
   
-  const getTabFilterValue = (tab) => {
-      if (tab === 'work') return 'Attestation de Travail';
-      if (tab === 'salary') return 'Attestation de Salaire';
-      if (tab === 'payslip') return 'Bulletin de Paie';
-      return 'Tous';
+  const getTabTypeValue = (tab) => {
+    if (tab === 'work') return 'travail';
+    if (tab === 'salary') return 'salaire';
+    if (tab === 'payslip') return 'administratif';
+    return null;
   };
 
   const filtered = docs.filter(d => {
     if (isEmployee) return d.employee === user?.name;
     return true;
-  }).filter(d => activeTab === 'all' || d.type.startsWith(getTabFilterValue(activeTab)));
+  }).filter(d => {
+    const tabType = getTabTypeValue(activeTab);
+    return !tabType || d.typeValue === tabType;
+  });
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -236,7 +262,7 @@ export default function Attestations() {
       {/* Doc Type Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {DOC_TYPES.map(dt => {
-          const count = docs.filter(d => d.type.startsWith(dt.value.split(' ')[0]) && (isEmployee ? d.employee === user?.name : true)).length;
+          const count = docs.filter(d => d.typeValue === dt.value && (isEmployee ? d.employee === user?.name : true)).length;
           return (
             <div key={dt.value} className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', cursor: 'pointer', borderTop: `3px solid ${dt.color}` }}
               onClick={() => { setActiveTab(dt.filterValue); setPage(1); }}>
@@ -281,7 +307,7 @@ export default function Attestations() {
               {paginated.length === 0 ? (
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-gray)' }}>{t('attestations.table.noData')}</td></tr>
               ) : paginated.map(doc => {
-                const cfg = statusConfig[doc.status] || statusConfig['processing'];
+                const cfg = statusConfig[doc.statut] || statusConfig['EN_ATTENTE'];
                 return (
                   <tr key={doc.id}>
                     <td><span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)', fontSize: '0.8rem' }}>{doc.id}</span></td>
@@ -291,7 +317,7 @@ export default function Attestations() {
                     <td>{doc.requestedAt}</td>
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, color: cfg.color, backgroundColor: cfg.bg }}>
-                        <i className={cfg.icon}></i> {t(`attestations.${doc.status}`)}
+                        <i className={cfg.icon}></i> {cfg.label || doc.statut}
                       </span>
                     </td>
                     <td>
@@ -301,14 +327,14 @@ export default function Attestations() {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        {doc.status === 'available' && (
+                        {doc.statut === 'SIGNEE' && (
                           <button onClick={() => generatePDF(doc)}
                             style={{ background: '#ECFDF5', color: '#10B981', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
                             <i className="fas fa-download"></i>
                           </button>
                         )}
-                        {isHR && doc.status !== 'available' && (
-                          <button onClick={() => { setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, status: 'waitingSignature' } : d)); showToast(t('attestations.toast.processed'), 'success'); }}
+                        {isHR && doc.statut === 'EN_ATTENTE' && (
+                          <button onClick={async () => { try { await api.put(`/attestations/${doc.rawId}/generate`); showToast(t('attestations.toast.processed'), 'success'); fetchAttestations(); } catch(e) { showToast('Erreur de validation', 'error'); } }}
                             style={{ background: '#EFF6FF', color: '#2563EB', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
                             <i className="fas fa-check"></i>
                           </button>

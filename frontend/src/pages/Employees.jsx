@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
@@ -6,7 +7,8 @@ import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { logSystemActivity } from '../utils/rbac';
-import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { TableRowSkeleton } from '../components/SkeletonLoader';
 
 const Employees = () => {
   const { showToast } = useToast();
@@ -18,6 +20,9 @@ const Employees = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedDept, setSelectedDept] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form states f Add Employee
   const [addForm, setAddForm] = useState({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
@@ -42,59 +47,177 @@ const Employees = () => {
     if (type === 'delete') setIsDeleteModalOpen(true);
   };
 
-  const onAddSubmit = (e) => {
+  const onAddSubmit = async (e) => {
     e.preventDefault();
     const fullName = `${addForm.firstName} ${addForm.lastName}`;
-    showToast(`Employé ${fullName} ajouté avec succès !`, 'success');
-    logSystemActivity(
-      "Création d'employé",
-      user?.name,
-      `Création du profil de l'employé: ${fullName} (${addForm.role}) dans le service ${addForm.dept}`
-    );
-    setIsAddModalOpen(false);
-    // Reset form
-    setAddForm({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
+    try {
+      const matchedService = services.find(s => s.nom.toLowerCase() === addForm.dept.toLowerCase());
+      const serviceId = matchedService ? matchedService.id : null;
+
+      await api.post('/employes', {
+        prenom: addForm.firstName,
+        nom: addForm.lastName,
+        email: addForm.email,
+        poste: addForm.role,
+        statut: 'ACTIF',
+        service_id: serviceId
+      });
+
+      showToast(`Employé ${fullName} ajouté avec succès !`, 'success');
+      logSystemActivity(
+        "Création d'employé",
+        user?.name,
+        `Création du profil de l'employé: ${fullName} (${addForm.role}) dans le service ${addForm.dept}`
+      );
+      setIsAddModalOpen(false);
+      setAddForm({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
+      fetchEmployees();
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      const errMsg = error.response?.data?.message || 'Erreur lors de la création de l\'employé';
+      showToast(errMsg, 'error');
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
-    showToast('Profil mis à jour !', 'success');
-    logSystemActivity(
-      "Modification d'employé",
-      user?.name,
-      `Modification du profil de ${selectedEmployee.name} -> Nouveau rôle: ${editForm.role}`
-    );
-    setIsEditModalOpen(false);
+    try {
+      const [firstName, ...lastNameArr] = editForm.name.trim().split(' ');
+      const lastName = lastNameArr.join(' ') || ' ';
+
+      await api.put(`/employes/${selectedEmployee.id}`, {
+        prenom: firstName,
+        nom: lastName,
+        email: editForm.email,
+        poste: editForm.role
+      });
+
+      showToast('Profil mis à jour !', 'success');
+      logSystemActivity(
+        "Modification d'employé",
+        user?.name,
+        `Modification du profil de ${selectedEmployee.name} -> Nouveau rôle: ${editForm.role}`
+      );
+      setIsEditModalOpen(false);
+      fetchEmployees();
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      const errMsg = error.response?.data?.message || 'Erreur lors de la modification de l\'employé';
+      showToast(errMsg, 'error');
+    }
   };
 
-  const onDeleteSubmit = () => {
-    showToast('L\'employé a été retiré du système.', 'error');
-    logSystemActivity(
-      "Suppression d'employé",
-      user?.name,
-      `Suppression définitive du compte de l'employé ${selectedEmployee.name}`
-    );
-    setIsDeleteModalOpen(false);
+  const onDeleteSubmit = async () => {
+    try {
+      await api.delete(`/employes/${selectedEmployee.id}`);
+      showToast('L\'employé a été retiré du système.', 'error');
+      logSystemActivity(
+        "Suppression d'employé",
+        user?.name,
+        `Suppression définitive du compte de l'employé ${selectedEmployee.name}`
+      );
+      setIsDeleteModalOpen(false);
+      fetchEmployees();
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      const errMsg = error.response?.data?.message || 'Erreur lors de la suppression de l\'employé';
+      showToast(errMsg, 'error');
+    }
   };
 
-  const employeesData = [
-    { id: 1, name: "Emma Wilson", email: "emma.w@company.com", role: "Chef de Produit Senior", type: "Temps plein", dept: "Produit", date: "15 Jan, 2024", status: "Actif", initials: "EW", bg: "#2563EB" },
-    { id: 2, name: "David Chen", email: "david.c@entreprise.com", role: "Développeur Frontend", type: "Temps plein", dept: "Ingénierie", date: "01 Mar, 2025", status: "Actif", initials: "DC", bg: "#10B981" },
-    { id: 3, name: "Sarah Miller", email: "sarah.m@entreprise.com", role: "Analyste Financière", type: "Temps partiel", dept: "Finance", date: "10 Nov, 2023", status: "En Congé", initials: "SM", bg: "#F59E0B" },
-    { id: 4, name: "Marcus Rowe", email: "marcus.r@entreprise.com", role: "Généraliste RH", type: "Temps plein", dept: "Ressources Humaines", date: "20 Oct, 2026", status: "Intégration", initials: "MR", bg: "#9333EA" },
-  ];
+  const [employees, setEmployees] = useState([]);
+  const [services, setServices] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const fetchServices = async () => {
+    try {
+      const res = await api.get('/services');
+      const list = res.data.data || [];
+      setServices(list);
+      if (list.length > 0) {
+        setAddForm(prev => ({ ...prev, dept: list[0].nom }));
+      }
+    } catch (err) {
+      console.error('Error fetching services:', err);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      setIsLoadingData(true);
+      const response = await api.get('/employes');
+      
+      const mappedEmployees = response.data.data.map(emp => ({
+        id: emp.id,
+        name: `${emp.prenom} ${emp.nom}`,
+        email: emp.user?.email || `${emp.prenom.toLowerCase()}.${emp.nom.toLowerCase()}@rh.ma`,
+        role: emp.poste || "Employé",
+        type: emp.statut || "Temps plein",
+        dept: emp.service?.nom || "Non assigné",
+        date: emp.dateRecrutement ? new Date(emp.dateRecrutement).toLocaleDateString('fr-FR') : "-",
+        status: emp.statut || 'Actif',
+        initials: `${emp.prenom?.[0] || ''}${emp.nom?.[0] || ''}`.toUpperCase(),
+        bg: "#2563EB",
+        raw: emp
+      }));
+      setEmployees(mappedEmployees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      showToast('Erreur lors du chargement des employés', 'error');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchServices();
+  }, []);
 
   // Apply strict Department Filter for Department Managers and Interim Managers
-  const filteredEmployees = employeesData.filter(emp => {
+  const filteredEmployees = employees.filter(emp => {
+    // 1. Search Query filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchName = emp.name.toLowerCase().includes(q);
+      const matchRole = emp.role.toLowerCase().includes(q);
+      const matchEmail = emp.email.toLowerCase().includes(q);
+      if (!matchName && !matchRole && !matchEmail) return false;
+    }
+
+    // 2. Department filter
     if (isDeptManager) {
-      // Must match exactly or match standard abbreviations
       const userDept = user?.dept?.toLowerCase() || '';
       const empDept = emp.dept.toLowerCase();
-      // Match RH/Ressources Humaines, Ingénierie, Finance, etc.
-      return empDept.includes(userDept) || userDept.includes(empDept);
+      if (!empDept.includes(userDept) && !userDept.includes(empDept)) return false;
+    } else if (selectedDept !== 'all') {
+      if (emp.dept !== selectedDept) return false;
     }
+
+    // 3. Status filter
+    if (selectedStatus !== 'all') {
+      if (emp.status !== selectedStatus) return false;
+    }
+
     return true;
   });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedDept, selectedStatus]);
+
+  const ITEMS_PER_PAGE = 4;
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Dynamic statistics calculated from database records
+  const activeCount = filteredEmployees.filter(e => e.status.toUpperCase() === 'ACTIF' || e.status === 'Actif').length;
+  const onboardingCount = filteredEmployees.filter(e => e.status.toUpperCase() === 'INTEGRATION' || e.status.toUpperCase() === 'ONBOARDING' || e.type.toUpperCase() === 'STAGE' || e.type.toUpperCase() === 'INTEGRATION').length;
+  const onLeaveCount = filteredEmployees.filter(e => e.status.toUpperCase() === 'EN_CONGE' || e.status.toUpperCase() === 'CONGE' || e.status.toUpperCase() === 'EN CONGÉ' || e.status === 'En Congé').length;
+  const deptsCount = new Set(filteredEmployees.map(e => e.dept).filter(d => d && d !== "Non assigné")).size;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -118,28 +241,28 @@ const Employees = () => {
           <div className="stat-header">
             <div className="stat-icon primary"><i className="fas fa-users"></i></div>
           </div>
-          <div className="stat-value">{isDeptManager ? filteredEmployees.length : 452}</div>
+          <div className="stat-value">{activeCount}</div>
           <div className="stat-label">{t('employees.stats.active')}</div>
         </div>
         <div className="stat-card purple-card">
           <div className="stat-header">
             <div className="stat-icon success" style={{ background: '#E0E7FF', color: '#4F46E5' }}><i className="fas fa-user-plus"></i></div>
           </div>
-          <div className="stat-value">{isDeptManager ? 0 : 24}</div>
+          <div className="stat-value">{onboardingCount}</div>
           <div className="stat-label">{t('employees.stats.onboarding')}</div>
         </div>
         <div className="stat-card amber-card">
           <div className="stat-header">
             <div className="stat-icon warning"><i className="fas fa-umbrella-beach"></i></div>
           </div>
-          <div className="stat-value">{isDeptManager ? filteredEmployees.filter(e => e.status === 'En Congé').length : 12}</div>
+          <div className="stat-value">{onLeaveCount}</div>
           <div className="stat-label">{t('employees.stats.onLeave')}</div>
         </div>
         <div className="stat-card emerald-card">
           <div className="stat-header">
             <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-building"></i></div>
           </div>
-          <div className="stat-value">{isDeptManager ? 1 : 8}</div>
+          <div className="stat-value">{deptsCount}</div>
           <div className="stat-label">{t('employees.stats.departments')}</div>
         </div>
       </div>
@@ -151,10 +274,37 @@ const Employees = () => {
           <div className="filter-group">
             <div className="search-bar">
               <i className="fas fa-search"></i>
-              <input type="text" placeholder={t('employees.filters.searchPlaceholder')} />
+              <input 
+                type="text" 
+                placeholder={t('employees.filters.searchPlaceholder')} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <button className="filter-pill filter-pill-blue">{t('employees.filters.deptFilter')}</button>
-            <button className="filter-pill filter-pill-green">{t('employees.filters.statusFilter')}</button>
+            {!isDeptManager && (
+              <select 
+                className="filter-pill filter-pill-blue" 
+                value={selectedDept} 
+                onChange={(e) => setSelectedDept(e.target.value)}
+                style={{ cursor: 'pointer', border: 'none', outline: 'none', paddingRight: '28px', backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232563EB%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px top 50%', backgroundSize: '0.65rem auto', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+              >
+                <option value="all">Tous les Départements</option>
+                {services.map(s => (
+                  <option key={s.id} value={s.nom}>{s.nom}</option>
+                ))}
+              </select>
+            )}
+            <select 
+              className="filter-pill filter-pill-green" 
+              value={selectedStatus} 
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              style={{ cursor: 'pointer', border: 'none', outline: 'none', paddingRight: '28px', backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2316A34A%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px top 50%', backgroundSize: '0.65rem auto', WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+            >
+              <option value="all">Tous les Statuts</option>
+              <option value="Actif">Actif</option>
+              <option value="En Congé">En Congé</option>
+              <option value="Suspendu">Suspendu</option>
+            </select>
           </div>
         </div>
 
@@ -171,7 +321,21 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredEmployees.map((emp, i) => (
+              {isLoadingData ? (
+                <>
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                </>
+              ) : paginatedEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-gray)' }}>
+                    Aucun employé trouvé.
+                  </td>
+                </tr>
+              ) : paginatedEmployees.map((emp, i) => (
                 <tr key={i}>
                   <td>
                     <div className="user-cell">
@@ -204,13 +368,6 @@ const Employees = () => {
                   </td>
                 </tr>
               ))}
-              {filteredEmployees.length === 0 && (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-gray)' }}>
-                    Aucun employé trouvé dans votre département.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -218,7 +375,7 @@ const Employees = () => {
         <Pagination 
           currentPage={currentPage} 
           totalItems={filteredEmployees.length} 
-          itemsPerPage={4} 
+          itemsPerPage={ITEMS_PER_PAGE} 
           onPageChange={setCurrentPage} 
         />
       </div>
@@ -264,10 +421,9 @@ const Employees = () => {
                 <Building2 size={12} color="var(--success)" /> {t('employees.form.department')}
               </label>
               <select className="form-input" value={addForm.dept} onChange={(e) => setAddForm({ ...addForm, dept: e.target.value })}>
-                <option value="Ingénierie">Ingénierie</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Finance">Finance</option>
-                <option value="Ressources Humaines">Ressources Humaines</option>
+                {services.map(s => (
+                  <option key={s.id} value={s.nom}>{s.nom}</option>
+                ))}
               </select>
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import { motion } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
@@ -17,26 +18,50 @@ const LeaveManagement = () => {
   const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
 
-  const defaultAbsences = [
-    { id: 1, name: "Emma Wilson", dept: "Dép. Ventes", type: "Congé Annuel", period: "15 Oct - 20 Oct", duration: "5 jours", status: "Approuvé", initials: "EW", bg: "#2563EB" },
-    { id: 2, name: "David Chen", dept: "Ingénierie", type: "Maladie", period: "01 Nov - 03 Nov", duration: "3 jours", status: "Approuvé", initials: "DC", bg: "#10B981" },
-    { id: 3, name: "Steve Jobs", dept: "Marketing", type: "Congé Annuel", period: "20 Déc - 02 Jan", duration: "14 jours", status: "En attente", initials: "SJ", bg: "#F59E0B" },
-    { id: 4, name: "Alex Kim", dept: "Finance", type: "Maladie", period: "13 Nov - 14 Nov", duration: "2 jours", status: "En attente", initials: "AK", bg: "#9333EA" },
-    { id: 5, name: "Ali Benali", dept: "Ingénierie", type: "Congé Annuel", period: "10 Déc - 12 Déc", duration: "2 jours", status: "En attente", initials: "AB", bg: "#059669" }
-  ];
+  const [absences, setAbsences] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [absences, setAbsences] = useState(() => {
+  const fetchLeaves = async () => {
     try {
-      const saved = localStorage.getItem('system_leaves');
-      return saved ? JSON.parse(saved) : defaultAbsences;
-    } catch (e) {
-      return defaultAbsences;
+      setIsLoading(true);
+      const res = await api.get('/conges');
+      const mapped = res.data.data.map(conge => {
+        let status = 'En attente';
+        if (conge.statut === 'APPROUVE') status = 'Approuvé';
+        if (conge.statut === 'APPROUVE_CHEF') status = 'Approuvé Chef';
+        if (conge.statut === 'REFUSE') status = 'Rejeté';
+
+        const d1 = new Date(conge.dateDebut);
+        const d2 = new Date(conge.dateFin);
+        const periodStr = `${d1.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'})} - ${d2.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'})}`;
+
+        const initials = conge.employe ? `${conge.employe.prenom[0]}${conge.employe.nom[0]}`.toUpperCase() : 'U';
+
+        return {
+          id: conge.id,
+          name: conge.employe ? `${conge.employe.prenom} ${conge.employe.nom}` : 'Utilisateur',
+          dept: conge.employe?.service?.nom || 'Général',
+          type: conge.motif || 'Congé Annuel',
+          period: periodStr,
+          duration: `${conge.nombreJours || 0} jours`,
+          status: status,
+          initials: initials,
+          bg: '#2563EB',
+          raw: conge
+        };
+      });
+      setAbsences(mapped.reverse());
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des congés', 'error');
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('system_leaves', JSON.stringify(absences));
-  }, [absences]);
+    fetchLeaves();
+  }, []);
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -82,41 +107,54 @@ const LeaveManagement = () => {
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
   };
 
-  const onLeaveSubmit = (e) => {
+  const onLeaveSubmit = async (e) => {
     e.preventDefault();
-    const newAbsence = {
-      id: Date.now(),
-      name: user?.name || "Utilisateur",
-      dept: user?.dept || "Général",
-      type: leaveForm.type,
-      period: `${formatDateShort(leaveForm.start)} - ${formatDateShort(leaveForm.end)}`,
-      duration: calculateDuration(leaveForm.start, leaveForm.end),
-      status: "En attente",
-      initials: (user?.name || "Utilisateur").split(' ').map(n=>n[0]).join(''),
-      bg: "#2563EB"
-    };
-
-    setAbsences(prev => [newAbsence, ...prev]);
-    showToast(i18n.language === 'fr' ? 'Demande de congé enregistrée avec succès !' : 'Leave request recorded successfully!', 'success');
-    logSystemActivity("Demande Congé", user?.name, `Demande de congé: ${newAbsence.duration} (${newAbsence.type})`);
-    setLeaveForm({ type: 'Congé Annuel', start: '', end: '', motif: '' });
-    setIsLeaveModalOpen(false);
+    try {
+      await api.post('/conges', {
+        dateDebut: leaveForm.start,
+        dateFin: leaveForm.end,
+        motif: leaveForm.type,
+        commentaire: leaveForm.motif
+      });
+      showToast(i18n.language === 'fr' ? 'Demande de congé enregistrée avec succès !' : 'Leave request recorded successfully!', 'success');
+      logSystemActivity("Demande Congé", user?.name, `Demande de congé (${leaveForm.type})`);
+      setLeaveForm({ type: 'Congé Annuel', start: '', end: '', motif: '' });
+      setIsLeaveModalOpen(false);
+      fetchLeaves();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la soumission de la demande', 'error');
+    }
   };
 
-  const onApprove = (id, e) => {
+  const onApprove = async (id, e) => {
     if(e) e.stopPropagation();
-    setAbsences(prev => prev.map(abs => abs.id === id ? { ...abs, status: 'Approuvé' } : abs));
-    showToast(i18n.language === 'fr' ? (isDeptManager ? 'Congé validé par le département.' : 'Congé approuvé avec succès.') : (isDeptManager ? 'Leave validated by department.' : 'Leave approved successfully.'), 'success');
-    logSystemActivity("Approbation Congé", user?.name, `Congé approuvé pour la demande #${id}`);
-    setIsViewModalOpen(false);
+    try {
+      await api.put(`/conges/${id}/approve`);
+      showToast('Congé approuvé', 'success');
+      logSystemActivity("Approbation Congé", user?.name, `Congé approuvé pour la demande #${id}`);
+      setIsViewModalOpen(false);
+      fetchLeaves();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de l\'approbation', 'error');
+    }
   };
 
-  const onReject = (id, e) => {
+  const onReject = async (id, e) => {
     if(e) e.stopPropagation();
-    setAbsences(prev => prev.map(abs => abs.id === id ? { ...abs, status: 'Rejeté' } : abs));
-    showToast(i18n.language === 'fr' ? 'La demande de congé a été rejetée.' : 'Leave request has been rejected.', 'error');
-    logSystemActivity("Rejet Congé", user?.name, `Congé rejeté pour la demande #${id}`);
-    setIsViewModalOpen(false);
+    try {
+      await api.put(`/conges/${id}/reject`, {
+        motifRefus: 'Refusé'
+      });
+      showToast('Congé refusé', 'error');
+      logSystemActivity("Rejet Congé", user?.name, `Congé rejeté pour la demande #${id}`);
+      setIsViewModalOpen(false);
+      fetchLeaves();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du rejet', 'error');
+    }
   };
 
   const onEditSubmit = () => {

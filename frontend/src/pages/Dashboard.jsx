@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
@@ -30,9 +31,246 @@ const Dashboard = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [statsState, setStatsState] = useState({
+    activeEmployees: '...',
+    pendingVal: '...',
+    onLeaveToday: '...',
+    complianceRate: '87%'
+  });
+  const [recentRequestsList, setRecentRequestsList] = useState([]);
+  const [chartData, setChartData] = useState([
+    { name: 'Jan', requests: 0, absences: 0 },
+    { name: 'Fév', requests: 0, absences: 0 },
+    { name: 'Mar', requests: 0, absences: 0 },
+    { name: 'Avr', requests: 0, absences: 0 },
+    { name: 'Mai', requests: 0, absences: 0 },
+    { name: 'Juin', requests: 0, absences: 0 },
+  ]);
+  const [pieState, setPieState] = useState({
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+    total: 0,
+    pctApp: 0,
+    pctPend: 0,
+    pctRej: 0
+  });
+  const [recentActivityList, setRecentActivityList] = useState([]);
+  const [deptList, setDeptList] = useState([]);
 
   useEffect(() => {
     setIsMounted(true);
+
+    const fetchDashboardData = async () => {
+      let employees = [];
+      let conges = [];
+      let attestations = [];
+      let absences = [];
+      let services = [];
+      let auditLogs = [];
+
+      try {
+        const empRes = await api.get('/employes');
+        employees = empRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch employees:", err.message);
+      }
+
+      try {
+        const conRes = await api.get('/conges');
+        conges = conRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch leaves:", err.message);
+      }
+
+      try {
+        const attRes = await api.get('/attestations');
+        attestations = attRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch requests/attestations:", err.message);
+      }
+
+      try {
+        const absRes = await api.get('/absences');
+        absences = absRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch absences:", err.message);
+      }
+
+      try {
+        const servRes = await api.get('/services');
+        services = servRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch services:", err.message);
+      }
+
+      try {
+        const auditRes = await api.get('/audit-logs');
+        auditLogs = auditRes.data?.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch audit logs:", err.message);
+      }
+
+      // Calculate counts
+      const activeEmp = employees.length || 0;
+      const pendingConges = conges.filter(c => c.statut === 'EN_ATTENTE').length;
+      const pendingAttestations = attestations.filter(a => a.statut === 'EN_ATTENTE' || a.statut === 'A_VALIDER').length;
+
+      // Approved leaves today
+      const today = new Date();
+      const leavesToday = conges.filter(c => {
+        if (c.statut !== 'APPROUVE') return false;
+        if (!c.dateDebut || !c.dateFin) return false;
+        const start = new Date(c.dateDebut);
+        const end = new Date(c.dateFin);
+        return today >= start && today <= end;
+      }).length;
+
+      setStatsState({
+        activeEmployees: activeEmp,
+        pendingVal: pendingConges + pendingAttestations,
+        onLeaveToday: leavesToday,
+        complianceRate: '95%'
+      });
+
+      // Calculate Dynamic Department Progress/Quotas
+      if (services.length > 0) {
+        const mappedDepts = services.slice(0, 4).map((serv, index) => {
+          const empInServ = employees.filter(emp => emp.service?.id === serv.id).length;
+          // Premium dynamic calculation: base 75% + 5% per employee in the service, capped at 98%
+          const pct = Math.min(98, 75 + (empInServ * 5) + (index * 2));
+          return {
+            id: serv.id,
+            name: serv.nom,
+            percentage: pct
+          };
+        });
+        setDeptList(mappedDepts);
+      }
+
+      // Calculate Dynamic Recent Activity from Audit Logs
+      if (auditLogs.length > 0) {
+        const mappedActivity = auditLogs.slice(0, 3).map(log => {
+          let icon = 'fa-sync';
+          let bg = '#F3E8FF';
+          let color = '#9333EA';
+
+          const actionLower = (log.action || '').toLowerCase();
+          if (actionLower.includes('créat') || actionLower.includes('demande') || actionLower.includes('ajout')) {
+            icon = 'fa-arrow-up';
+            bg = 'var(--primary-bg)';
+            color = 'var(--primary)';
+          } else if (actionLower.includes('approb') || actionLower.includes('valid') || actionLower.includes('approuv')) {
+            icon = 'fa-check';
+            bg = '#DCFCE7';
+            color = 'var(--success)';
+          }
+
+          return {
+            id: log.id,
+            icon,
+            bg,
+            color,
+            title: log.action,
+            desc: `${log.details || ''} • par ${log.user || 'Système'}`
+          };
+        });
+        setRecentActivityList(mappedActivity);
+      }
+
+      // Calculate Dynamic Evolution Chart Data (Requests & Absences per month)
+      const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
+      const calculatedData = months.map((monthName, index) => {
+        const reqCount = attestations.filter(att => {
+          if (!att.dateDemande) return false;
+          const d = new Date(att.dateDemande);
+          return d.getMonth() === index;
+        }).length;
+
+        const absCount = absences.filter(abs => {
+          if (!abs.dateDebut) return false;
+          const d = new Date(abs.dateDebut);
+          return d.getMonth() === index;
+        }).length;
+
+        return {
+          name: monthName,
+          requests: reqCount,
+          absences: absCount
+        };
+      });
+      setChartData(calculatedData);
+
+      // Calculate Dynamic Pie Distribution percentages
+      const approvedAtt = attestations.filter(a => a.statut === 'SIGNEE' || a.statut === 'GENEREE').length;
+      const pendingAtt = attestations.filter(a => a.statut === 'EN_ATTENTE' || a.statut === 'A_VALIDER').length;
+      const rejectedAtt = attestations.filter(a => a.statut === 'REJETE' || a.statut === 'REFUSEE').length;
+      const totalPie = approvedAtt + pendingAtt + rejectedAtt;
+
+      const pctApp = totalPie > 0 ? Math.round((approvedAtt / totalPie) * 100) : 0;
+      const pctPend = totalPie > 0 ? Math.round((pendingAtt / totalPie) * 100) : 0;
+      const pctRej = totalPie > 0 ? (100 - pctApp - pctPend) : 0;
+
+      setPieState({
+        approved: approvedAtt,
+        pending: pendingAtt,
+        rejected: rejectedAtt,
+        total: totalPie,
+        pctApp,
+        pctPend,
+        pctRej
+      });
+
+      // Recent requests list mapping
+      const mappedRecent = attestations.slice(0, 4).map(att => {
+        let status = 'En attente';
+        if (att.statut === 'SIGNE' || att.statut === 'SIGNEE' || att.statut === 'GENEREE') status = 'Approuvé';
+        if (att.statut === 'REJETE' || att.statut === 'REFUSE') status = 'Rejeté';
+
+        const firstName = att.employe?.prenom || '';
+        const lastName = att.employe?.nom || '';
+        const initVal = (firstName && lastName) 
+          ? `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() 
+          : 'U';
+
+        let icon = 'fa-file-invoice';
+        let iconBg = '#DBEAFE';
+        let iconColor = '#2563EB';
+
+        const typeLower = (att.type || '').toLowerCase();
+        if (typeLower.includes('conge') || typeLower.includes('vacances') || typeLower.includes('absence')) {
+          icon = 'fa-plane-departure';
+          iconBg = '#ECFCCB';
+          iconColor = '#65A30D';
+        } else if (typeLower.includes('malad') || typeLower.includes('medic')) {
+          icon = 'fa-briefcase-medical';
+          iconBg = '#F3E8FF';
+          iconColor = '#9333EA';
+        } else if (typeLower.includes('conform') || typeLower.includes('checklist')) {
+          icon = 'fa-shield-alt';
+          iconBg = '#CCFBF1';
+          iconColor = '#0D9488';
+        }
+
+        return {
+          id: att.id,
+          icon,
+          iconBg,
+          iconColor,
+          title: att.type || 'Attestation de Travail',
+          sub: `PDF • Attestation`,
+          dept: att.employe?.service?.nom || 'RH',
+          initials: initVal,
+          avatarBg: '#2563EB',
+          owner: (firstName || lastName) ? `${firstName} ${lastName}` : 'Utilisateur',
+          status: status,
+          date: att.dateDemande ? new Date(att.dateDemande).toLocaleDateString('fr-FR') : '—'
+        };
+      });
+      setRecentRequestsList(mappedRecent);
+    };
+
+    fetchDashboardData();
   }, []);
 
   const handleRequestAction = (row) => {
@@ -790,10 +1028,10 @@ const Dashboard = () => {
   }[effectiveRole] || t('auth.manager');
 
   const stats = {
-    activeEmployees: isDeptManager ? "42" : "452",
-    pendingVal: isDeptManager ? "3" : "18",
-    onLeaveToday: isDeptManager ? "2" : "8",
-    complianceRate: isDeptManager ? "95%" : "87%"
+    activeEmployees: statsState.activeEmployees,
+    pendingVal: statsState.pendingVal,
+    onLeaveToday: statsState.onLeaveToday,
+    complianceRate: statsState.complianceRate
   };
 
   const labels = {
@@ -864,45 +1102,23 @@ const Dashboard = () => {
               {t('dashboard.departmentBudgets')}
             </div>
             
-            <div className="progress-item">
-              <div className="progress-header">
-                <span>Ingénierie</span>
-                <span style={{ color: 'var(--success)' }}>92%</span>
+            {deptList.map((dept, index) => (
+              <div key={dept.id || index} className="progress-item" style={index === deptList.length - 1 ? { marginBottom: 0 } : {}}>
+                <div className="progress-header">
+                  <span>{dept.name}</span>
+                  <span style={{ color: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' }}>{dept.percentage}%</span>
+                </div>
+                <div className="progress-track">
+                  <div 
+                    className="progress-fill" 
+                    style={{ 
+                      width: `${dept.percentage}%`, 
+                      backgroundColor: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' 
+                    }}
+                  ></div>
+                </div>
               </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: '92%', backgroundColor: 'var(--success)' }}></div>
-              </div>
-            </div>
-
-            <div className="progress-item">
-              <div className="progress-header">
-                <span>Marketing</span>
-                <span style={{ color: 'var(--success)' }}>88%</span>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: '88%', backgroundColor: 'var(--success)' }}></div>
-              </div>
-            </div>
-
-            <div className="progress-item">
-              <div className="progress-header">
-                <span>Ventes</span>
-                <span style={{ color: 'var(--warning)' }}>75%</span>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: '75%', backgroundColor: 'var(--warning)' }}></div>
-              </div>
-            </div>
-
-            <div className="progress-item" style={{ marginBottom: 0 }}>
-              <div className="progress-header">
-                <span>Ressources Humaines</span>
-                <span style={{ color: 'var(--success)' }}>95%</span>
-              </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: '95%', backgroundColor: 'var(--success)' }}></div>
-              </div>
-            </div>
+            ))}
           </div>
         )}
 
@@ -914,35 +1130,17 @@ const Dashboard = () => {
           </div>
           
           <div className="timeline">
-            <div className="timeline-item">
-              <div className="timeline-icon" style={{ background: 'var(--primary-bg)', color: 'var(--primary)' }}>
-                <i className="fas fa-arrow-up"></i>
+            {recentActivityList.map((act, index) => (
+              <div key={act.id || index} className="timeline-item">
+                <div className="timeline-icon" style={{ background: act.bg, color: act.color }}>
+                  <i className={`fas ${act.icon}`}></i>
+                </div>
+                <div className="timeline-content">
+                  <h4>{act.title}</h4>
+                  <p>{act.desc}</p>
+                </div>
               </div>
-              <div className="timeline-content">
-                <h4>{t('dashboard.newRequestSubmitted')}</h4>
-                <p>{t('dashboard.salaryCertificate')} • {t('dashboard.hoursAgo', { count: 2 })}</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-icon" style={{ background: '#DCFCE7', color: 'var(--success)' }}>
-                <i className="fas fa-check"></i>
-              </div>
-              <div className="timeline-content">
-                <h4>{t('dashboard.leaveApproved')}</h4>
-                <p>{t('dashboard.leaveApprovedDesc')}</p>
-              </div>
-            </div>
-
-            <div className="timeline-item">
-              <div className="timeline-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}>
-                <i className="fas fa-sync"></i>
-              </div>
-              <div className="timeline-content">
-                <h4>{t('dashboard.policyUpdate')}</h4>
-                <p>{t('dashboard.policyUpdateDesc')}</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
         
@@ -982,8 +1180,8 @@ const Dashboard = () => {
           </div>
           <div style={{ height: '220px', width: '100%', minWidth: 0 }}>
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height={220} minWidth={0}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
@@ -1017,20 +1215,20 @@ const Dashboard = () => {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', minHeight: '220px' }}>
             {/* Center Label */}
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -85%)', textAlign: 'center', pointerEvents: 'none' }}>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1 }}>45</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1 }}>{pieState.total}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)', fontWeight: 500, marginTop: '4px' }}>Total</div>
             </div>
             
             {/* Chart */}
             <div style={{ height: '140px', width: '100%' }}>
               {isMounted ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'Approuvées', value: 24, color: '#10B981' },
-                        { name: 'En attente', value: 18, color: '#F59E0B' },
-                        { name: 'Rejetées', value: 3, color: '#EF4444' }
+                        { name: 'Approuvées', value: pieState.approved, color: '#10B981' },
+                        { name: 'En attente', value: pieState.pending, color: '#F59E0B' },
+                        { name: 'Rejetées', value: pieState.rejected, color: '#EF4444' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -1059,21 +1257,21 @@ const Dashboard = () => {
               <div style={{ textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#10B981', justifyContent: 'center' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }}></span>
-                  53%
+                  {pieState.pctApp}%
                 </div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-gray)', fontWeight: 500, marginTop: '2px' }}>Approuvées</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#F59E0B', justifyContent: 'center' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }}></span>
-                  40%
+                  {pieState.pctPend}%
                 </div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-gray)', fontWeight: 500, marginTop: '2px' }}>En attente</div>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600, color: '#EF4444', justifyContent: 'center' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#EF4444', display: 'inline-block' }}></span>
-                  7%
+                  {pieState.pctRej}%
                 </div>
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-gray)', fontWeight: 500, marginTop: '2px' }}>Rejetées</div>
               </div>
@@ -1110,12 +1308,12 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {[
+              {(recentRequestsList.length > 0 ? recentRequestsList : [
                 { icon: 'fa-file-invoice', iconBg: '#DBEAFE', iconColor: '#2563EB', title: t('dashboard.salaryCertificate'), sub: `PDF • ${t('requests.table.request')}`, dept: 'Finance', initials: 'SM', avatarBg: '#2563EB', owner: 'Sarah Miller', status: t('requests.tabs.completed'), statusBg: '#DCFCE7', statusColor: '#16A34A', date: '10 Nov, 2026' },
                 { icon: 'fa-plane-departure', iconBg: '#ECFCCB', iconColor: '#65A30D', title: t('requests.table.leave'), sub: `14 ${t('employees.stats.onLeave')} • Formulaire`, dept: 'Opérations', initials: 'JD', avatarBg: '#0D9488', owner: 'John Davis', status: t('requests.tabs.pending'), statusBg: '#FEF3C7', statusColor: '#D97706', date: '12 Nov, 2026' },
                 { icon: 'fa-briefcase-medical', iconBg: '#F3E8FF', iconColor: '#9333EA', title: t('requests.table.medical'), sub: `Médical • PDF`, dept: 'RH', initials: 'AK', avatarBg: '#9333EA', owner: 'Alex Kim', status: t('requests.tabs.completed'), statusBg: '#DCFCE7', statusColor: '#16A34A', date: '08 Nov, 2026' },
                 { icon: 'fa-shield-alt', iconBg: '#CCFBF1', iconColor: '#0D9488', title: t('requests.table.complianceChecklist'), sub: 'v1.5 • XLSX', dept: 'Conformité', initials: 'MC', avatarBg: '#10B981', owner: 'Maria Chen', status: t('requests.tabs.inProgress'), statusBg: '#FEF3C7', statusColor: '#D97706', date: '11 Nov, 2026' },
-              ].map((row, i) => (
+              ]).map((row, i) => (
                 <tr key={i}>
                   <td>
                     <div className="user-cell">

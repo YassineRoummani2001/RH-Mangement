@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
@@ -7,37 +8,58 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { logSystemActivity } from '../utils/rbac';
 import { FileText, Clock, AlertTriangle, CheckCircle2, User, Building2, Calendar, Download, Eye, Check, X, FileSignature, Loader2 } from 'lucide-react';
+import { TableRowSkeleton } from '../components/SkeletonLoader';
 import { jsPDF } from 'jspdf';
 
 const Requests = () => {
   const { showToast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, effectiveRole } = useAuth();
   
   const isEmployee = effectiveRole === 'EMPLOYEE';
   const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
 
-  const defaultRequests = [
-    { id: 1, title: "Attestation de Salaire", sub: "PDF • Demande urgente", dept: "Opérations", owner: "John Davis", ownerBg: "0D9488", date: "Il y a 2h", status: "attente", icon: "fas fa-file-invoice", color: "#9333EA", bg: "#F3E8FF", priorite: "Urgente" },
-    { id: 2, title: "Attestation de Travail", sub: "Document RH", dept: "Conformité", owner: "Maria Chen", ownerBg: "10B981", date: "Il y a 5h", status: "attente", icon: "fas fa-file-contract", color: "#2563EB", bg: "#DBEAFE", priorite: "Normale" },
-    { id: 3, title: "Renouvellement Matériel", sub: "Équipement IT", dept: "Ingénierie", owner: "Lucas Martin", ownerBg: "F59E0B", date: "Il y a 1j", status: "cours", icon: "fas fa-laptop-code", color: "#D97706", bg: "#FEF3C7", priorite: "Haute" },
-    { id: 4, title: "Attestation de Travail", sub: "Clôturé avec succès", dept: "Ressources Humaines", owner: "Emma Wilson", ownerBg: "2563EB", date: "Hier", status: "terminees", icon: "fas fa-check-circle", color: "#16A34A", bg: "#DCFCE7", priorite: "Normale" },
-    { id: 5, title: "Demande de Congé", sub: "Congé Annuel", dept: "Finance", owner: "Sarah Miller", ownerBg: "EF4444", date: "Il y a 3j", status: "rejetees", icon: "fas fa-plane", color: "#EF4444", bg: "#FEE2E2", priorite: "Normale" }
-  ];
+  const [requests, setRequests] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [requests, setRequests] = useState(() => {
+  const fetchRequests = async () => {
     try {
-      const saved = localStorage.getItem('system_requests');
-      return saved ? JSON.parse(saved) : defaultRequests;
-    } catch (e) {
-      return defaultRequests;
+      setIsLoading(true);
+      const res = await api.get('/attestations');
+      const mapped = res.data.data.map(req => {
+        let status = 'attente';
+        if (req.statut === 'GENEREE') status = 'cours';
+        if (req.statut === 'SIGNEE') status = 'terminees';
+        // if rejected, well we don't have rejection in backend yet, but we'll leave it as is
+        
+        return {
+          id: req.id,
+          title: req.type || 'Attestation',
+          sub: 'Document RH',
+          dept: req.employe?.service?.nom || 'Général',
+          owner: req.employe ? `${req.employe.prenom} ${req.employe.nom}` : 'Inconnu',
+          ownerBg: '2563EB',
+          date: req.dateDemande ? new Date(req.dateDemande).toLocaleDateString('fr-FR') : '—',
+          status: status,
+          icon: 'fas fa-file-contract',
+          color: '#2563EB',
+          bg: '#DBEAFE',
+          priorite: 'Normale'
+        };
+      });
+      setRequests(mapped.reverse());
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des demandes', 'error');
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('system_requests', JSON.stringify(requests));
-  }, [requests]);
+    fetchRequests();
+  }, []);
 
   const [activeTab, setActiveTab] = useState('attente');
   const [currentPage, setCurrentPage] = useState(1);
@@ -217,27 +239,21 @@ const Requests = () => {
   };
 
   const handleNewRequestChange = e => setNewRequestForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleNewRequestSubmit = () => {
-    const newReq = {
-      id: Date.now(),
-      title: newRequestForm.type,
-      sub: newRequestForm.description || "Nouvelle demande",
-      dept: user?.dept || "Général",
-      owner: user?.name || "Employé",
-      ownerBg: "2563EB",
-      date: "À l'instant",
-      status: "attente",
-      icon: "fas fa-file",
-      color: "#2563EB",
-      bg: "#DBEAFE",
-      priorite: newRequestForm.priorite
-    };
-    
-    setRequests(prev => [newReq, ...prev]);
-    showToast(i18n.language === 'fr' ? 'Votre demande a été soumise avec succès.' : 'Your request has been submitted successfully.', 'success');
-    logSystemActivity("Création Demande", user?.name, `Soumission de la demande: ${newReq.title}`);
-    setNewRequestForm({ type: 'Attestation de Travail', priorite: 'Normale (Délai 48h)', description: '', fichier: null });
-    setIsModalOpen(false);
+
+  const handleNewRequestSubmit = async () => {
+    try {
+      await api.post('/attestations', {
+        type: newRequestForm.type
+      });
+      showToast(i18n.language === 'fr' ? 'Votre demande a été soumise avec succès.' : 'Your request has been submitted successfully.', 'success');
+      logSystemActivity("Création Demande", user?.name, `Soumission de la demande: ${newRequestForm.type}`);
+      setNewRequestForm({ type: 'Attestation de Travail', priorite: 'Normale (Délai 48h)', description: '', fichier: null });
+      setIsModalOpen(false);
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la création de la demande.', 'error');
+    }
   };
 
   const openDetails = (req) => {
@@ -245,25 +261,29 @@ const Requests = () => {
     setIsDetailsModalOpen(true);
   };
 
-  const onApprove = () => {
+  const onApprove = async () => {
     if (!selectedRequest) return;
-    const nextStatus = isDeptManager ? 'cours' : 'terminees';
-    
-    setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: nextStatus, date: 'À l\'instant' } : r));
-    showToast(i18n.language === 'fr' ? (isDeptManager ? 'Demande validée et transmise aux RH.' : 'La demande a été approuvée avec succès.') : (isDeptManager ? 'Request validated and sent to HR.' : 'Request approved successfully.'), 'success');
-    logSystemActivity(
-      isDeptManager ? "Validation Demande (N+1)" : "Approbation Demande (RH)", 
-      user?.name, 
-      `Demande ${selectedRequest.title} de ${selectedRequest.owner} traitée.`
-    );
-    setIsDetailsModalOpen(false);
+    try {
+      if (selectedRequest.status === 'attente') {
+        // HR generates it
+        await api.post(`/attestations/${selectedRequest.id}/generate`);
+      } else if (selectedRequest.status === 'cours') {
+        // Secretary or HR signs it
+        await api.post(`/attestations/${selectedRequest.id}/sign`);
+      }
+      showToast('Demande approuvée avec succès', 'success');
+      setIsDetailsModalOpen(false);
+      fetchRequests();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de l\'approbation', 'error');
+    }
   };
 
-  const onReject = () => {
+  const onReject = async () => {
     if (!selectedRequest) return;
-    setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'rejetees', date: 'À l\'instant' } : r));
-    showToast(i18n.language === 'fr' ? 'La demande a été rejetée.' : 'The request has been rejected.', 'error');
-    logSystemActivity("Rejet Demande", user?.name, `Demande ${selectedRequest.title} de ${selectedRequest.owner} rejetée.`);
+    // The backend doesn't have a reject endpoint yet, but we can do a mock update for now
+    showToast('Rejet de la demande n\'est pas encore supporté par l\'API', 'info');
     setIsDetailsModalOpen(false);
   };
 
@@ -318,7 +338,37 @@ const Requests = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredByTab.map((req) => (
+              {isLoading ? (
+                <>
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                </>
+              ) : filteredByTab.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-gray)' }}>
+                    {i18n.language === 'en' ? (
+                      activeTab === 'attente' 
+                        ? "No pending requests found." 
+                        : activeTab === 'cours' 
+                        ? "No in-progress requests found." 
+                        : activeTab === 'terminees' 
+                        ? "No completed requests found." 
+                        : "No rejected requests found."
+                    ) : (
+                      activeTab === 'attente' 
+                        ? "Aucune demande en attente trouvée." 
+                        : activeTab === 'cours' 
+                        ? "Aucune demande en cours trouvée." 
+                        : activeTab === 'terminees' 
+                        ? "Aucune demande terminée trouvée." 
+                        : "Aucune demande rejetée trouvée."
+                    )}
+                  </td>
+                </tr>
+              ) : filteredByTab.map((req) => (
                 <tr key={req.id}>
                   <td>
                     <div className="user-cell">
@@ -372,13 +422,6 @@ const Requests = () => {
                   </td>
                 </tr>
               ))}
-              {filteredByTab.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-gray)' }}>
-                    Aucune demande {activeTab} trouvée.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
           

@@ -1,0 +1,28 @@
+import express from 'express';
+import authRoutes from './authRoutes.js';
+import absenceRoutes from './absenceRoutes.js';
+import affectationRoutes from './affectationRoutes.js';
+import attestationRoutes from './attestationRoutes.js';
+import auditlogRoutes from './auditlogRoutes.js';
+import congeRoutes from './congeRoutes.js';
+import correctiondemandeRoutes from './correctiondemandeRoutes.js';
+import documentRoutes from './documentRoutes.js';
+import employeRoutes from './employeRoutes.js';
+import formationRoutes from './formationRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
+import servicerhRoutes from './servicerhRoutes.js';
+
+const router = express.Router();
+router.use('/auth', authRoutes);
+router.use('/absences', absenceRoutes);
+router.use('/affectations', affectationRoutes);
+router.use('/attestations', attestationRoutes);
+router.use('/auditlogs', auditlogRoutes);
+router.use('/conges', congeRoutes);
+router.use('/correctiondemandes', correctiondemandeRoutes);
+router.use('/documents', documentRoutes);
+router.use('/employes', employeRoutes);
+router.use('/formations', formationRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/servicerhs', servicerhRoutes);
+export default router;

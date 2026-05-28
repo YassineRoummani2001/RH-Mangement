@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import { useToast } from '../context/ToastContext';
 import { jsPDF } from 'jspdf';
@@ -9,34 +10,37 @@ import { GraduationCap, Scale } from 'lucide-react';
 const Compliance = () => {
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: 'Michael Brown',
-      email: 'michael.b@company.com',
-      initials: 'MB',
-      avatarBg: '#F59E0B',
-      requirement: 'Formation Anti-Harcèlement', // We could translate this dynamically if it matched a key, for now we will assume it's data
-      status: 'En retard (2 j)',
-      isLate: true,
-      deadlineColor: '#E11D48',
-      badgeBg: '#FFE4E6',
-      badgeColor: '#E11D48'
-    },
-    {
-      id: 2,
-      name: 'Linda White',
-      email: 'linda.w@company.com',
-      initials: 'LW',
-      avatarBg: '#2563EB',
-      requirement: 'Cybersécurité',
-      status: '15 Nov, 2026',
-      isLate: false,
-      deadlineColor: '#64748B',
-      badgeBg: '#FEF3C7',
-      badgeColor: '#D97706'
+  const [employees, setEmployees] = useState([]);
+
+  const fetchComplianceEmployees = async () => {
+    try {
+      const res = await api.get('/employes');
+      const data = res.data.data || [];
+      const mapped = data.slice(0, 5).map((emp, index) => {
+        const requirements = ['Formation Anti-Harcèlement', 'Cybersécurité', 'Protection des Données (RGPD)'];
+        return {
+          id: emp.id,
+          name: `${emp.prenom} ${emp.nom}`,
+          email: `${emp.prenom.toLowerCase()}.${emp.nom.toLowerCase()}@rh.ma`,
+          initials: `${emp.prenom[0]}${emp.nom[0]}`.toUpperCase(),
+          avatarBg: index % 2 === 0 ? '#F59E0B' : '#2563EB',
+          requirement: requirements[index % requirements.length],
+          status: index % 2 === 0 ? 'En retard (2 j)' : '15 Nov, 2026',
+          isLate: index % 2 === 0,
+          deadlineColor: index % 2 === 0 ? '#E11D48' : '#64748B',
+          badgeBg: index % 2 === 0 ? '#FFE4E6' : '#FEF3C7',
+          badgeColor: index % 2 === 0 ? '#E11D48' : '#D97706'
+        };
+      });
+      setEmployees(mapped);
+    } catch (err) {
+      console.error(err);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchComplianceEmployees();
+  }, []);
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);

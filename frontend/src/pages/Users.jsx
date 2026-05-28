@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { motion } from 'framer-motion';
@@ -6,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { User, Mail, ShieldCheck, Key, Lock, AlertTriangle } from 'lucide-react';
 import { MOROCCAN_CITIES } from '../utils/cities';
+import { TableRowSkeleton } from '../components/SkeletonLoader';
 
 const Users = () => {
   const { showToast } = useToast();
@@ -22,19 +24,26 @@ const Users = () => {
   const [addForm, setAddForm] = useState({ name: '', email: '', role: 'EMPLOYEE', password: '', jobTitle: '', department: '', phone: '', hireDate: '', contractType: '', location: '' });
   const [editForm, setEditForm] = useState({ name: '', email: '', role: '', jobTitle: '', department: '', phone: '', hireDate: '', contractType: '', location: '' });
 
-  const defaultUsers = [
-    { 
-      id: 1, name: "Yassine Roummani", email: "yassine@company.com", role: "HR_MANAGER", status: "Actif", lastLogin: "Il y a 2h", initials: "YR", bg: "#2563EB",
-      jobTitle: "Directrice des Ressources Humaines", department: "Ressources Humaines", hireDate: "12 Janvier 2024", contractType: "CDI (Temps Plein)", phone: "+212 6 12 34 56 7777777777777", location: "Rabat, Maroc"
-    },
-    { id: 2, name: "Maria Chen", email: "maria.c@entreprise.com", role: "HR_AGENT", status: "Actif", lastLogin: "Hier", initials: "MC", bg: "#10B981" },
-    { id: 3, name: "David Miller", email: "david.m@entreprise.com", role: "DEPARTMENT_MANAGER", status: "Inactif", lastLogin: "Il y a 1 semaine", initials: "DM", bg: "#F59E0B" },
-    { id: 4, name: "Sarah Connor", email: "sarah.c@entreprise.com", role: "EMPLOYEE", status: "Actif", lastLogin: "Ce matin", initials: "SC", bg: "#9333EA" },
-    { id: 5, name: "John Doe", email: "john.doe@entreprise.com", role: "SECRETARY_GENERAL", status: "Actif", lastLogin: "Il y a 1j", initials: "JD", bg: "#DB2777" },
-  ];
-
-  const [users, setUsers] = useState(defaultUsers);
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/users');
+      setUsers(res.data.data || []);
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des comptes utilisateurs.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -52,14 +61,18 @@ const Users = () => {
     'SECRETARY_GENERAL': 'Secrétaire Générale'
   };
 
-  const handleToggleStatus = (userId) => {
-    const userToUpdate = users.find(u => u.id === userId);
-    if (!userToUpdate) return;
-    
-    setUsers(prev => prev.map(u => 
-      u.id === userId ? { ...u, status: u.status === 'Actif' ? 'Inactif' : 'Actif' } : u
-    ));
-    showToast(t('users.toast.updated', { name: userToUpdate.name }), 'success');
+  const handleToggleStatus = async (userId) => {
+    try {
+      const res = await api.post(`/users/${userId}/toggle-status`);
+      const isActive = res.data.data.isActive;
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, status: isActive ? 'Actif' : 'Inactif', bg: isActive ? '#2563EB' : '#94A3B8' } : u
+      ));
+      showToast('Statut du compte mis à jour avec succès.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du changement de statut du compte.', 'error');
+    }
   };
 
   const handleAction = (type, user) => {
@@ -76,41 +89,51 @@ const Users = () => {
     if (type === 'delete') setIsDeleteModalOpen(true);
   };
 
-  const onAddSubmit = (e) => {
+  const onAddSubmit = async (e) => {
     e.preventDefault();
-    const newUser = {
-      id: Date.now(),
-      name: addForm.name,
-      email: addForm.email,
-      role: addForm.role,
-      jobTitle: addForm.jobTitle,
-      department: addForm.department,
-      phone: addForm.phone,
-      hireDate: addForm.hireDate,
-      contractType: addForm.contractType,
-      location: addForm.location,
-      status: 'Actif',
-      lastLogin: 'Jamais',
-      initials: addForm.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
-      bg: '#2563EB'
-    };
-    setUsers(prev => [newUser, ...prev]);
-    showToast(t('users.toast.created', { name: newUser.name }), 'success');
-    setIsAddModalOpen(false);
-    setAddForm({ name: '', email: '', role: 'EMPLOYEE', password: '', jobTitle: '', department: '', phone: '', hireDate: '', contractType: '', location: '' });
+    try {
+      await api.post('/users', {
+        email: addForm.email,
+        password: addForm.password,
+        role: addForm.role,
+        name: addForm.name
+      });
+      showToast(t('users.toast.created', { name: addForm.name }), 'success');
+      setIsAddModalOpen(false);
+      setAddForm({ name: '', email: '', role: 'EMPLOYEE', password: '', jobTitle: '', department: '', phone: '', hireDate: '', contractType: '', location: '' });
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Erreur lors de la création du compte.', 'error');
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
-    setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, ...editForm } : u));
-    showToast(t('users.toast.updated', { name: editForm.name }), 'success');
-    setIsEditModalOpen(false);
+    try {
+      await api.put(`/users/${selectedUser.id}`, {
+        email: editForm.email,
+        role: editForm.role
+      });
+      showToast(t('users.toast.updated', { name: editForm.name }), 'success');
+      setIsEditModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.message || 'Erreur lors de la mise à jour du compte.', 'error');
+    }
   };
 
-  const onDeleteSubmit = () => {
-    setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
-    showToast(t('users.toast.deleted'), 'error');
-    setIsDeleteModalOpen(false);
+  const onDeleteSubmit = async () => {
+    try {
+      await api.delete(`/users/${selectedUser.id}`);
+      showToast(t('users.toast.deleted'), 'error');
+      setIsDeleteModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la suppression du compte.', 'error');
+    }
   };
 
   return (
@@ -152,7 +175,15 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {isLoading ? (
+                <>
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                  <TableRowSkeleton cols={6} />
+                </>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-gray)' }}>
                     {t('users.table.noData')}

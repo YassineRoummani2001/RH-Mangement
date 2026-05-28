@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import { User, Mail, Phone, Calendar, Briefcase, MapPin, Shield, Edit3, Key, Clock, CheckCircle } from 'lucide-react';
 
 const Profile = () => {
   const { user, effectiveRole } = useAuth();
   const { t } = useTranslation();
+  const [profileData, setProfileData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/me');
+      const data = res.data.data;
+      setProfileData(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   // Dynamic employee details loaded from local settings
   const formatHireDate = (dateStr) => {
@@ -26,11 +46,11 @@ const Profile = () => {
 
   const savedProfile = localStorage.getItem('hr_profile_data');
   let employeeDetails = {
-    phone: '+212 6 12 34 56 7777777777777',
-    department: 'Ressources Humaines',
-    hireDate: '12 Janvier 2024',
-    contractType: 'CDI (Temps Plein)',
-    location: 'Rabat, Maroc',
+    phone: profileData?.employe?.telephone || '+212 6 12 34 56 78',
+    department: profileData?.employe?.service?.nom || 'Ressources Humaines',
+    hireDate: profileData?.employe?.dateEmbauche ? formatHireDate(profileData.employe.dateEmbauche.split('T')[0]) : '12 Janvier 2024',
+    contractType: profileData?.employe?.statut === 'ACTIF' ? 'CDI (Temps Plein)' : 'CDI',
+    location: profileData?.employe?.adresse || 'Rabat, Maroc',
     annualLeavesUsed: 4,
     annualLeavesTotal: 22,
     sickLeavesUsed: 2,
@@ -95,8 +115,8 @@ const Profile = () => {
         ></div>
 
         <img 
-          src={user.avatar} 
-          alt={user.name} 
+          src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=2563EB&color=fff`} 
+          alt={user?.name} 
           style={{ 
             width: '100px', 
             height: '100px', 
@@ -108,11 +128,11 @@ const Profile = () => {
         />
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 1 }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-dark)' }}>{user.name}</h2>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-dark)' }}>{user?.name}</h2>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span className={`filter-tag ${user.role === 'HR_MANAGER' ? 'blue' : 'green'}`} style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
-              {user.role === 'HR_MANAGER' ? t('profile.hrManager') : t('profile.employee')}
+            <span className={`filter-tag ${user?.role === 'HR_MANAGER' ? 'blue' : 'green'}`} style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
+              {user?.role === 'HR_MANAGER' ? t('profile.hrManager') : t('profile.employee')}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#10B981', fontWeight: 600 }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 8px #10B981' }}></span>
@@ -121,7 +141,7 @@ const Profile = () => {
           </div>
 
           <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Mail size={14} /> {user.email}
+            <Mail size={14} /> {user?.email}
           </p>
         </div>
       </div>
@@ -142,7 +162,7 @@ const Profile = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.postTitle')}</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>Directrice des Ressources Humaines</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{profileData?.employe?.poste || 'Directrice des Ressources Humaines'}</div>
               </div>
             </div>
 

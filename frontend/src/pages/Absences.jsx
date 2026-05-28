@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -7,13 +8,7 @@ import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { logSystemActivity, triggerWorkflowNotification } from '../utils/rbac';
 
-const MOCK_ABSENCES = [
-  { id: 'ABS-001', employee: 'Ali Benali', dept: 'Ingénierie', type: 'absence', date: '2026-05-20', hours: 8, reason: 'Non justifiée', justificatif: null, status: 'unjustified', warning: true },
-  { id: 'ABS-002', employee: 'Sara Hamidi', dept: 'Marketing', type: 'late', date: '2026-05-22', hours: 1.5, reason: 'Transports', justificatif: null, status: 'justified', warning: false },
-  { id: 'ABS-003', employee: 'Karim Ouali', dept: 'Finance', type: 'absence', date: '2026-05-21', hours: 4, reason: 'Maladie', justificatif: 'certificat_medical.pdf', status: 'justifiedMedical', warning: false },
-  { id: 'ABS-004', employee: 'Nadia Benmoussa', dept: 'Ingénierie', type: 'late', date: '2026-05-23', hours: 0.5, reason: 'Non justifié', justificatif: null, status: 'unjustified', warning: false },
-  { id: 'ABS-005', employee: 'Youssef Tazi', dept: 'RH', type: 'absence', date: '2026-05-19', hours: 8, reason: 'Raison personnelle', justificatif: 'justificatif.pdf', status: 'justified', warning: false },
-];
+
 
 const TYPE_CONFIG = {
   'absence': { color: '#EF4444', bg: '#FEF2F2', icon: 'fas fa-user-times' },
@@ -30,7 +25,8 @@ export default function Absences() {
   const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [absences, setAbsences] = useState(MOCK_ABSENCES);
+  const [absences, setAbsences] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedAbs, setSelectedAbs] = useState(null);
@@ -40,6 +36,47 @@ export default function Absences() {
 
   const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
+
+  const fetchAbsences = async () => {
+    try {
+      setIsLoadingData(true);
+      const res = await api.get('/absences');
+      const mapped = res.data.data.map(abs => {
+        // Calculate diff in hours
+        const d1 = new Date(abs.dateDebut);
+        const d2 = new Date(abs.dateFin);
+        const diffHours = Math.max(8, Math.abs(d2 - d1) / 36e5);
+        
+        let mappedStatus = 'inProgress';
+        if (abs.statut === 'JUSTIFIEE') mappedStatus = 'justified';
+        if (abs.statut === 'INJUSTIFIEE') mappedStatus = 'unjustified';
+        
+        return {
+          id: `ABS-00${abs.id}`,
+          rawId: abs.id,
+          employee: abs.employe ? `${abs.employe.prenom} ${abs.employe.nom}` : 'Inconnu',
+          dept: abs.employe?.service?.nom || 'Général',
+          type: abs.type === 'Retard' ? 'late' : 'absence',
+          date: d1.toLocaleDateString('fr-FR'),
+          hours: diffHours,
+          reason: abs.motif || 'Non précisé',
+          justificatif: abs.justificatif,
+          status: mappedStatus,
+          warning: mappedStatus === 'unjustified'
+        };
+      });
+      setAbsences(mapped);
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des absences', 'error');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAbsences();
+  }, []);
 
   const [form, setForm] = useState({
     employee: '', dept: 'Ingénierie', type: 'absence', date: '', hours: 8, reason: '', status: 'unjustified'

@@ -17,33 +17,24 @@ const Login = () => {
 
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole]         = useState('HR_MANAGER');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const roles = [
-    { id: 'EMPLOYEE', label: t('auth.employee') },
-    { id: 'HR_AGENT', label: t('auth.hrAgent') },
-    { id: 'HR_MANAGER', label: t('auth.hrManager') },
-    { id: 'DEPARTMENT_MANAGER', label: t('auth.manager') },
-    { id: 'INTERIM_MANAGER', label: t('auth.interimManager') },
-    { id: 'SECRETARY_GENERAL', label: 'Secrétaire Générale' },
-  ];
+  // Roles are now dynamically fetched from the database
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setTimeout(() => {
-      const result = login(email, password, role);
-      if (result?.success) {
-        navigate('/dashboard');
-      } else {
-        setError(t('auth.invalidCredentials'));
-        setIsLoading(false);
-      }
-    }, 1200);
+    
+    const result = await login(email, password);
+    if (result?.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result?.error || t('auth.invalidCredentials'));
+      setIsLoading(false);
+    }
   };
 
   const isDark = theme === 'dark';
@@ -146,20 +137,7 @@ const Login = () => {
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Role */}
-            <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 13, fontWeight: 700, color: isDark ? '#cbd5e1' : '#374151', marginBottom: 8 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '6px', background: 'rgba(147,51,234,.1)', color: '#9333ea' }}><UserCheck style={{ width: 12, height: 12 }} /></span>
-                {t('auth.role')}
-              </label>
-              <div style={{ position: 'relative' }}>
-                <UserCheck style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: '#9333ea', zIndex: 5 }} />
-                <select value={role} onChange={(e) => setRole(e.target.value)} style={selectStyle} required>
-                  {roles.map((r) => <option key={r.id} value={r.id} style={{ background: isDark ? '#1e293b' : '#fff', color: isDark ? '#f1f5f9' : '#0f172a' }}>{r.label}</option>)}
-                </select>
-                <ChevronDown style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: isDark ? '#64748b' : '#9ca3af', pointerEvents: 'none' }} />
-              </div>
-            </div>
+
 
             {/* Email */}
             <div>

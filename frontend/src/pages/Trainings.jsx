@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -9,12 +10,7 @@ import { triggerWorkflowNotification, logSystemActivity } from '../utils/rbac';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MOROCCAN_CITIES } from '../utils/cities';
 
-const MOCK_TRAININGS = [
-  { id: 'FRM-001', title: 'ReactJS Avancé', domain: 'Informatique', trainer: 'Jean Martin', startDate: '2026-06-10', endDate: '2026-06-12', location: 'Casablanca', maxParticipants: 15, participants: ['Ali Benali', 'Sara Hamidi', 'Karim Ouali'], status: 'planned' },
-  { id: 'FRM-002', title: 'Leadership & Management', domain: 'Management', trainer: 'Amina Berrada', startDate: '2026-05-20', endDate: '2026-05-21', location: 'Rabat', maxParticipants: 10, participants: ['Leila Mansour', 'Hassan Alami'], status: 'done' },
-  { id: 'FRM-003', title: 'Sécurité des Systèmes d\'Information', domain: 'Informatique', trainer: 'Omar Tahir', startDate: '2026-07-01', endDate: '2026-07-03', location: 'En ligne', maxParticipants: 20, participants: ['Ali Benali'], status: 'planned' },
-  { id: 'FRM-004', title: 'Excel pour la Finance', domain: 'Finance', trainer: 'Nadia Rhali', startDate: '2026-05-15', endDate: '2026-05-15', location: 'Casablanca', maxParticipants: 12, participants: ['Sara Hamidi', 'Karim Ouali', 'Ali Benali'], status: 'inProgress' },
-];
+
 
 const chartData = [
   { month: 'Jan', formations: 2 }, { month: 'Fév', formations: 1 },
@@ -35,7 +31,8 @@ export default function Trainings() {
   const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [trainings, setTrainings] = useState(MOCK_TRAININGS);
+  const [trainings, setTrainings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
@@ -47,51 +44,97 @@ export default function Trainings() {
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
   const canManage = isHR;
 
+  const fetchTrainings = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/formations');
+      const mapped = res.data.data.map(t => {
+        let status = 'planned';
+        if (t.statut === 'EN_COURS') status = 'inProgress';
+        if (t.statut === 'TERMINEE') status = 'done';
+        if (t.statut === 'ANNULEE') status = 'cancelled';
+        
+        return {
+          id: `FRM-00${t.id}`,
+          rawId: t.id,
+          title: t.titre,
+          domain: 'Général',
+          trainer: 'Formateur Interne',
+          startDate: new Date(t.dateDebut).toLocaleDateString('fr-FR'),
+          endDate: new Date(t.dateFin).toLocaleDateString('fr-FR'),
+          location: t.lieu || 'Non spécifié',
+          maxParticipants: t.capacite || 20,
+          participants: t.participants ? t.participants.map(p => `${p.prenom} ${p.nom}`) : [],
+          status: status
+        };
+      });
+      setTrainings(mapped);
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des formations', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrainings();
+  }, []);
+
   const [form, setForm] = useState({
     title: '', domain: 'Informatique', trainer: '', startDate: '', endDate: '',
     location: '', maxParticipants: 15, description: ''
   });
   const handleFormChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleCreate = () => {
-    if (!form.title || !form.startDate || !form.endDate || !form.trainer) {
+  const handleCreate = async () => {
+    if (!form.title || !form.startDate || !form.endDate) {
       showToast(t('trainings.toast.missingFields'), 'warning');
       return;
     }
-    const newTraining = {
-      id: `FRM-${Date.now()}`,
-      ...form,
-      maxParticipants: Number(form.maxParticipants),
-      participants: [],
-      status: 'planned',
-    };
-    setTrainings(prev => [newTraining, ...prev]);
-    triggerWorkflowNotification('Tous', 'Nouvelle formation disponible', `Nouvelle formation : "${form.title}" programmée du ${form.startDate} au ${form.endDate}.`, 'info');
-    logSystemActivity('Création Formation', user?.name, `Formation "${form.title}" créée`);
-    showToast(t('trainings.toast.created'), 'success');
-    setIsCreateModalOpen(false);
-    setForm({ title: '', domain: 'Informatique', trainer: '', startDate: '', endDate: '', location: '', maxParticipants: 15, description: '' });
+    try {
+      await api.post('/formations', {
+        titre: form.title,
+        description: form.description,
+        lieu: form.location,
+        capacite: Number(form.maxParticipants),
+        dateDebut: form.startDate,
+        dateFin: form.endDate,
+        statut: 'PLANIFIEE'
+      });
+      showToast(t('trainings.toast.created'), 'success');
+      setIsCreateModalOpen(false);
+      setForm({ title: '', domain: 'Informatique', trainer: '', startDate: '', endDate: '', location: '', maxParticipants: 15, description: '' });
+      fetchTrainings();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la création', 'error');
+    }
   };
 
-  const handleEnroll = (training) => {
-    if (training.participants.includes(user?.name)) {
-      showToast(t('trainings.toast.alreadyEnrolled'), 'warning');
-      return;
+  const handleEnroll = async (training) => {
+    try {
+      await api.post(`/formations/${training.rawId}/participer`);
+      showToast(t('trainings.toast.enrolled', { title: training.title }), 'success');
+      fetchTrainings();
+    } catch (err) {
+      if (err.response?.data?.message) {
+        showToast(err.response.data.message, 'error');
+      } else {
+        showToast('Erreur lors de l\'inscription', 'error');
+      }
     }
-    if (training.participants.length >= training.maxParticipants) {
-      showToast(t('trainings.toast.full'), 'error');
-      return;
-    }
-    setTrainings(prev => prev.map(t =>
-      t.id === training.id ? { ...t, participants: [...t.participants, user?.name] } : t
-    ));
-    showToast(t('trainings.toast.enrolled', { title: training.title }), 'success');
   };
 
-  const handleDelete = (id) => {
-    setTrainings(prev => prev.filter(t => t.id !== id));
-    showToast(t('trainings.toast.deleted'), 'success');
-    setIsDetailModalOpen(false);
+  const handleDelete = async (id, rawId) => {
+    try {
+      await api.delete(`/formations/${rawId}`);
+      showToast(t('trainings.toast.deleted'), 'success');
+      setIsDetailModalOpen(false);
+      fetchTrainings();
+    } catch (err) {
+      showToast('Erreur lors de la suppression', 'error');
+    }
   };
 
   const filters = ['all', 'planned', 'inProgress', 'done'];
@@ -209,7 +252,7 @@ export default function Trainings() {
             <i className="fas fa-chart-bar" style={{ color: 'var(--primary)' }}></i> {t('trainings.perMonth')}
           </div>
           <div style={{ height: '200px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--text-gray)" fontSize={11} />
@@ -334,7 +377,7 @@ export default function Trainings() {
               </div>
             )}
             {canManage && (
-              <button onClick={() => handleDelete(selectedTraining.id)}
+              <button onClick={() => handleDelete(selectedTraining.id, selectedTraining.rawId)}
                 style={{ marginTop: '8px', padding: '10px', background: '#FEF2F2', color: '#EF4444', border: '1px solid #FECACA', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>
                 <i className="fas fa-trash"></i> {t('trainings.modal.delete')}
               </button>

@@ -20,7 +20,8 @@
     "low": "Basse",
     "previous": "Précédent",
     "next": "Suivant",
-    "showingEntries": "Affichage de {{first}} à {{last}} sur {{total}} entrées"
+    "showingEntries": "Affichage de {{first}} à {{last}} sur {{total}} entrées",
+    "share": "Partager"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -533,7 +534,10 @@
       "department": "Département",
       "hiredDate": "Date d'arrivée",
       "status": "Statut",
-      "actions": "Actions"
+      "actions": "Actions",
+      "view": "Voir",
+      "edit": "Modifier",
+      "delete": "Supprimer"
     },
     "filters": {
       "deptFilter": "Dép: Ingénierie",

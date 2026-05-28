@@ -1,4 +1,5 @@
 // Role-Based Access Control (RBAC) Configurations and Helpers
+import api from '../services/api';
 
 export const ROLES = {
   EMPLOYEE: 'EMPLOYEE',
@@ -128,19 +129,28 @@ export const hasPermission = (user, permission) => {
 /**
  * Centralized system audit logger. Stores logs locally in localStorage and limits size to 200 items.
  */
-export const logSystemActivity = (action, userName, details = '') => {
+export const logSystemActivity = async (action, userName, details = '') => {
   try {
+    const detailStr = typeof details === 'object' ? JSON.stringify(details) : details;
+    
+    // 1. Fallback to localStorage for instant local audits
     const logs = JSON.parse(localStorage.getItem('system_audit_logs')) || [];
     const newLog = {
       id: `LOG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
       action,
       user: userName || 'Système',
       timestamp: new Date().toISOString(),
-      details: typeof details === 'object' ? JSON.stringify(details) : details,
+      details: detailStr,
     };
     logs.unshift(newLog);
-    // Persist only the latest 200 activity records
     localStorage.setItem('system_audit_logs', JSON.stringify(logs.slice(0, 200)));
+
+    // 2. Persist directly to Symfony backend database asynchronously
+    await api.post('/audit-logs', {
+      action,
+      user: userName || 'Système',
+      details: detailStr
+    });
   } catch (error) {
     console.error('Audit Logger Error:', error);
   }

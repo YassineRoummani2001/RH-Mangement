@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin, Users, Tag, Clock } from 'lucide-react';
 
 export default function Calendar() {
@@ -27,15 +28,90 @@ export default function Calendar() {
     { month: 10, day: 18, nameFr: "Fête de l'Indépendance", nameEn: "Independence Day" }
   ];
 
-  // Simulated active employee absence/leave planner events
-  const leaveEvents = [
-    { day: 5, month: 4, type: 'paid', employee: 'Sarah Connor', labelFr: 'Congé Annuel', labelEn: 'Annual Leave' },
-    { day: 12, month: 4, type: 'sick', employee: 'Ali Benali', labelFr: 'Congé Maladie', labelEn: 'Sick Leave' },
-    { day: 15, month: 4, type: 'remote', employee: 'Yassine Mansouri', labelFr: 'Télétravail', labelEn: 'Remote Work' },
-    { day: 19, month: 4, type: 'paid', employee: 'Marc Leblanc', labelFr: 'Congé Annuel', labelEn: 'Annual Leave' },
-    { day: 22, month: 4, type: 'remote', employee: 'Salma Alami', labelFr: 'Télétravail', labelEn: 'Remote Work' },
-    { day: 8, month: 5, type: 'paid', employee: 'Karim Bennani', labelFr: 'Congé Annuel', labelEn: 'Annual Leave' }
-  ];
+  const [leaveEvents, setLeaveEvents] = useState([]);
+
+  const fetchCalendarLeaves = async () => {
+    try {
+      const [congesRes, absRes, formRes] = await Promise.all([
+        api.get('/conges').catch(() => ({ data: { data: [] } })),
+        api.get('/absences').catch(() => ({ data: { data: [] } })),
+        api.get('/formations').catch(() => ({ data: { data: [] } }))
+      ]);
+
+      const conges = congesRes.data?.data || [];
+      const absences = absRes.data?.data || [];
+      const formations = formRes.data?.data || [];
+
+      let allEvents = [];
+
+      // Helper function to generate an event for each day in a date range
+      const addEventsForRange = (item, type, labelFr, labelEn) => {
+        if (!item.dateDebut) return;
+        const start = new Date(item.dateDebut);
+        const end = item.dateFin ? new Date(item.dateFin) : new Date(start);
+        
+        // Loop through each day from start to end safely
+        let d = new Date(start);
+        while (d <= end) {
+          allEvents.push({
+            day: d.getDate(),
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            type: type,
+            employee: item.employe ? `${item.employe.prenom} ${item.employe.nom}` : 'Collaborateur',
+            labelFr: labelFr,
+            labelEn: labelEn
+          });
+          d.setDate(d.getDate() + 1);
+        }
+      };
+
+      // Process Conges
+      conges.forEach(item => {
+        let eventType = 'paid'; // Default blue for approved/normal
+        if (item.statut === 'REFUSE') eventType = 'sick'; // Red for refused
+        if (item.statut === 'EN_ATTENTE') eventType = 'remote'; // Green/neutral for pending
+        
+        addEventsForRange(item, eventType, item.motif || 'Congé', item.motif || 'Leave');
+      });
+
+      // Process Absences
+      absences.forEach(item => {
+        const motif = item.motif || item.type || 'Absence';
+        // Red for absences
+        addEventsForRange(item, 'sick', motif, motif);
+      });
+
+      // Process Formations
+      formations.forEach(item => {
+        if (!item.dateDebut) return;
+        const start = new Date(item.dateDebut);
+        const end = item.dateFin ? new Date(item.dateFin) : new Date(start);
+
+        let d = new Date(start);
+        while (d <= end) {
+          allEvents.push({
+            day: d.getDate(),
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            type: 'remote', // Green for formations
+            employee: item.titre || 'Formation',
+            labelFr: item.description || 'Formation Planifiée',
+            labelEn: item.description || 'Scheduled Training'
+          });
+          d.setDate(d.getDate() + 1);
+        }
+      });
+
+      setLeaveEvents(allEvents);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCalendarLeaves();
+  }, [currentDate]);
 
   const firstDayIndex = new Date(year, month, 1).getDay();
   // Adjust so Monday is first day of the week

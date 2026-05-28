@@ -104,9 +104,9 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Signature Électronique - Secretary General only */}
+            {/* Signature Électronique - Secretary General + HR Manager */}
             <Route path="signature" element={
-              <ProtectedRoute allowedRoles={['SECRETARY_GENERAL']}>
+              <ProtectedRoute allowedRoles={['SECRETARY_GENERAL', 'HR_MANAGER']}>
                 <Signature />
               </ProtectedRoute>
             } />

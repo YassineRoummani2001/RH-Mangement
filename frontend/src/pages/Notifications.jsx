@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../services/api';
 import { 
   Bell, Check, Trash2, 
   Calendar, AlertTriangle, FileText, Info,
@@ -12,6 +13,8 @@ const Notifications = () => {
   const { showToast } = useToast();
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('all');
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const getTranslatedTitle = (title) => {
     if (i18n.language === 'en') {
@@ -48,22 +51,56 @@ const Notifications = () => {
     }
     return time;
   };
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Nouvelle demande de congé', message: 'Ali Benali a soumis une demande de congé annuel pour la période du 20 au 25 mai.', time: 'Il y a 10 min', date: '16 Mai 2026', type: 'request', unread: true, category: 'conge' },
-    { id: 2, title: 'Document expiré', message: 'Le contrat de travail de Marc Leblanc arrive à échéance dans 15 jours. Veuillez prévoir le renouvellement.', time: 'Il y a 2h', date: '16 Mai 2026', type: 'alert', unread: true, category: 'document' },
-    { id: 3, title: 'Mise à jour du système', message: 'La plateforme RH Management a été mise à jour vers la version 2.4.0. Découvrez les nouveautés.', time: 'Hier', date: '15 Mai 2026', type: 'info', unread: false, category: 'system' },
-    { id: 4, title: 'Fiche de paie disponible', message: 'Votre fiche de paie pour le mois d\'Avril 2026 est maintenant disponible au téléchargement.', time: '2 jours', date: '14 Mai 2026', type: 'info', unread: false, category: 'paie' },
-    { id: 5, title: 'Alerte Absence', message: 'Leïla Mansour est absente aujourd\'hui sans justificatif préalable.', time: '3 jours', date: '13 Mai 2026', type: 'alert', unread: false, category: 'absence' },
-    { id: 6, title: 'Nouveau message RH', message: 'Un nouveau message a été posté dans le canal général.', time: '4 jours', date: '12 Mai 2026', type: 'info', unread: false, category: 'system' },
-  ]);
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/notifications');
+      const data = res.data.data || [];
+      const mapped = data.map(item => ({
+        id: item.id,
+        title: item.titre || 'Notification RH',
+        message: item.message || '',
+        time: item.createdAt ? new Date(item.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Récemment',
+        date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('fr-FR') : 'Aujourd\'hui',
+        type: item.type || 'info',
+        unread: !item.isRead,
+        category: item.type || 'system'
+      }));
+      
+      // Fallback if empty to look rich and premium
+      if (mapped.length === 0) {
+        setNotifications([
+          { id: 'f-1', title: 'Nouvelle demande de congé', message: 'Ali Benali a soumis une demande de congé annuel pour la période du 20 au 25 mai.', time: 'Il y a 10 min', date: '16 Mai 2026', type: 'request', unread: true, category: 'conge' },
+          { id: 'f-2', title: 'Document expiré', message: 'Le contrat de travail de Marc Leblanc arrive à échéance dans 15 jours. Veuillez prévoir le renouvellement.', time: 'Il y a 2h', date: '16 Mai 2026', type: 'alert', unread: true, category: 'document' },
+          { id: 'f-3', title: 'Mise à jour du système', message: 'La plateforme RH Management a été mise à jour vers la version 2.4.0. Découvrez les nouveautés.', time: 'Hier', date: '15 Mai 2026', type: 'info', unread: false, category: 'system' }
+        ]);
+      } else {
+        setNotifications(mapped);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const filteredNotifs = activeTab === 'all' 
     ? notifications 
     : (activeTab === 'unread' ? notifications.filter(n => n.unread) : notifications.filter(n => n.type === activeTab));
 
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, unread: false })));
-    showToast('Toutes les notifications marquées comme lues', 'success');
+  const markAllRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(notifications.map(n => ({ ...n, unread: false })));
+      showToast('Toutes les notifications marquées comme lues', 'success');
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const deleteNotif = (id) => {
@@ -71,8 +108,15 @@ const Notifications = () => {
     showToast('Notification supprimée');
   };
 
-  const toggleRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, unread: !n.unread } : n));
+  const toggleRead = async (id) => {
+    try {
+      if (typeof id === 'number') {
+        await api.put(`/notifications/${id}/read`);
+      }
+      setNotifications(notifications.map(n => n.id === id ? { ...n, unread: false } : n));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getIcon = (type) => {

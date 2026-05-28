@@ -3,20 +3,9 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Modal from '../components/Modal';
+import api from '../services/api';
 import { logSystemActivity, triggerWorkflowNotification } from '../utils/rbac';
 import { jsPDF } from 'jspdf';
-
-const DOCS_TO_SIGN = [
-  { id: 'DOC-004', type: 'Attestation de Travail', employee: 'Karim Ouali', dept: 'Finance', requestedAt: '2026-05-18', validatedByRH: true, status: 'En attente signature' },
-  { id: 'DOC-007', type: 'Attestation de Salaire', employee: 'Nadia Benmoussa', dept: 'Ingénierie', requestedAt: '2026-05-19', validatedByRH: true, status: 'En attente signature' },
-  { id: 'DOC-008', type: 'Attestation de Travail', employee: 'Youssef Tazi', dept: 'RH', requestedAt: '2026-05-20', validatedByRH: true, status: 'En attente signature' },
-];
-
-const SIGNED_DOCS = [
-  { id: 'DOC-001', type: 'Attestation de Travail', employee: 'Ali Benali', dept: 'Ingénierie', signedAt: '2026-05-10 14:32', status: 'Signé' },
-  { id: 'DOC-003', type: 'Bulletin de Paie (Avril)', employee: 'Ali Benali', dept: 'Ingénierie', signedAt: '2026-05-01 09:15', status: 'Signé' },
-  { id: 'DOC-005', type: 'Bulletin de Paie (Mars)', employee: 'Sara Hamidi', dept: 'Marketing', signedAt: '2026-04-30 16:45', status: 'Signé' },
-];
 
 export default function Signature() {
   const { user } = useAuth();
@@ -25,12 +14,52 @@ export default function Signature() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
-  const [pendingDocs, setPendingDocs] = useState(DOCS_TO_SIGN);
-  const [signedDocs, setSignedDocs] = useState(SIGNED_DOCS);
+  const [pendingDocs, setPendingDocs] = useState([]);
+  const [signedDocs, setSignedDocs] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [activeTab, setActiveTab] = useState('pending');
   const [signatureData, setSignatureData] = useState(null);
+
+  const fetchDocs = useCallback(async () => {
+    try {
+      setIsLoadingDocs(true);
+      const res = await api.get('/attestations');
+      const all = res.data.data || [];
+      const pending = all.filter(a => a.statut === 'GENEREE').map(a => ({
+        id: `DOC-${String(a.id).padStart(3, '0')}`,
+        rawId: a.id,
+        type: a.type === 'travail' ? 'Attestation de Travail' : a.type === 'salaire' ? 'Attestation de Salaire' : 'Bulletin de Paie',
+        employee: a.employe ? `${a.employe.prenom} ${a.employe.nom}` : 'Inconnu',
+        dept: a.employe?.service?.nom || 'Général',
+        requestedAt: a.dateDemande ? new Date(a.dateDemande).toLocaleDateString('fr-FR') : '',
+        validatedByRH: a.signatureRH,
+        status: 'En attente signature',
+      }));
+      const signed = all.filter(a => a.statut === 'SIGNEE').map(a => ({
+        id: `DOC-${String(a.id).padStart(3, '0')}`,
+        rawId: a.id,
+        type: a.type === 'travail' ? 'Attestation de Travail' : a.type === 'salaire' ? 'Attestation de Salaire' : 'Bulletin de Paie',
+        employee: a.employe ? `${a.employe.prenom} ${a.employe.nom}` : 'Inconnu',
+        dept: a.employe?.service?.nom || 'Général',
+        signedAt: a.dateGeneration ? new Date(a.dateGeneration).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '',
+        status: 'Signé',
+      }));
+      setPendingDocs(pending);
+      setSignedDocs(signed);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDocs();
+  }, [fetchDocs]);
+
+
 
   // Canvas drawing logic
   const getPos = (e, canvas) => {
@@ -115,7 +144,7 @@ export default function Signature() {
     }, 100);
   };
 
-  const handleSign = () => {
+  const handleSign = async () => {
     if (!hasSignature) {
       showToast('Veuillez apposer votre signature avant de valider.', 'warning');
       return;
@@ -124,21 +153,18 @@ export default function Signature() {
     const sigData = canvas ? canvas.toDataURL('image/png') : null;
     setSignatureData(sigData);
 
-    const now = new Date();
-    const signedAt = now.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-    setPendingDocs(prev => prev.filter(d => d.id !== selectedDoc.id));
-    setSignedDocs(prev => [{
-      ...selectedDoc,
-      status: 'Signé',
-      signedAt,
-    }, ...prev]);
-
-    triggerWorkflowNotification(selectedDoc.employee, 'Document signé — disponible', `Votre ${selectedDoc.type} a été signé électroniquement par la Secrétaire Générale. Vous pouvez le télécharger.`, 'success');
-    logSystemActivity('Signature Électronique', user?.name, `Document ${selectedDoc.id} signé pour ${selectedDoc.employee}`);
-    showToast(`Document "${selectedDoc.type}" signé et transmis à ${selectedDoc.employee} !`, 'success');
-    setIsSignModalOpen(false);
-    clearSignature();
+    try {
+      await api.put(`/attestations/${selectedDoc.rawId}/sign`);
+      triggerWorkflowNotification(selectedDoc.employee, 'Document signé — disponible', `Votre ${selectedDoc.type} a été signé électroniquement par la Secrétaire Générale. Vous pouvez le télécharger.`, 'success');
+      logSystemActivity('Signature Électronique', user?.name, `Document ${selectedDoc.id} signé pour ${selectedDoc.employee}`);
+      showToast(`Document "${selectedDoc.type}" signé et transmis à ${selectedDoc.employee} !`, 'success');
+      setIsSignModalOpen(false);
+      clearSignature();
+      fetchDocs();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la signature du document.', 'error');
+    }
   };
 
   const downloadSignedPDF = (doc) => {

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
 import { DollarSign, Printer, Download, Calculator, User, Briefcase, FileText, CheckCircle } from 'lucide-react';
 
 export default function Finance() {
@@ -8,20 +9,38 @@ export default function Finance() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const mockEmployees = [
-    { id: 1, name: 'Sarah Connor', role: 'Director of HR', baseSalary: 18000, department: 'Ressources Humaines', contractType: 'CDI' },
-    { id: 2, name: 'Ali Benali', role: 'Senior Web Developer', baseSalary: 14000, department: 'Ingénierie', contractType: 'CDI' },
-    { id: 3, name: 'Marc Leblanc', role: 'UX Designer', baseSalary: 9500, department: 'Design', contractType: 'CDI' },
-    { id: 4, name: 'Karim Bennani', role: 'Support Specialist', baseSalary: 6500, department: 'Support', contractType: 'CDD' },
-    { id: 5, name: 'Salma Alami', role: 'HR Assistant', baseSalary: 7500, department: 'Ressources Humaines', contractType: 'CDI' }
-  ];
-
-  const [selectedEmpId, setSelectedEmpId] = useState(1);
+  const [mockEmployees, setMockEmployees] = useState([]);
+  const [selectedEmpId, setSelectedEmpId] = useState('');
   const [bonus, setBonus] = useState(1500);
   const [allowance, setAllowance] = useState(800); // Prime de transport/logement
   const [isSigned, setIsSigned] = useState(false);
 
-  const currentEmp = mockEmployees.find(e => e.id === Number(selectedEmpId)) || mockEmployees[0];
+  const fetchFinanceEmployees = async () => {
+    try {
+      const res = await api.get('/employes');
+      const data = res.data.data || [];
+      const mapped = data.map(emp => ({
+        id: emp.id,
+        name: `${emp.prenom} ${emp.nom}`,
+        role: emp.poste || 'Collaborateur',
+        baseSalary: emp.salaire ? Number(emp.salaire) : 8500,
+        department: emp.service?.nom || 'Général',
+        contractType: 'CDI'
+      }));
+      setMockEmployees(mapped);
+      if (mapped.length > 0) {
+        setSelectedEmpId(mapped[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchFinanceEmployees();
+  }, []);
+
+  const currentEmp = mockEmployees.find(e => e.id === Number(selectedEmpId)) || mockEmployees[0] || { name: 'Chargement...', role: 'HR', baseSalary: 8500, department: 'RH', contractType: 'CDI' };
 
   // Moroccan Tax Deductions Logic
   const baseSalary = currentEmp.baseSalary;

@@ -1,22 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { logSystemActivity } from '../utils/rbac';
 
 const DEPARTMENTS = ['Ingénierie', 'Marketing', 'Finance', 'Ressources Humaines', 'Commercial', 'Direction'];
-
-const MOCK_EMPLOYEES = [
-  { id: 1, name: 'Ali Benali', email: 'ali.benali@rh.ma', poste: 'Développeur Senior', dept: 'Ingénierie', assignedSince: '2024-01-15', status: 'Actif' },
-  { id: 2, name: 'Sara Hamidi', email: 'sara.hamidi@rh.ma', poste: 'Chef de Projet Marketing', dept: 'Marketing', assignedSince: '2023-06-01', status: 'Actif' },
-  { id: 3, name: 'Karim Ouali', email: 'karim.ouali@rh.ma', poste: 'Analyste Financier', dept: 'Finance', assignedSince: '2024-03-20', status: 'Actif' },
-  { id: 4, name: 'Nadia Benmoussa', email: 'nadia.benmoussa@rh.ma', poste: 'Ingénieure QA', dept: 'Ingénierie', assignedSince: '2025-01-10', status: 'Actif' },
-  { id: 5, name: 'Youssef Tazi', email: 'youssef.tazi@rh.ma', poste: 'Chargé RH', dept: 'Ressources Humaines', assignedSince: '2023-09-01', status: 'Actif' },
-  { id: 6, name: 'Imane Chraibi', email: 'imane.chraibi@rh.ma', poste: 'Commercial Senior', dept: 'Commercial', assignedSince: '2024-07-01', status: 'Actif' },
-];
 
 const DEPT_COLORS = {
   'Ingénierie':         '#2563EB',
@@ -31,7 +23,8 @@ export default function Assignments() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [employees, setEmployees] = useState(MOCK_EMPLOYEES);
+  const [employees, setEmployees] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
@@ -43,26 +36,75 @@ export default function Assignments() {
   const [editForm, setEditForm] = useState({ dept: '', poste: '' });
   const handleEditChange = e => setEditForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
+  const fetchAssignments = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/affectations');
+      const data = res.data.data || [];
+      const mapped = data.map(item => ({
+        id: item.id,
+        name: item.employe ? `${item.employe.prenom} ${item.employe.nom}` : 'Non spécifié',
+        email: item.employe?.cin ? `${item.employe.prenom.toLowerCase()}@rh.ma` : 'inconnu@rh.ma',
+        poste: item.poste || item.employe?.poste || 'Collaborateur',
+        dept: item.service?.nom || 'Général',
+        assignedSince: item.dateDebut ? new Date(item.dateDebut).toLocaleDateString('fr-FR') : 'Non définie',
+        status: item.employe?.statut || 'Actif',
+        serviceId: item.service?.id,
+        employeId: item.employe?.id
+      }));
+      setEmployees(mapped);
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des affectations.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
   const openEdit = (emp) => {
     setSelectedEmp(emp);
     setEditForm({ dept: emp.dept, poste: emp.poste });
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    setEmployees(prev => prev.map(e =>
-      e.id === selectedEmp.id ? { ...e, dept: editForm.dept, poste: editForm.poste, assignedSince: new Date().toISOString().split('T')[0] } : e
-    ));
-    logSystemActivity('Modification Affectation', user?.name, `${selectedEmp.name} → ${editForm.dept} (${editForm.poste})`);
-    showToast(t('assignments.toast.updated', { name: selectedEmp.name }), 'success');
-    setIsEditModalOpen(false);
+  const handleSaveEdit = async () => {
+    try {
+      const serviceRes = await api.get('/services');
+      const services = serviceRes.data.data || [];
+      const matchedService = services.find(s => s.nom.toLowerCase() === editForm.dept.toLowerCase());
+      
+      await api.post('/affectations', {
+        employe_id: selectedEmp.employeId,
+        poste: editForm.poste,
+        dateDebut: new Date().toISOString().split('T')[0],
+        service_id: matchedService ? matchedService.id : null
+      });
+
+      logSystemActivity('Modification Affectation', user?.name, `${selectedEmp.name} → ${editForm.dept} (${editForm.poste})`);
+      showToast(t('assignments.toast.updated', { name: selectedEmp.name }), 'success');
+      setIsEditModalOpen(false);
+      fetchAssignments();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la mise à jour de l\'affectation.', 'error');
+    }
   };
 
-  const handleDelete = () => {
-    setEmployees(prev => prev.filter(e => e.id !== selectedEmp.id));
-    logSystemActivity('Suppression Affectation', user?.name, `Affectation de ${selectedEmp.name} supprimée`);
-    showToast(t('assignments.toast.deleted', { name: selectedEmp.name }), 'success');
-    setIsDeleteModalOpen(false);
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/affectations/${selectedEmp.id}`);
+      logSystemActivity('Suppression Affectation', user?.name, `Affectation de ${selectedEmp.name} supprimée`);
+      showToast(t('assignments.toast.deleted', { name: selectedEmp.name }), 'success');
+      setIsDeleteModalOpen(false);
+      fetchAssignments();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la suppression de l\'affectation.', 'error');
+    }
   };
 
   const deptCounts = DEPARTMENTS.reduce((acc, dept) => {

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { User, Mail, Phone, MapPin, Clock, Calendar, Briefcase, Shield, Globe, Users, Bell, AlertTriangle, Lock, Key, Eye, EyeOff, Loader2, Check, Link2 } from 'lucide-react';
 import { logSystemActivity } from '../utils/rbac';
+import api from '../services/api';
 
 import { MOROCCAN_CITIES } from '../utils/cities';
 import Pagination from '../components/Pagination';
@@ -22,10 +23,27 @@ const Settings = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const logsPerPage = 5;
   
-  useEffect(() => {
-    if (activeTab === 'audit') {
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await api.get('/audit-logs');
+      const mapped = (res.data.data || []).map(log => ({
+        id: `LOG-${log.id}`,
+        action: log.action,
+        user: log.user,
+        timestamp: log.createdAt,
+        details: log.details || ''
+      }));
+      setAuditLogs(mapped);
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
       const logs = JSON.parse(localStorage.getItem('system_audit_logs')) || [];
       setAuditLogs(logs);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchAuditLogs();
       setCurrentPage(1); // Reset to page 1 when loading logs
     }
   }, [activeTab]);
@@ -35,11 +53,18 @@ const Settings = () => {
   const currentLogs = auditLogs.slice(indexOfFirstLog, indexOfLastLog);
   const totalPages = Math.ceil(auditLogs.length / logsPerPage);
 
-  const clearAuditLogs = () => {
-    localStorage.removeItem('system_audit_logs');
-    setAuditLogs([]);
-    showToast("Journal d'audit réinitialisé avec succès.", "success");
-    logSystemActivity("Nettoyage des logs", user?.name, "Effacement de l'ensemble du journal d'audit");
+  const clearAuditLogs = async () => {
+    try {
+      await api.delete('/audit-logs');
+      showToast("Journal d'audit réinitialisé avec succès.", "success");
+      fetchAuditLogs();
+    } catch (err) {
+      console.error('Error clearing audit logs:', err);
+      localStorage.removeItem('system_audit_logs');
+      setAuditLogs([]);
+      showToast("Journal d'audit réinitialisé avec succès.", "success");
+      logSystemActivity("Nettoyage des logs", user?.name, "Effacement de l'ensemble du journal d'audit");
+    }
   };
 
   const getDefaultFormData = () => {
@@ -69,6 +94,42 @@ const Settings = () => {
     }
     return defaults;
   };
+  const [dbEmployeeId, setDbEmployeeId] = useState(null);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/me');
+      const data = res.data.data;
+      if (data) {
+        const emp = data.employe || {};
+        setDbEmployeeId(emp.id || null);
+        const fetchedData = {
+          prenom: emp.prenom || data.email.split('@')[0],
+          nom: emp.nom || '',
+          email: data.email,
+          phone: emp.telephone || '',
+          location: emp.adresse || '',
+          contractType: emp.statut || 'CDI (Temps Plein)',
+          hireDate: emp.dateRecrutement || '',
+          department: emp.service?.nom || 'Ressources Humaines',
+          companyName: 'Acme Corp',
+          industry: 'Technologies',
+          companySize: '201-500 employés',
+          weeklySummary: true,
+          employeeRequests: true,
+          complianceAlerts: false
+        };
+        setFormData(fetchedData);
+        setInitialFormData(fetchedData);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const [formData, setFormData] = useState(getDefaultFormData);
   const [initialFormData, setInitialFormData] = useState(getDefaultFormData);
@@ -77,18 +138,33 @@ const Settings = () => {
   const isProfileDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
   const isPasswordReady = passwordForm.current.length > 0 && passwordForm.new.length > 0 && passwordForm.confirm.length > 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isProfileDirty) return;
-    localStorage.setItem('hr_profile_data', JSON.stringify(formData));
-    setInitialFormData({ ...formData });
-    if (setUser && user) {
-      setUser({
-        ...user,
-        name: `${formData.prenom} ${formData.nom}`,
-        email: formData.email
-      });
+    try {
+      if (dbEmployeeId) {
+        await api.put(`/employes/${dbEmployeeId}`, {
+          prenom: formData.prenom,
+          nom: formData.nom,
+          telephone: formData.phone,
+          adresse: formData.location
+        });
+      }
+      
+      if (setUser && user) {
+        setUser({
+          ...user,
+          name: `${formData.prenom} ${formData.nom}`,
+          email: formData.email
+        });
+      }
+
+      setInitialFormData({ ...formData });
+      showToast(t('settings.toast.saveSuccess') || 'Modifications enregistrées !', 'success');
+      logSystemActivity("Modification de profil", user?.name, `Modification des coordonnées personnelles`);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      showToast('Erreur lors de la sauvegarde', 'error');
     }
-    showToast(t('settings.toast.saveSuccess') || 'Modifications enregistrées !', 'success');
   };
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -97,7 +173,7 @@ const Settings = () => {
 
 
 
-  const handlePasswordUpdate = () => {
+  const handlePasswordUpdate = async () => {
     if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
       showToast(t('settings.toast.missingFields') || 'Veuillez remplir tous les champs de mot de passe', 'warning');
       return;
@@ -106,8 +182,19 @@ const Settings = () => {
       showToast(t('settings.toast.passwordMismatch') || 'Les mots de passe ne correspondent pas', 'error');
       return;
     }
-    showToast(t('settings.toast.passwordSuccess') || 'Mot de passe mis à jour !', 'success');
-    setPasswordForm({ current: '', new: '', confirm: '' });
+    try {
+      await api.post('/change-password', {
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.new
+      });
+      showToast(t('settings.toast.passwordSuccess') || 'Mot de passe mis à jour !', 'success');
+      setPasswordForm({ current: '', new: '', confirm: '' });
+      logSystemActivity("Changement de mot de passe", user?.name, "Mise à jour sécurisée du mot de passe");
+    } catch (err) {
+      console.error('Error updating password:', err);
+      const errMsg = err.response?.data?.message || 'Erreur lors de la mise à jour du mot de passe';
+      showToast(errMsg, 'error');
+    }
   };
 
   const [slackConnected, setSlackConnected] = useState(true);

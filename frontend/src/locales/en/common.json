@@ -20,7 +20,8 @@
     "low": "Low",
     "previous": "Previous",
     "next": "Next",
-    "showingEntries": "Showing {{first}} to {{last}} of {{total}} entries"
+    "showingEntries": "Showing {{first}} to {{last}} of {{total}} entries",
+    "share": "Share"
   },
   "auth": {
     "signIn": "Sign In",
@@ -533,7 +534,10 @@
       "department": "Department",
       "hiredDate": "Hired Date",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete"
     },
     "filters": {
       "deptFilter": "Dept: Engineering",

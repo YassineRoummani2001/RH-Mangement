@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import api from '../services/api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { triggerWorkflowNotification, logSystemActivity } from '../utils/rbac';
 
 const ANNUAL_QUOTA = 5; // heures par an
-
-const MOCK_AUTHORIZATIONS = [
-  { id: 'AUTH-001', employee: 'Ali Benali', dept: 'Ingénierie', date: '2026-05-20', hours: 2, reason: 'Rendez-vous médical', status: 'pending', submittedAt: '2026-05-18', approvedByChef: false, approvedByRH: false },
-  { id: 'AUTH-002', employee: 'Sara Hamidi', dept: 'Marketing', date: '2026-05-22', hours: 1, reason: 'Démarche administrative', status: 'approved', submittedAt: '2026-05-15', approvedByChef: true, approvedByRH: true },
-  { id: 'AUTH-003', employee: 'Karim Ouali', dept: 'Finance', date: '2026-05-24', hours: 3, reason: 'Urgence familiale', status: 'validatedChef', submittedAt: '2026-05-19', approvedByChef: true, approvedByRH: false },
-  { id: 'AUTH-004', employee: 'Nadia Benmoussa', dept: 'Ingénierie', date: '2026-05-26', hours: 1, reason: 'Démarche bancaire', status: 'refused', submittedAt: '2026-05-16', approvedByChef: false, approvedByRH: false },
-  { id: 'AUTH-005', employee: 'Youssef Tazi', dept: 'RH', date: '2026-06-01', hours: 2, reason: 'Consultation spécialiste', status: 'pending', submittedAt: '2026-05-20', approvedByChef: false, approvedByRH: false },
-];
 
 const statusConfig = {
   'pending':       { color: '#F59E0B', bg: '#FFFBEB', icon: 'fas fa-clock' },
@@ -28,7 +21,8 @@ export default function Authorizations() {
   const { user, effectiveRole } = useAuth();
   const { showToast } = useToast();
   const { t } = useTranslation();
-  const [authorizations, setAuthorizations] = useState(MOCK_AUTHORIZATIONS);
+  const [authorizations, setAuthorizations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedAuth, setSelectedAuth] = useState(null);
@@ -40,6 +34,42 @@ export default function Authorizations() {
   const isDeptManager = effectiveRole === 'DEPARTMENT_MANAGER' || effectiveRole === 'INTERIM_MANAGER';
   const isHR = effectiveRole === 'HR_MANAGER' || effectiveRole === 'HR_AGENT';
 
+  const fetchAuthorizations = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.get('/conges');
+      const data = res.data.data || [];
+      const mapped = data.map(item => {
+        let status = 'pending';
+        if (item.statut === 'APPROUVE_CHEF') status = 'validatedChef';
+        if (item.statut === 'APPROUVE') status = 'approved';
+        if (item.statut === 'REFUSE') status = 'refused';
+
+        return {
+          id: `AUTH-00${item.id}`,
+          rawId: item.id,
+          employee: item.employe ? `${item.employe.prenom} ${item.employe.nom}` : 'Collaborateur',
+          dept: item.employe?.service?.nom || 'Général',
+          date: item.dateDebut ? new Date(item.dateDebut).toISOString().split('T')[0] : '',
+          hours: item.nombreJours || 2,
+          reason: item.motif || 'Absence exceptionnelle',
+          status: status,
+          submittedAt: item.dateDebut ? new Date(item.dateDebut).toISOString().split('T')[0] : ''
+        };
+      });
+      setAuthorizations(mapped);
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du chargement des autorisations.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAuthorizations();
+  }, []);
+
   const usedHours = authorizations
     .filter(a => a.employee === user?.name && a.status === 'approved')
     .reduce((sum, a) => sum + a.hours, 0);
@@ -48,56 +78,71 @@ export default function Authorizations() {
   const [form, setForm] = useState({ date: '', hours: 1, reason: '' });
   const handleFormChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!form.date || !form.reason) {
       showToast(t('authorizations.toast.missingFields'), 'warning');
       return;
     }
-    const newAuth = {
-      id: `AUTH-${Date.now()}`,
-      employee: user?.name,
-      dept: user?.dept,
-      date: form.date,
-      hours: Number(form.hours),
-      reason: form.reason,
-      status: 'pending',
-      submittedAt: new Date().toISOString().split('T')[0],
-      approvedByChef: false,
-      approvedByRH: false,
-    };
-    setAuthorizations(prev => [newAuth, ...prev]);
-    triggerWorkflowNotification('Chef de Service', 'Nouvelle autorisation d\'absence', `${user?.name} a soumis une demande d'autorisation pour le ${form.date}.`, 'request');
-    logSystemActivity('Demande Autorisation', user?.name, `Autorisation demandée pour ${form.date} (${form.hours}h)`);
-    showToast(t('authorizations.toast.submitted'), 'success');
-    setIsCreateModalOpen(false);
-    setForm({ date: '', hours: 1, reason: '' });
+    try {
+      // Simulate hours using nombreJours in backend Conge
+      await api.post('/conges', {
+        dateDebut: form.date,
+        dateFin: form.date,
+        motif: form.reason,
+        commentaire: `Demande d'autorisation d'absence de ${form.hours} heure(s)`
+      });
+
+      triggerWorkflowNotification('Chef de Service', 'Nouvelle autorisation d\'absence', `${user?.name} a soumis une demande d'autorisation pour le ${form.date}.`, 'request');
+      logSystemActivity('Demande Autorisation', user?.name, `Autorisation demandée pour ${form.date} (${form.hours}h)`);
+      showToast(t('authorizations.toast.submitted'), 'success');
+      setIsCreateModalOpen(false);
+      setForm({ date: '', hours: 1, reason: '' });
+      fetchAuthorizations();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la soumission de la demande.', 'error');
+    }
   };
 
-  const handleApproveChef = (auth) => {
-    setAuthorizations(prev => prev.map(a =>
-      a.id === auth.id ? { ...a, status: 'validatedChef', approvedByChef: true } : a
-    ));
-    triggerWorkflowNotification('Agent RH', 'Autorisation validée par chef', `Demande de ${auth.employee} validée — en attente RH.`, 'approval');
-    showToast(t('authorizations.toast.validatedChef', { name: auth.employee }), 'success');
-    setIsDetailModalOpen(false);
+  const handleApproveChef = async (auth) => {
+    try {
+      await api.put(`/conges/${auth.rawId}/approve`);
+      triggerWorkflowNotification('Agent RH', 'Autorisation validée par chef', `Demande de ${auth.employee} validée — en attente RH.`, 'approval');
+      showToast(t('authorizations.toast.validatedChef', { name: auth.employee }), 'success');
+      setIsDetailModalOpen(false);
+      fetchAuthorizations();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de la validation par le chef.', 'error');
+    }
   };
 
-  const handleApproveRH = (auth) => {
-    setAuthorizations(prev => prev.map(a =>
-      a.id === auth.id ? { ...a, status: 'approved', approvedByRH: true } : a
-    ));
-    triggerWorkflowNotification(auth.employee, 'Autorisation approuvée', `Votre demande d'autorisation du ${auth.date} a été approuvée par le RH.`, 'success');
-    showToast(t('authorizations.toast.approvedRH', { name: auth.employee }), 'success');
-    setIsDetailModalOpen(false);
+  const handleApproveRH = async (auth) => {
+    try {
+      await api.put(`/conges/${auth.rawId}/approve`);
+      triggerWorkflowNotification(auth.employee, 'Autorisation approuvée', `Votre demande d'autorisation du ${auth.date} a été approuvée par le RH.`, 'success');
+      showToast(t('authorizations.toast.approvedRH', { name: auth.employee }), 'success');
+      setIsDetailModalOpen(false);
+      fetchAuthorizations();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors de l\'approbation par le RH.', 'error');
+    }
   };
 
-  const handleRefuse = (auth) => {
-    setAuthorizations(prev => prev.map(a =>
-      a.id === auth.id ? { ...a, status: 'refused' } : a
-    ));
-    triggerWorkflowNotification(auth.employee, 'Autorisation refusée', `Votre demande d'autorisation du ${auth.date} a été refusée.`, 'warning');
-    showToast(t('authorizations.toast.refused', { name: auth.employee }), 'error');
-    setIsDetailModalOpen(false);
+  const handleRefuse = async (auth) => {
+    try {
+      await api.put(`/conges/${auth.rawId}/reject`, {
+        motifRefus: 'Refusé'
+      });
+      triggerWorkflowNotification(auth.employee, 'Autorisation refusée', `Votre demande d'autorisation du ${auth.date} a été refusée.`, 'warning');
+      showToast(t('authorizations.toast.refused', { name: auth.employee }), 'error');
+      setIsDetailModalOpen(false);
+      fetchAuthorizations();
+    } catch (err) {
+      console.error(err);
+      showToast('Erreur lors du refus de la demande.', 'error');
+    }
   };
 
   const filters = ['all', 'pending', 'validatedChef', 'approved', 'refused'];

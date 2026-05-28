@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { logSystemActivity, getEffectiveRole } from '../utils/rbac';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -19,40 +20,56 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(user));
     } else {
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
   }, [user]);
 
-  const login = (email, password, role = 'HR_MANAGER') => {
-    const roleProfiles = {
-      HR_MANAGER:          { name: 'Sarah Connor',         title: 'Administrateur RH',      dept: 'Ressources Humaines',  bg: '2563EB' },
-      HR_AGENT:            { name: 'Marc Leblanc',         title: 'Agent RH',               dept: 'Ressources Humaines',  bg: '7C3AED' },
-      EMPLOYEE:            { name: 'Ali Benali',           title: 'Employé',                dept: 'Ingénierie',            bg: '059669' },
-      DEPARTMENT_MANAGER:  { name: 'Leila Mansour',        title: 'Chef de Service',        dept: 'Ingénierie',            bg: 'D97706' },
-      INTERIM_MANAGER:     { name: 'Hassan Alami',         title: 'Chef de Service Intérim',dept: 'Finance',               bg: 'DC2626' },
-      SECRETARY_GENERAL:   { name: 'Fatima Zahra Alaoui',  title: 'Secrétaire Générale',   dept: 'Direction Générale',    bg: 'BE185D' },
-    };
-    
-    const profile = roleProfiles[role] ?? roleProfiles['HR_MANAGER'];
-    const initials = profile.name.split(' ').map(n => n[0]).join('+');
-
-    // Default interim until is tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const mockUser = {
-      id: Math.floor(1000 + Math.random() * 9000),
-      name: profile.name,
-      title: profile.title,
-      email,
-      role,
-      dept: profile.dept,
-      avatar: `https://ui-avatars.com/api/?name=${initials}&background=${profile.bg}&color=fff`,
-      ...(role === 'INTERIM_MANAGER' ? { interimUntil: tomorrow.toISOString() } : {})
-    };
-    
-    setUser(mockUser);
-    logSystemActivity("Connexion", mockUser.name, `Session ouverte pour ${mockUser.title} (${role})`);
-    return { success: true };
+  const login = async (email, password) => {
+    try {
+      // 1. Get Token
+      const res = await api.post('/login', { email, password });
+      const { token } = res.data;
+      
+      if (token) {
+        localStorage.setItem('token', token);
+        
+        // 2. Get User Profile
+        const profileRes = await api.get('/me');
+        const userData = profileRes.data.data;
+        
+        // Ensure role compatibility with existing frontend
+        // Assuming the backend roles like ROLE_ADMIN_RH map to HR_MANAGER
+        const roleMapping = {
+          'ROLE_ADMIN_RH': 'HR_MANAGER',
+          'ROLE_AGENT_RH': 'HR_AGENT',
+          'ROLE_EMPLOYE': 'EMPLOYEE',
+          'ROLE_CHEF_SERVICE': 'DEPARTMENT_MANAGER',
+          'ROLE_SECRETAIRE_GENERALE': 'SECRETARY_GENERAL'
+        };
+        
+        const mainRole = userData.roles.find(r => roleMapping[r]) || 'ROLE_EMPLOYE';
+        const mappedRole = roleMapping[mainRole] || 'EMPLOYEE';
+        
+        // Format the user for the frontend
+        const frontendUser = {
+          id: userData.id,
+          name: userData.employe ? `${userData.employe.prenom} ${userData.employe.nom}` : email,
+          title: userData.employe ? userData.employe.poste : 'Utilisateur',
+          email: userData.email,
+          role: mappedRole,
+          dept: userData.employe?.service?.nom || 'Administration',
+          avatar: userData.employe?.photo || `https://ui-avatars.com/api/?name=${email}&background=2563EB&color=fff`,
+        };
+        
+        setUser(frontendUser);
+        logSystemActivity("Connexion", frontendUser.name, `Session ouverte pour ${frontendUser.title} (${mappedRole})`);
+        return { success: true };
+      }
+      return { success: false };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: error.response?.data?.message || 'Login failed' };
+    }
   };
 
   const logout = () => {
