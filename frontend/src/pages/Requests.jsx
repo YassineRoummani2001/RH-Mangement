@@ -266,11 +266,11 @@ const Requests = () => {
     if (!target) return;
     try {
       if (target.status === 'attente') {
-        // HR generates it
-        await api.post(`/attestations/${target.id}/generate`);
+        // Mettre le statut A_VALIDER (En cours)
+        await api.put(`/attestations/${target.id}`, { statut: 'A_VALIDER' });
       } else if (target.status === 'cours') {
-        // Secretary or HR signs it
-        await api.post(`/attestations/${target.id}/sign`);
+        // Mettre le statut APPROUVE (Terminée)
+        await api.put(`/attestations/${target.id}`, { statut: 'APPROUVE' });
       }
       showToast('Demande approuvée avec succès', 'success');
       setIsDetailsModalOpen(false);
@@ -285,8 +285,11 @@ const Requests = () => {
     const target = reqToReject && reqToReject.id ? reqToReject : selectedRequest;
     if (!target) return;
     try {
-      await api.post(`/attestations/${target.id}/refuse`);
-      showToast('Demande rejetée', 'error');
+      await api.put(`/attestations/${target.id}`, { 
+        statut: 'REFUSE',
+        motifRefus: 'Refusé'
+      });
+      showToast('Demande refusée', 'error');
       setIsDetailsModalOpen(false);
       fetchRequests();
     } catch (err) {

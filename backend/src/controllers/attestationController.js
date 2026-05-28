@@ -13,7 +13,7 @@ export const getAll = async (req, res) => {
       }
     }
 
-    const items = await Attestation.find(query).populate({ path: 'employe', populate: { path: 'service' } });
+    const items = await Attestation.find(query).populate('employe');
     res.json({ success: true, message: 'Liste récupérée', data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -32,17 +32,7 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const data = { ...req.body };
-    // Auto-link to logged-in user's employe if not provided
-    if (!data.employe && req.user) {
-      const emp = await Employe.findOne({ user: req.user._id });
-      if (emp) data.employe = emp._id;
-    }
-    // Set defaults
-    if (!data.statut) data.statut = 'EN_ATTENTE';
-    if (!data.dateDemande) data.dateDemande = new Date();
-
-    const item = new Attestation(data);
+    const item = new Attestation(req.body);
     await item.save();
     res.status(201).json({ success: true, message: 'Créé avec succès', data: item });
   } catch (error) {
@@ -67,50 +57,5 @@ export const remove = async (req, res) => {
     res.json({ success: true, message: 'Supprimé avec succès' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Generate: HR moves EN_ATTENTE -> GENEREE
-export const generate = async (req, res) => {
-  try {
-    const item = await Attestation.findByIdAndUpdate(
-      req.params.id,
-      { statut: 'GENEREE', dateGeneration: new Date(), signatureChef: true },
-      { new: true }
-    );
-    if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
-    res.json({ success: true, message: 'Attestation générée', data: item });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
-// Sign: Secretary/HR moves GENEREE -> SIGNEE
-export const sign = async (req, res) => {
-  try {
-    const item = await Attestation.findByIdAndUpdate(
-      req.params.id,
-      { statut: 'SIGNEE', signatureRH: true },
-      { new: true }
-    );
-    if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
-    res.json({ success: true, message: 'Attestation signée', data: item });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
-
-// Refuse: reject attestation
-export const refuse = async (req, res) => {
-  try {
-    const item = await Attestation.findByIdAndUpdate(
-      req.params.id,
-      { statut: 'REFUSEE' },
-      { new: true }
-    );
-    if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
-    res.json({ success: true, message: 'Attestation refusée', data: item });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
   }
 };

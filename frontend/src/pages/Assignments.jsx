@@ -42,7 +42,7 @@ export default function Assignments() {
       setIsLoading(true);
       const [affRes, srvRes] = await Promise.all([
         api.get('/affectations'),
-        api.get('/services')
+        api.get('/servicerhs')
       ]);
       const data = affRes.data.data || [];
       const servicesData = srvRes.data.data || [];
@@ -79,7 +79,7 @@ export default function Assignments() {
 
   const handleSaveEdit = async () => {
     try {
-      const serviceRes = await api.get('/services');
+      const serviceRes = await api.get('/servicerhs');
       const services = serviceRes.data.data || [];
       const matchedService = services.find(s => s.nom.toLowerCase() === editForm.dept.toLowerCase());
       

@@ -14,19 +14,17 @@ import servicerhRoutes from './servicerhRoutes.js';
 import userRoutes from './userRoutes.js';
 
 const router = express.Router();
-router.use('/', authRoutes);
+router.use('/auth', authRoutes);
 router.use('/absences', absenceRoutes);
 router.use('/affectations', affectationRoutes);
 router.use('/attestations', attestationRoutes);
-// Support both /auditlogs and /audit-logs (frontend uses /audit-logs)
 router.use('/auditlogs', auditlogRoutes);
-router.use('/audit-logs', auditlogRoutes);
 router.use('/conges', congeRoutes);
 router.use('/correctiondemandes', correctiondemandeRoutes);
 router.use('/documents', documentRoutes);
 router.use('/employes', employeRoutes);
 router.use('/formations', formationRoutes);
 router.use('/notifications', notificationRoutes);
-router.use('/services', servicerhRoutes);
+router.use('/servicerhs', servicerhRoutes);
 router.use('/users', userRoutes);
 export default router;

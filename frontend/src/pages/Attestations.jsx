@@ -388,9 +388,9 @@ export default function Attestations() {
               <i className="fas fa-file-signature" style={{ color: '#7C3AED' }}></i> {t('attestations.modal.docType')} *
             </label>
             <select name="type" className="form-input" value={form.type} onChange={handleFormChange}>
-              <option>Attestation de Travail</option>
-              <option>Attestation de Salaire</option>
-              <option>Bulletin de Paie</option>
+              <option value="travail">Attestation de Travail</option>
+              <option value="salaire">Attestation de Salaire</option>
+              <option value="administratif">Bulletin de Paie</option>
             </select>
           </div>
           <div className="form-group" style={{ marginBottom: '12px' }}>

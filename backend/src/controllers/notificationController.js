@@ -7,9 +7,9 @@ export const getAll = async (req, res) => {
     if (req.user && !req.user.roles.includes('ROLE_AGENT_RH') && !req.user.roles.includes('ROLE_ADMIN_RH') && true) {
       const employe = await Employe.findOne({ user: req.user._id });
       if (employe) {
-        query.$or = [{ employe: employe._id }, { employe: null }, { employe: { $exists: false } }];
+        query.employe = employe._id;
       } else {
-        query.$or = [{ employe: null }, { employe: { $exists: false } }];
+        return res.json({ success: true, message: 'Liste vide', data: [] });
       }
     }
 
@@ -55,24 +55,6 @@ export const remove = async (req, res) => {
     const item = await Notification.findByIdAndDelete(req.params.id);
     if (!item) return res.status(404).json({ success: false, message: 'Introuvable' });
     res.json({ success: true, message: 'Supprimé avec succès' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-export const markAllRead = async (req, res) => {
-  try {
-    let query = {};
-    if (req.user && !req.user.roles.includes('ROLE_AGENT_RH') && !req.user.roles.includes('ROLE_ADMIN_RH') && true) {
-      const employe = await Employe.findOne({ user: req.user._id });
-      if (employe) {
-        query.employe = employe._id;
-      } else {
-        return res.json({ success: true, message: 'Liste vide' });
-      }
-    }
-    await Notification.updateMany(query, { $set: { isRead: true } });
-    res.json({ success: true, message: 'Toutes les notifications marquées comme lues' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

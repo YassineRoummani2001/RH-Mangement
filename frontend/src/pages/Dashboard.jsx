@@ -64,6 +64,7 @@ const Dashboard = () => {
     setIsMounted(true);
 
     const fetchDashboardData = async () => {
+      setIsLoading(true);
       let employees = [];
       let conges = [];
       let attestations = [];
@@ -100,7 +101,7 @@ const Dashboard = () => {
       }
 
       try {
-        const servRes = await api.get('/services');
+        const servRes = await api.get('/servicerhs');
         services = servRes.data?.data || [];
       } catch (err) {
         console.warn("Failed to fetch services:", err.message);
@@ -138,12 +139,15 @@ const Dashboard = () => {
       // Calculate Dynamic Department Progress/Quotas
       if (services.length > 0) {
         const mappedDepts = services.slice(0, 4).map((serv, index) => {
-          const empInServ = employees.filter(emp => emp.service?.id === serv.id).length;
+          const empInServ = employees.filter(emp => {
+            const empServId = typeof emp.service === 'object' ? emp.service?._id : emp.service;
+            return empServId === serv._id;
+          }).length;
           // Premium dynamic calculation: base 75% + 5% per employee in the service, capped at 98%
           const pct = Math.min(98, 75 + (empInServ * 5) + (index * 2));
           return {
-            id: serv.id,
-            name: serv.nom,
+            id: serv._id || index,
+            name: serv.nom || 'Département',
             percentage: pct
           };
         });
@@ -313,10 +317,126 @@ const Dashboard = () => {
         };
       });
       setRecentRequestsList(mappedRecent);
+      setIsLoading(false);
     };
 
     fetchDashboardData();
   }, []);
+
+  const handleGeneratePayroll = () => {
+    showToast(`Préparation du rapport de paie global...`, 'info');
+    
+    setTimeout(() => {
+      try {
+        const doc = new jsPDF();
+        const img = new Image();
+        img.src = '/logo.png';
+        
+        const generatePDF = (logoLoaded) => {
+          // === HEADER ===
+          if (logoLoaded) {
+            doc.addImage(img, 'PNG', 15, 15, 35, 35);
+          }
+          
+          // Company Info (Right aligned)
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(18);
+          doc.setTextColor(15, 23, 42); // Slate 900
+          doc.text("RH MANAGEMENT S.A.", 195, 22, { align: "right" });
+          
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139); // Slate 500
+          doc.text("Quartier des Affaires, Casablanca, Maroc", 195, 30, { align: "right" });
+          doc.text("Tél : +212 5 22 00 00 00", 195, 36, { align: "right" });
+          doc.text("Email : contact@rh-management.com", 195, 42, { align: "right" });
+
+          // Header Separator Line
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.line(15, 55, 195, 55);
+
+          // === DATE ===
+          const currentDate = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+          const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+          doc.setFontSize(11);
+          doc.setTextColor(15, 23, 42);
+          doc.text(`Édité à Casablanca, le ${today}`, 195, 70, { align: "right" });
+
+          // === TITLE ===
+          doc.setFontSize(20);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(37, 99, 235); // Blue Primary
+          const titleText = `RAPPORT DE PAIE MENSUEL`;
+          doc.text(titleText, 105, 95, { align: "center" });
+          
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "italic");
+          doc.setTextColor(100, 116, 139);
+          doc.text(`Période : ${currentDate.toUpperCase()}`, 105, 105, { align: "center" });
+
+          // === BODY & STATS ===
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text("Résumé Global du Mois", 20, 125);
+          
+          // Highlighted details box
+          doc.setFillColor(248, 250, 252);
+          doc.setDrawColor(226, 232, 240);
+          doc.roundedRect(20, 135, 170, 45, 3, 3, 'FD'); // Fill and border
+          
+          doc.setFontSize(12);
+          
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(`Total Employés Actifs :`, 30, 150);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(37, 99, 235); // Blue
+          doc.text(`${statsState.activeEmployees} collaborateurs`, 95, 150);
+          
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(`Taux de Conformité :`, 30, 162);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(16, 185, 129); // Green
+          doc.text(`${statsState.complianceRate}`, 95, 162);
+          
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(`Total Absences (Mois) :`, 30, 174);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(245, 158, 11); // Amber
+          doc.text(`${statsState.onLeaveToday} jour(s) de congé enregistré(s)`, 95, 174);
+
+          // === SIGNATURE ===
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(15, 23, 42);
+          doc.text("Direction des Ressources Humaines", 195, 215, { align: "right" });
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          doc.text("(Document généré électroniquement)", 195, 222, { align: "right" });
+
+          // === FOOTER ===
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184); // Slate 400
+          doc.text(`Ce document est un récapitulatif analytique à l'usage interne de la direction de RH Management S.A.`, 105, 278, { align: "center" });
+          doc.text(`Généré le ${new Date().toLocaleString('fr-FR')} (Référence: PAYROLL-${new Date().getTime().toString().slice(-6)})`, 105, 283, { align: "center" });
+
+          doc.save(`Rapport_Paie_${currentDate.replace(' ', '_')}.pdf`);
+          showToast(`Rapport de paie généré avec succès !`, 'success');
+        };
+
+        // Try to load the logo
+        img.onload = () => generatePDF(true);
+        img.onerror = () => generatePDF(false);
+
+      } catch (err) {
+        console.error(err);
+        showToast("Erreur lors de la génération du rapport", 'error');
+      }
+    }, 800);
+  };
 
   const handleRequestAction = (row) => {
     setSelectedRequest(row);
@@ -1208,42 +1328,58 @@ const Dashboard = () => {
 
       {/* Stats Row */}
       <div className="stats-grid">
-        <div className="stat-card blue-card">
-          <div className="stat-header">
-            <div className="stat-icon primary">
-              <i className="fas fa-users"></i>
-            </div>
-            <div className="stat-trend positive"><i className="fas fa-arrow-up"></i> +12%</div>
-          </div>
-          <div className="stat-value">{stats.activeEmployees}</div>
-          <div className="stat-label">{labels.activeEmployees}</div>
+        <div className="stat-card blue-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+          {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon primary">
+                  <i className="fas fa-users"></i>
+                </div>
+                <div className="stat-trend positive"><i className="fas fa-arrow-up"></i> +12%</div>
+              </div>
+              <div className="stat-value">{stats.activeEmployees}</div>
+              <div className="stat-label">{labels.activeEmployees}</div>
+            </>
+          )}
         </div>
 
-        <div className="stat-card amber-card">
-          <div className="stat-header">
-            <div className="stat-icon warning"><i className="fas fa-clock"></i></div>
-            <div className="stat-trend negative"><i className="fas fa-circle" style={{ fontSize: '8px' }}></i> Urgent</div>
-          </div>
-          <div className="stat-value">{stats.pendingVal}</div>
-          <div className="stat-label">{labels.pendingVal}</div>
+        <div className="stat-card amber-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+          {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon warning"><i className="fas fa-clock"></i></div>
+                <div className="stat-trend negative"><i className="fas fa-circle" style={{ fontSize: '8px' }}></i> Urgent</div>
+              </div>
+              <div className="stat-value">{stats.pendingVal}</div>
+              <div className="stat-label">{labels.pendingVal}</div>
+            </>
+          )}
         </div>
 
-        <div className="stat-card emerald-card">
-          <div className="stat-header">
-            <div className="stat-icon success"><i className="fas fa-calendar-check"></i></div>
-            <div className="stat-trend positive"><i className="fas fa-check"></i> À jour</div>
-          </div>
-          <div className="stat-value">{stats.onLeaveToday}</div>
-          <div className="stat-label">{labels.onLeaveToday}</div>
+        <div className="stat-card emerald-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+          {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon success"><i className="fas fa-calendar-check"></i></div>
+                <div className="stat-trend positive"><i className="fas fa-check"></i> À jour</div>
+              </div>
+              <div className="stat-value">{stats.onLeaveToday}</div>
+              <div className="stat-label">{labels.onLeaveToday}</div>
+            </>
+          )}
         </div>
 
-        <div className="stat-card lime-card">
-          <div className="stat-header">
-            <div className="stat-icon" style={{ background: '#ECFCCB', color: '#65A30D' }}><i className="fas fa-shield-alt"></i></div>
-            <div className="stat-trend positive" style={{ color: 'var(--success)' }}>Optimal</div>
-          </div>
-          <div className="stat-value">{stats.complianceRate}</div>
-          <div className="stat-label">{labels.complianceRate}</div>
+        <div className="stat-card lime-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+          {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon" style={{ background: '#ECFCCB', color: '#65A30D' }}><i className="fas fa-shield-alt"></i></div>
+                <div className="stat-trend positive" style={{ color: 'var(--success)' }}>Optimal</div>
+              </div>
+              <div className="stat-value">{stats.complianceRate}</div>
+              <div className="stat-label">{labels.complianceRate}</div>
+            </>
+          )}
         </div>
       </div>
 
@@ -1257,23 +1393,32 @@ const Dashboard = () => {
               {t('dashboard.departmentBudgets')}
             </div>
             
-            {deptList.map((dept, index) => (
-              <div key={dept.id || index} className="progress-item" style={index === deptList.length - 1 ? { marginBottom: 0 } : {}}>
-                <div className="progress-header">
-                  <span>{dept.name}</span>
-                  <span style={{ color: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' }}>{dept.percentage}%</span>
-                </div>
-                <div className="progress-track">
-                  <div 
-                    className="progress-fill" 
-                    style={{ 
-                      width: `${dept.percentage}%`, 
-                      backgroundColor: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' 
-                    }}
-                  ></div>
-                </div>
+            {isLoading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
+                <Skeleton height="35px" borderRadius="8px" />
+                <Skeleton height="35px" borderRadius="8px" />
+                <Skeleton height="35px" borderRadius="8px" />
+                <Skeleton height="35px" borderRadius="8px" />
               </div>
-            ))}
+            ) : (
+              deptList.map((dept, index) => (
+                <div key={dept.id || index} className="progress-item" style={index === deptList.length - 1 ? { marginBottom: 0 } : {}}>
+                  <div className="progress-header">
+                    <span>{dept.name}</span>
+                    <span style={{ color: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' }}>{dept.percentage}%</span>
+                  </div>
+                  <div className="progress-track">
+                    <div 
+                      className="progress-fill" 
+                      style={{ 
+                        width: `${dept.percentage}%`, 
+                        backgroundColor: dept.percentage >= 85 ? 'var(--success)' : 'var(--warning)' 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
@@ -1285,7 +1430,13 @@ const Dashboard = () => {
           </div>
           
           <div className="timeline">
-            {recentActivityList.map((act, index) => (
+            {isLoading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
+                <Skeleton height="45px" borderRadius="8px" />
+                <Skeleton height="45px" borderRadius="8px" />
+                <Skeleton height="45px" borderRadius="8px" />
+              </div>
+            ) : recentActivityList.map((act, index) => (
               <div key={act.id || index} className="timeline-item">
                 <div className="timeline-icon" style={{ background: act.bg, color: act.color }}>
                   <i className={`fas ${act.icon}`}></i>
@@ -1320,7 +1471,7 @@ const Dashboard = () => {
             </button>
           )}
           {effectiveRole === 'HR_MANAGER' && (
-            <button className="quick-action-btn primary" style={{ marginTop: '8px' }}>
+            <button className="quick-action-btn primary" style={{ marginTop: '8px' }} onClick={handleGeneratePayroll}>
               <i className="fas fa-download"></i> {t('dashboard.generatePayroll')}
             </button>
           )}
@@ -1334,7 +1485,7 @@ const Dashboard = () => {
             Évolution des Demandes et Absences
           </div>
           <div style={{ height: '220px', width: '100%', minWidth: 0 }}>
-            {isMounted ? (
+            {isLoading ? <Skeleton height="220px" borderRadius="12px" /> : isMounted ? (
               <ResponsiveContainer width="100%" height={220} minWidth={0}>
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
@@ -1376,7 +1527,7 @@ const Dashboard = () => {
             
             {/* Chart */}
             <div style={{ height: '140px', width: '100%' }}>
-              {isMounted ? (
+              {isLoading ? <Skeleton height="140px" borderRadius="12px" /> : isMounted ? (
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
                     <Pie
@@ -1463,7 +1614,15 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {(recentRequestsList.length > 0 ? recentRequestsList : []).slice((dashboardPage - 1) * 4, dashboardPage * 4).map((row, i) => (
+              {isLoading ? (
+                [1,2,3,4].map(i => (
+                  <tr key={`sk-${i}`}>
+                    <td colSpan="6" style={{ padding: '12px' }}>
+                       <Skeleton height="45px" borderRadius="8px" />
+                    </td>
+                  </tr>
+                ))
+              ) : (recentRequestsList.length > 0 ? recentRequestsList : []).slice((dashboardPage - 1) * 4, dashboardPage * 4).map((row, i) => (
                 <tr key={i}>
                   <td>
                     <div className="user-cell">

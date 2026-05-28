@@ -44,34 +44,17 @@ const Profile = () => {
     return dateStr;
   };
 
-  const savedProfile = localStorage.getItem('hr_profile_data');
-  let employeeDetails = {
-    phone: profileData?.employe?.telephone || '+212 6 12 34 56 78',
-    department: profileData?.employe?.service?.nom || 'Ressources Humaines',
-    hireDate: profileData?.employe?.dateEmbauche ? formatHireDate(profileData.employe.dateEmbauche.split('T')[0]) : '12 Janvier 2024',
-    contractType: profileData?.employe?.statut === 'ACTIF' ? 'CDI (Temps Plein)' : 'CDI',
-    location: profileData?.employe?.adresse || 'Rabat, Maroc',
+  const employeeDetails = {
+    phone: profileData?.employe?.telephone || 'Non spécifié',
+    department: profileData?.employe?.service?.nom || 'Général',
+    hireDate: profileData?.employe?.dateRecrutement ? formatHireDate(profileData.employe.dateRecrutement.split('T')[0]) : 'Non spécifiée',
+    contractType: profileData?.employe?.statut === 'ACTIF' ? 'CDI (Temps Plein)' : (profileData?.employe?.statut || 'Non spécifié'),
+    location: profileData?.employe?.adresse || 'Non spécifiée',
     annualLeavesUsed: 4,
     annualLeavesTotal: 22,
     sickLeavesUsed: 2,
     sickLeavesTotal: 8,
   };
-
-  if (savedProfile) {
-    try {
-      const parsed = JSON.parse(savedProfile);
-      employeeDetails = {
-        ...employeeDetails,
-        phone: parsed.phone || employeeDetails.phone,
-        department: parsed.department || employeeDetails.department,
-        hireDate: parsed.hireDate ? formatHireDate(parsed.hireDate) : employeeDetails.hireDate,
-        contractType: parsed.contractType || employeeDetails.contractType,
-        location: parsed.location || employeeDetails.location,
-      };
-    } catch (e) {
-      console.error(e);
-    }
-  }
 
   const remainingAnnual = employeeDetails.annualLeavesTotal - employeeDetails.annualLeavesUsed;
   const remainingSick = employeeDetails.sickLeavesTotal - employeeDetails.sickLeavesUsed;
@@ -115,8 +98,8 @@ const Profile = () => {
         ></div>
 
         <img 
-          src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}&background=2563EB&color=fff`} 
-          alt={user?.name} 
+          src={profileData?.employe?.photo || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.employe ? profileData.employe.prenom + ' ' + profileData.employe.nom : (user?.name || 'User'))}&background=2563EB&color=fff`} 
+          alt={profileData?.employe?.prenom || user?.name} 
           style={{ 
             width: '100px', 
             height: '100px', 
@@ -128,7 +111,7 @@ const Profile = () => {
         />
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 1 }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-dark)' }}>{user?.name}</h2>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-dark)' }}>{profileData?.employe ? `${profileData.employe.prenom} ${profileData.employe.nom}` : user?.name}</h2>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span className={`filter-tag ${user?.role === 'HR_MANAGER' ? 'blue' : 'green'}`} style={{ fontSize: '0.7rem', padding: '3px 10px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700 }}>
@@ -162,7 +145,7 @@ const Profile = () => {
               </div>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{t('profile.postTitle')}</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{profileData?.employe?.poste || 'Directrice des Ressources Humaines'}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{profileData?.employe?.poste || 'Non spécifié'}</div>
               </div>
             </div>
 

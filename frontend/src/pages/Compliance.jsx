@@ -15,25 +15,70 @@ const Compliance = () => {
 
   const fetchComplianceEmployees = async () => {
     try {
-      const res = await api.get('/employes');
-      const data = res.data.data || [];
-      const mapped = data.map((emp, index) => {
-        const requirements = ['Formation Anti-Harcèlement', 'Cybersécurité', 'Protection des Données (RGPD)'];
-        return {
-          id: emp.id,
-          name: `${emp.prenom} ${emp.nom}`,
-          email: `${emp.prenom.toLowerCase()}.${emp.nom.toLowerCase()}@rh.ma`,
-          initials: `${emp.prenom[0]}${emp.nom[0]}`.toUpperCase(),
-          avatarBg: index % 2 === 0 ? '#F59E0B' : '#2563EB',
-          requirement: requirements[index % requirements.length],
-          status: index % 2 === 0 ? 'En retard (2 j)' : '15 Nov, 2026',
-          isLate: index % 2 === 0,
-          deadlineColor: index % 2 === 0 ? '#E11D48' : '#64748B',
-          badgeBg: index % 2 === 0 ? '#FFE4E6' : '#FEF3C7',
-          badgeColor: index % 2 === 0 ? '#E11D48' : '#D97706'
-        };
+      const [empRes, formRes] = await Promise.all([
+        api.get('/employes'),
+        api.get('/formations')
+      ]);
+      const data = empRes.data.data || [];
+      const formations = formRes.data.data || [];
+      
+      const nonCompliant = [];
+      let counter = 0;
+
+      data.forEach((emp) => {
+        const missedFormations = formations.filter(f => {
+          if (!f.participants) return true;
+          return !f.participants.some(p => (p._id === emp._id || p === emp._id));
+        });
+
+        if (formations.length === 0) {
+          // Fallback demo values if no trainings exist in DB
+          const requirements = ['Formation Anti-Harcèlement', 'Cybersécurité', 'Protection des Données (RGPD)'];
+          const isLate = counter % 2 === 0;
+          nonCompliant.push({
+            id: emp._id || emp.id,
+            name: `${emp.prenom || 'Utilisateur'} ${emp.nom || 'Inconnu'}`,
+            email: emp.user?.email || `${(emp.prenom || 'user').toLowerCase()}.${(emp.nom || 'inconnu').toLowerCase()}@rh.ma`,
+            initials: `${(emp.prenom ? emp.prenom[0] : 'U')}${(emp.nom ? emp.nom[0] : 'U')}`.toUpperCase(),
+            avatarBg: counter % 2 === 0 ? '#F59E0B' : '#2563EB',
+            requirement: requirements[counter % requirements.length],
+            status: isLate ? 'En retard (2 j)' : '15 Nov, 2026',
+            isLate: isLate,
+            deadlineColor: isLate ? '#E11D48' : '#64748B',
+            badgeBg: isLate ? '#FFE4E6' : '#FEF3C7',
+            badgeColor: isLate ? '#E11D48' : '#D97706'
+          });
+          counter++;
+        } else if (missedFormations.length > 0) {
+          const missed = missedFormations[0];
+          const deadline = new Date(missed.dateFin || missed.dateDebut || Date.now());
+          const isLate = deadline < new Date();
+          
+          let statusText = '';
+          if (isLate) {
+            const daysLate = Math.floor((new Date() - deadline) / (1000 * 60 * 60 * 24));
+            statusText = `En retard (${daysLate} j)`;
+          } else {
+            statusText = deadline.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+          }
+
+          nonCompliant.push({
+            id: emp._id || emp.id,
+            name: `${emp.prenom || 'Utilisateur'} ${emp.nom || 'Inconnu'}`,
+            email: emp.user?.email || `${(emp.prenom || 'user').toLowerCase()}.${(emp.nom || 'inconnu').toLowerCase()}@rh.ma`,
+            initials: `${(emp.prenom ? emp.prenom[0] : 'U')}${(emp.nom ? emp.nom[0] : 'U')}`.toUpperCase(),
+            avatarBg: counter % 2 === 0 ? '#F59E0B' : '#2563EB',
+            requirement: missed.titre || 'Formation Requise',
+            status: statusText,
+            isLate: isLate,
+            deadlineColor: isLate ? '#E11D48' : '#64748B',
+            badgeBg: isLate ? '#FFE4E6' : '#FEF3C7',
+            badgeColor: isLate ? '#E11D48' : '#D97706'
+          });
+          counter++;
+        }
       });
-      setEmployees(mapped);
+      setEmployees(nonCompliant);
     } catch (err) {
       console.error(err);
     }
@@ -45,6 +90,7 @@ const Compliance = () => {
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -72,9 +118,23 @@ const Compliance = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleReminderSubmit = () => {
-    showToast(t('compliance.toast.reminderSent', { email: selectedEmployee.email }), 'success');
-    setIsReminderModalOpen(false);
+  const handleReminderSubmit = async () => {
+    try {
+      const res = await api.post('/mail/send', {
+        to: selectedEmployee.email,
+        subject: `Rappel: Formation Obligatoire - ${selectedEmployee.requirement}`,
+        text: reminderMessage
+      });
+      if (res.data.success) {
+        showToast(t('compliance.toast.reminderSent', { email: selectedEmployee.email }), 'success');
+        setIsReminderModalOpen(false);
+      } else {
+        showToast("Erreur lors de l'envoi de l'email", 'error');
+      }
+    } catch (err) {
+      console.error('Email send error:', err);
+      showToast(err.response?.data?.message || "Erreur lors de l'envoi de l'email", 'error');
+    }
   };
 
   const handleEditSubmit = () => {
@@ -230,6 +290,12 @@ const Compliance = () => {
     setIsExportModalOpen(false);
   };
 
+  const filteredEmployees = employees.filter(emp => 
+    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.requirement.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <header className="header">
@@ -335,7 +401,15 @@ const Compliance = () => {
           <div className="filter-group">
             <div className="search-bar">
               <i className="fas fa-search"></i>
-              <input type="text" placeholder={t('common.search', 'Rechercher...')} />
+              <input 
+                type="text" 
+                placeholder={t('common.search', 'Rechercher...')} 
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
           </div>
         </div>
@@ -351,15 +425,15 @@ const Compliance = () => {
               </tr>
             </thead>
             <tbody>
-              {employees.length === 0 ? (
+              {filteredEmployees.length === 0 ? (
                 <tr>
                   <td colSpan="4" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-gray)' }}>
                     <i className="fas fa-check-circle" style={{ color: 'var(--success)', fontSize: '1.5rem', marginBottom: '8px', display: 'block' }}></i>
-                    {t('compliance.table.allCompliant')}
+                    {searchQuery ? t('common.noResult', 'Aucun résultat trouvé') : t('compliance.table.allCompliant')}
                   </td>
                 </tr>
               ) : (
-                employees.slice((currentPage - 1) * 5, currentPage * 5).map((emp) => (
+                filteredEmployees.slice((currentPage - 1) * 5, currentPage * 5).map((emp) => (
                   <tr key={emp.id}>
                     <td>
                       <div className="user-cell">
@@ -390,7 +464,7 @@ const Compliance = () => {
           
           <Pagination
             currentPage={currentPage}
-            totalItems={employees.length}
+            totalItems={filteredEmployees.length}
             itemsPerPage={5}
             onPageChange={setCurrentPage}
           />

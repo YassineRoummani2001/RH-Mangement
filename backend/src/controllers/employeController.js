@@ -31,21 +31,7 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const data = { ...req.body };
-    // Map service_id to service for Mongoose
-    if (data.service_id) {
-      data.service = data.service_id;
-      delete data.service_id;
-    }
-    // Auto-generate matricule if missing
-    if (!data.matricule) {
-      data.matricule = `EMP${Date.now()}`;
-    }
-    // Set default dateRecrutement to today if not provided
-    if (!data.dateRecrutement) {
-      data.dateRecrutement = new Date();
-    }
-    const item = new Employe(data);
+    const item = new Employe(req.body);
     await item.save();
     res.status(201).json({ success: true, message: 'Créé avec succès', data: item });
   } catch (error) {

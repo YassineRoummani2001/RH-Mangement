@@ -9,6 +9,8 @@ import { logSystemActivity } from '../utils/rbac';
 import { Calendar, Clock, Umbrella, HeartPulse, User, MapPin, CheckCircle2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { Skeleton } from '../components/Skeleton';
+import { TableRowSkeleton } from '../components/SkeletonLoader';
 
 const LeaveManagement = () => {
   const { showToast } = useToast();
@@ -132,7 +134,7 @@ const LeaveManagement = () => {
   const onApprove = async (id, e) => {
     if(e) e.stopPropagation();
     try {
-      await api.put(`/conges/${id}/approve`);
+      await api.put(`/conges/${id}`, { statut: 'APPROUVE' });
       showToast('Congé approuvé', 'success');
       logSystemActivity("Approbation Congé", user?.name, `Congé approuvé pour la demande #${id}`);
       setIsViewModalOpen(false);
@@ -146,7 +148,8 @@ const LeaveManagement = () => {
   const onReject = async (id, e) => {
     if(e) e.stopPropagation();
     try {
-      await api.put(`/conges/${id}/reject`, {
+      await api.put(`/conges/${id}`, {
+        statut: 'REFUSE',
         motifRefus: 'Refusé'
       });
       showToast('Congé refusé', 'error');
@@ -183,64 +186,96 @@ const LeaveManagement = () => {
       <div className="stats-grid" style={{ marginBottom: '24px' }}>
         {isEmployee ? (
           <>
-            <div className="stat-card blue-card">
-              <div className="stat-header">
-                <div className="stat-icon primary"><i className="fas fa-calendar-check"></i></div>
-              </div>
-              <div className="stat-value">18</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Jours Restants (Annuel)' : 'Remaining Days (Annual)'}</div>
+            <div className="stat-card blue-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon primary"><i className="fas fa-calendar-check"></i></div>
+                  </div>
+                  <div className="stat-value">18</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Jours Restants (Annuel)' : 'Remaining Days (Annual)'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card amber-card">
-              <div className="stat-header">
-                <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
-              </div>
-              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'En attente').length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
+            <div className="stat-card amber-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
+                  </div>
+                  <div className="stat-value">{filteredAbsences.filter(a => a.status === 'En attente').length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card emerald-card">
-              <div className="stat-header">
-                <div className="stat-icon success"><i className="fas fa-plane-departure"></i></div>
-              </div>
-              <div className="stat-value">12</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Jours Pris Cette Année' : 'Days Taken This Year'}</div>
+            <div className="stat-card emerald-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon success"><i className="fas fa-plane-departure"></i></div>
+                  </div>
+                  <div className="stat-value">12</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Jours Pris Cette Année' : 'Days Taken This Year'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card red-card">
-              <div className="stat-header">
-                <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
-              </div>
-              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
+            <div className="stat-card red-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
+                  </div>
+                  <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
+                </>
+              )}
             </div>
           </>
         ) : (
           <>
-            <div className="stat-card emerald-card">
-              <div className="stat-header">
-                <div className="stat-icon success"><i className="fas fa-umbrella-beach"></i></div>
-              </div>
-              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Approuvé' && a.type === 'Congé Annuel').length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'En Congé Approuvé' : 'On Approved Leave'}</div>
+            <div className="stat-card emerald-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon success"><i className="fas fa-umbrella-beach"></i></div>
+                  </div>
+                  <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Approuvé' && a.type === 'Congé Annuel').length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'En Congé Approuvé' : 'On Approved Leave'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card amber-card">
-              <div className="stat-header">
-                <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
-              </div>
-              <div className="stat-value">{pendingRequests.length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
+            <div className="stat-card amber-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon warning"><i className="fas fa-hourglass-half"></i></div>
+                  </div>
+                  <div className="stat-value">{pendingRequests.length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Demandes en Attente' : 'Pending Requests'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card purple-card">
-              <div className="stat-header">
-                <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-briefcase-medical"></i></div>
-              </div>
-              <div className="stat-value">{filteredAbsences.filter(a => a.type === 'Maladie').length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Arrêts Maladie' : 'Sick Leaves'}</div>
+            <div className="stat-card purple-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-briefcase-medical"></i></div>
+                  </div>
+                  <div className="stat-value">{filteredAbsences.filter(a => a.type === 'Maladie').length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Arrêts Maladie' : 'Sick Leaves'}</div>
+                </>
+              )}
             </div>
-            <div className="stat-card red-card">
-              <div className="stat-header">
-                <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
-              </div>
-              <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
-              <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
+            <div className="stat-card red-card" style={isLoading ? { padding: 0, border: 'none' } : {}}>
+              {isLoading ? <Skeleton height="120px" borderRadius="16px" /> : (
+                <>
+                  <div className="stat-header">
+                    <div className="stat-icon" style={{ background: '#FEE2E2', color: '#EF4444' }}><i className="fas fa-times-circle"></i></div>
+                  </div>
+                  <div className="stat-value">{filteredAbsences.filter(a => a.status === 'Rejeté').length}</div>
+                  <div className="stat-label">{i18n.language === 'fr' ? 'Demandes Rejetées' : 'Rejected Requests'}</div>
+                </>
+              )}
             </div>
           </>
         )}

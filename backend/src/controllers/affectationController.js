@@ -32,11 +32,7 @@ export const getById = async (req, res) => {
 
 export const create = async (req, res) => {
   try {
-    const data = { ...req.body };
-    if (data.employe_id) { data.employe = data.employe_id; delete data.employe_id; }
-    if (data.service_id) { data.service = data.service_id; delete data.service_id; }
-
-    const item = new Affectation(data);
+    const item = new Affectation(req.body);
     await item.save();
     res.status(201).json({ success: true, message: 'Créé avec succès', data: item });
   } catch (error) {

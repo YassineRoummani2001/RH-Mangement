@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { logSystemActivity } from '../utils/rbac';
 import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { Skeleton } from '../components/Skeleton';
 import { TableRowSkeleton } from '../components/SkeletonLoader';
 
 const Employees = () => {
@@ -237,33 +238,49 @@ const Employees = () => {
 
       {/* Stats Row */}
       <div className="stats-grid" style={{ marginBottom: '24px' }}>
-        <div className="stat-card blue-card">
-          <div className="stat-header">
-            <div className="stat-icon primary"><i className="fas fa-users"></i></div>
-          </div>
-          <div className="stat-value">{activeCount}</div>
-          <div className="stat-label">{t('employees.stats.active')}</div>
+        <div className="stat-card blue-card" style={isLoadingData ? { padding: 0, border: 'none' } : {}}>
+          {isLoadingData ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon primary"><i className="fas fa-users"></i></div>
+              </div>
+              <div className="stat-value">{activeCount}</div>
+              <div className="stat-label">{t('employees.stats.active')}</div>
+            </>
+          )}
         </div>
-        <div className="stat-card purple-card">
-          <div className="stat-header">
-            <div className="stat-icon success" style={{ background: '#E0E7FF', color: '#4F46E5' }}><i className="fas fa-user-plus"></i></div>
-          </div>
-          <div className="stat-value">{onboardingCount}</div>
-          <div className="stat-label">{t('employees.stats.onboarding')}</div>
+        <div className="stat-card purple-card" style={isLoadingData ? { padding: 0, border: 'none' } : {}}>
+          {isLoadingData ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon success" style={{ background: '#E0E7FF', color: '#4F46E5' }}><i className="fas fa-user-plus"></i></div>
+              </div>
+              <div className="stat-value">{onboardingCount}</div>
+              <div className="stat-label">{t('employees.stats.onboarding')}</div>
+            </>
+          )}
         </div>
-        <div className="stat-card amber-card">
-          <div className="stat-header">
-            <div className="stat-icon warning"><i className="fas fa-umbrella-beach"></i></div>
-          </div>
-          <div className="stat-value">{onLeaveCount}</div>
-          <div className="stat-label">{t('employees.stats.onLeave')}</div>
+        <div className="stat-card amber-card" style={isLoadingData ? { padding: 0, border: 'none' } : {}}>
+          {isLoadingData ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon warning"><i className="fas fa-umbrella-beach"></i></div>
+              </div>
+              <div className="stat-value">{onLeaveCount}</div>
+              <div className="stat-label">{t('employees.stats.onLeave')}</div>
+            </>
+          )}
         </div>
-        <div className="stat-card emerald-card">
-          <div className="stat-header">
-            <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-building"></i></div>
-          </div>
-          <div className="stat-value">{deptsCount}</div>
-          <div className="stat-label">{t('employees.stats.departments')}</div>
+        <div className="stat-card emerald-card" style={isLoadingData ? { padding: 0, border: 'none' } : {}}>
+          {isLoadingData ? <Skeleton height="120px" borderRadius="16px" /> : (
+            <>
+              <div className="stat-header">
+                <div className="stat-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}><i className="fas fa-building"></i></div>
+              </div>
+              <div className="stat-value">{deptsCount}</div>
+              <div className="stat-label">{t('employees.stats.departments')}</div>
+            </>
+          )}
         </div>
       </div>
 
