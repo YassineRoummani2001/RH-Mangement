@@ -27,14 +27,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       // 1. Get Token
-      const res = await api.post('/login', { email, password });
+      const res = await api.post('/auth/login', { email, password });
       const { token } = res.data;
       
       if (token) {
         localStorage.setItem('token', token);
         
         // 2. Get User Profile
-        const profileRes = await api.get('/me');
+        const profileRes = await api.get('/auth/me');
         const userData = profileRes.data.data;
         
         // Ensure role compatibility with existing frontend

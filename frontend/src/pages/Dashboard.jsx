@@ -9,6 +9,7 @@ import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import { User, Building2, Calendar, Fingerprint, FileText, Share2, Download, Mail, Briefcase, AlertTriangle, Umbrella } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 const data = [
@@ -333,98 +334,129 @@ const Dashboard = () => {
         img.src = '/logo.png';
         
         const generatePDF = (logoLoaded) => {
-          // === HEADER ===
-          if (logoLoaded) {
-            doc.addImage(img, 'PNG', 15, 15, 35, 35);
+          try {
+            // === HEADER ===
+            if (logoLoaded) {
+              doc.addImage(img, 'PNG', 15, 15, 35, 35);
+            }
+            
+            // Company Info (Right aligned)
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(15, 23, 42); // Slate 900
+            doc.text("RH MANAGEMENT S.A.", 195, 22, { align: "right" });
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 116, 139); // Slate 500
+            doc.text("Quartier des Affaires, Casablanca, Maroc", 195, 30, { align: "right" });
+            doc.text("Tél : +212 5 22 00 00 00", 195, 36, { align: "right" });
+            doc.text("Email : contact@rh-management.com", 195, 42, { align: "right" });
+
+            // Header Separator Line
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.5);
+            doc.line(15, 55, 195, 55);
+
+            // === DATE ===
+            const currentDate = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+            doc.setFontSize(11);
+            doc.setTextColor(15, 23, 42);
+            doc.text(`Édité à Casablanca, le ${today}`, 195, 70, { align: "right" });
+
+            // === TITLE ===
+            doc.setFontSize(20);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(37, 99, 235); // Blue Primary
+            const titleText = `RAPPORT DE PAIE MENSUEL`;
+            doc.text(titleText, 105, 95, { align: "center" });
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Période : ${currentDate.toUpperCase()}`, 105, 105, { align: "center" });
+
+            // === BODY & STATS ===
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text("Résumé Global du Mois", 20, 125);
+            
+            // Highlighted details box
+            doc.setFillColor(248, 250, 252);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(20, 135, 170, 45, 3, 3, 'FD'); // Fill and border
+            
+            doc.setFontSize(12);
+            
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text(`Total Employés Actifs :`, 30, 150);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(37, 99, 235); // Blue
+            doc.text(`${statsState.activeEmployees} collaborateurs`, 95, 150);
+            
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text(`Taux de Conformité :`, 30, 162);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(16, 185, 129); // Green
+            doc.text(`${statsState.complianceRate}`, 95, 162);
+            
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(30, 41, 59);
+            doc.text(`Total Absences (Mois) :`, 30, 174);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(245, 158, 11); // Amber
+            doc.text(`${statsState.onLeaveToday} jour(s) de congé enregistré(s)`, 95, 174);
+
+            // === AUTOTABLE ===
+            doc.setFontSize(14);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Détails d'Allocation par Département", 20, 195);
+
+            autoTable(doc, {
+              startY: 200,
+              head: [['Département', "Part d'Effectifs", 'Masse Salariale Mensuelle', 'Statut']],
+              body: deptList.map(d => {
+                const estimatedBudget = (d.percentage / 100 * 450000).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return [
+                  d.name,
+                  d.percentage.toFixed(1) + ' %',
+                  estimatedBudget + ' MAD',
+                  'Conforme'
+                ];
+              }),
+              theme: 'striped',
+              headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' },
+              bodyStyles: { textColor: [50, 50, 50], fontSize: 10 },
+              alternateRowStyles: { fillColor: [248, 250, 252] },
+              margin: { left: 20, right: 20 }
+            });
+
+            let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 25 : 250;
+
+            // === SIGNATURE ===
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(15, 23, 42);
+            doc.text("Direction des Ressources Humaines", 195, finalY, { align: "right" });
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 116, 139);
+            doc.text("(Document généré électroniquement)", 195, finalY + 7, { align: "right" });
+
+            // === FOOTER ===
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184); // Slate 400
+            doc.text(`Ce document est un récapitulatif analytique à l'usage interne de la direction de RH Management S.A.`, 105, 278, { align: "center" });
+            doc.text(`Généré le ${new Date().toLocaleString('fr-FR')} (Référence: PAYROLL-${new Date().getTime().toString().slice(-6)})`, 105, 283, { align: "center" });
+
+            doc.save(`Rapport_Paie_${currentDate.replace(' ', '_')}.pdf`);
+            showToast(`Rapport de paie généré avec succès !`, 'success');
+          } catch (err) {
+            console.error("PDF Generation Error:", err);
+            showToast("Erreur lors de la génération du rapport", 'error');
           }
-          
-          // Company Info (Right aligned)
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(18);
-          doc.setTextColor(15, 23, 42); // Slate 900
-          doc.text("RH MANAGEMENT S.A.", 195, 22, { align: "right" });
-          
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 116, 139); // Slate 500
-          doc.text("Quartier des Affaires, Casablanca, Maroc", 195, 30, { align: "right" });
-          doc.text("Tél : +212 5 22 00 00 00", 195, 36, { align: "right" });
-          doc.text("Email : contact@rh-management.com", 195, 42, { align: "right" });
-
-          // Header Separator Line
-          doc.setDrawColor(226, 232, 240);
-          doc.setLineWidth(0.5);
-          doc.line(15, 55, 195, 55);
-
-          // === DATE ===
-          const currentDate = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-          const today = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
-          doc.setFontSize(11);
-          doc.setTextColor(15, 23, 42);
-          doc.text(`Édité à Casablanca, le ${today}`, 195, 70, { align: "right" });
-
-          // === TITLE ===
-          doc.setFontSize(20);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(37, 99, 235); // Blue Primary
-          const titleText = `RAPPORT DE PAIE MENSUEL`;
-          doc.text(titleText, 105, 95, { align: "center" });
-          
-          doc.setFontSize(12);
-          doc.setFont("helvetica", "italic");
-          doc.setTextColor(100, 116, 139);
-          doc.text(`Période : ${currentDate.toUpperCase()}`, 105, 105, { align: "center" });
-
-          // === BODY & STATS ===
-          doc.setFontSize(14);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(30, 41, 59);
-          doc.text("Résumé Global du Mois", 20, 125);
-          
-          // Highlighted details box
-          doc.setFillColor(248, 250, 252);
-          doc.setDrawColor(226, 232, 240);
-          doc.roundedRect(20, 135, 170, 45, 3, 3, 'FD'); // Fill and border
-          
-          doc.setFontSize(12);
-          
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(30, 41, 59);
-          doc.text(`Total Employés Actifs :`, 30, 150);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(37, 99, 235); // Blue
-          doc.text(`${statsState.activeEmployees} collaborateurs`, 95, 150);
-          
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(30, 41, 59);
-          doc.text(`Taux de Conformité :`, 30, 162);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(16, 185, 129); // Green
-          doc.text(`${statsState.complianceRate}`, 95, 162);
-          
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(30, 41, 59);
-          doc.text(`Total Absences (Mois) :`, 30, 174);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(245, 158, 11); // Amber
-          doc.text(`${statsState.onLeaveToday} jour(s) de congé enregistré(s)`, 95, 174);
-
-          // === SIGNATURE ===
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(15, 23, 42);
-          doc.text("Direction des Ressources Humaines", 195, 215, { align: "right" });
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 116, 139);
-          doc.text("(Document généré électroniquement)", 195, 222, { align: "right" });
-
-          // === FOOTER ===
-          doc.setFontSize(8);
-          doc.setTextColor(148, 163, 184); // Slate 400
-          doc.text(`Ce document est un récapitulatif analytique à l'usage interne de la direction de RH Management S.A.`, 105, 278, { align: "center" });
-          doc.text(`Généré le ${new Date().toLocaleString('fr-FR')} (Référence: PAYROLL-${new Date().getTime().toString().slice(-6)})`, 105, 283, { align: "center" });
-
-          doc.save(`Rapport_Paie_${currentDate.replace(' ', '_')}.pdf`);
-          showToast(`Rapport de paie généré avec succès !`, 'success');
         };
 
         // Try to load the logo
@@ -433,7 +465,7 @@ const Dashboard = () => {
 
       } catch (err) {
         console.error(err);
-        showToast("Erreur lors de la génération du rapport", 'error');
+        showToast("Erreur d'initialisation du rapport", 'error');
       }
     }, 800);
   };
