@@ -178,7 +178,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '24px' }} className="calendar-layout-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(0, 1fr)', gap: '24px' }} className="calendar-layout-grid">
         {/* Left Side: Calendar Grid Card */}
         <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Calendar Weekday Names Header */}
@@ -189,7 +189,7 @@ export default function Calendar() {
           </div>
 
           {/* Calendar Body Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px', flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '10px', flex: 1 }}>
             {emptyBoxes.map((_, idx) => (
               <div key={`empty-${idx}`} style={{ minHeight: '60px', opacity: 0.15 }}></div>
             ))}
@@ -219,7 +219,9 @@ export default function Calendar() {
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     boxShadow: isSelected ? '0 8px 20px -6px rgba(37,99,235,0.15)' : 'none',
-                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflow: 'hidden',
+                    minWidth: 0
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
@@ -257,7 +259,7 @@ export default function Calendar() {
 
                   {/* Leave Events list badges inside day */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '6px' }}>
-                    {dayLeaves.map((l, idx) => {
+                    {dayLeaves.slice(0, 3).map((l, idx) => {
                       const colorTokens = getEventBadgeColor(l.type);
                       return (
                         <div 
@@ -278,6 +280,11 @@ export default function Calendar() {
                         </div>
                       );
                     })}
+                    {dayLeaves.length > 3 && (
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-gray)', textAlign: 'center', marginTop: '2px', background: isDark ? '#334155' : '#f1f5f9', borderRadius: '4px', padding: '1px 0' }}>
+                        +{dayLeaves.length - 3}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -342,20 +349,25 @@ export default function Calendar() {
                         gap: '8px'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Users style={{ width: 14, height: 14, color: '#2563eb' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, wordBreak: 'break-word' }}>
+                          <Users style={{ width: 14, height: 14, color: '#2563eb', flexShrink: 0 }} />
                           {event.employee}
                         </span>
                         <span 
                           style={{ 
                             fontSize: '0.65rem', 
                             fontWeight: 700, 
-                            padding: '2px 8px', 
-                            borderRadius: '12px', 
+                            padding: '4px 8px', 
+                            borderRadius: '6px', 
                             background: colors.bg, 
                             color: colors.color, 
-                            textTransform: 'uppercase' 
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '100%',
+                            display: 'inline-block'
                           }}
                         >
                           {i18n.language === 'fr' ? event.labelFr : event.labelEn}

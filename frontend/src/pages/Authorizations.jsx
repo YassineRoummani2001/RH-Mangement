@@ -265,21 +265,21 @@ export default function Authorizations() {
                 const cfg = statusConfig[auth.status] || statusConfig['pending'];
                 return (
                   <tr key={auth.id}>
-                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)', fontSize: '0.8rem' }}>{auth.id}</span></td>
-                    {!isEmployee && <td><span style={{ fontWeight: 600 }}>{auth.employee}</span></td>}
-                    {!isEmployee && <td><span className="filter-tag blue">{auth.dept}</span></td>}
-                    <td>{auth.date}</td>
-                    <td><span style={{ fontWeight: 700, color: 'var(--primary)' }}>{auth.hours}h</span></td>
+                    <td style={{ whiteSpace: 'nowrap' }}><span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)', fontSize: '0.8rem' }}>{auth.id}</span></td>
+                    {!isEmployee && <td style={{ whiteSpace: 'nowrap' }}><span style={{ fontWeight: 600 }}>{auth.employee}</span></td>}
+                    {!isEmployee && <td style={{ whiteSpace: 'nowrap' }}><span className="filter-tag blue">{auth.dept}</span></td>}
+                    <td style={{ whiteSpace: 'nowrap' }}>{auth.date}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}><span style={{ fontWeight: 700, color: 'var(--primary)' }}>{auth.hours}h</span></td>
                     <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{auth.reason}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, color: cfg.color, backgroundColor: cfg.bg }}>
                         <i className={cfg.icon}></i> {t(`authorizations.status_values.${auth.status}`)}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <button
                         onClick={() => { setSelectedAuth(auth); setIsDetailModalOpen(true); }}
-                        style={{ background: 'var(--primary-bg)', color: 'var(--primary)', border: 'none', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                        style={{ background: 'var(--primary-bg)', color: 'var(--primary)', border: 'none', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
                       >
                         <i className="fas fa-eye"></i> {t('authorizations.details')}
                       </button>

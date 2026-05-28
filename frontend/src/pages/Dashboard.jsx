@@ -57,6 +57,8 @@ const Dashboard = () => {
   });
   const [recentActivityList, setRecentActivityList] = useState([]);
   const [deptList, setDeptList] = useState([]);
+  const [isEmployeeSearchOpen, setIsEmployeeSearchOpen] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState('');
 
   useEffect(() => {
     setIsMounted(true);
@@ -1092,18 +1094,52 @@ const Dashboard = () => {
         >
           <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }} style={{ padding: '4px 0' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1', position: 'relative' }}>
                 <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <User size={12} color="var(--primary)" /> Employé
                 </label>
-                <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
-                  <option value="">Sélectionnez un employé...</option>
-                  {dashboardEmployees.map(emp => (
-                    <option key={emp._id || emp.id} value={emp._id || emp.id}>
-                      {emp.prenom} {emp.nom}{emp.service?.nom ? ` (${emp.service.nom})` : ''}
-                    </option>
-                  ))}
-                </select>
+                <div 
+                  className="form-input" 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: 'var(--main-bg)' }}
+                  onClick={() => setIsEmployeeSearchOpen(!isEmployeeSearchOpen)}
+                >
+                  <span style={{ color: leaveForm.employe ? 'inherit' : 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {leaveForm.employe ? <User size={14} color="var(--primary)" /> : null}
+                    {leaveForm.employe ? (dashboardEmployees.find(e => (e._id || e.id) === leaveForm.employe)?.prenom + ' ' + dashboardEmployees.find(e => (e._id || e.id) === leaveForm.employe)?.nom) : 'Sélectionnez un employé...'}
+                  </span>
+                  <i className="fas fa-chevron-down" style={{ fontSize: '0.8rem', color: 'var(--text-gray)' }}></i>
+                </div>
+                {isEmployeeSearchOpen && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'var(--main-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', marginTop: '4px', zIndex: 9999, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+                    <div style={{ padding: '8px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--sidebar-bg)', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="Rechercher..." 
+                        value={employeeSearch} 
+                        onChange={e => setEmployeeSearch(e.target.value)} 
+                        style={{ padding: '6px 10px', minHeight: '32px', marginBottom: 0, backgroundColor: 'var(--main-bg)' }}
+                        autoFocus
+                      />
+                    </div>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', backgroundColor: 'var(--main-bg)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                      {dashboardEmployees.filter(e => `${e.prenom} ${e.nom}`.toLowerCase().includes(employeeSearch.toLowerCase())).map(emp => (
+                        <div 
+                          key={emp._id || emp.id} 
+                          style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background-color 0.1s' }}
+                          onClick={() => { setLeaveForm(p => ({ ...p, employe: emp._id || emp.id })); setIsEmployeeSearchOpen(false); setEmployeeSearch(''); }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--primary-bg)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                            {emp.prenom[0]}{emp.nom[0]}
+                          </div>
+                          <span style={{ fontWeight: 500 }}>{emp.prenom} {emp.nom} {emp.service?.nom ? `(${emp.service.nom})` : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
                 <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1599,15 +1635,52 @@ const Dashboard = () => {
         showFooter={false}
       >
         <form onSubmit={e => { e.preventDefault(); handleLeaveSubmit(); }} style={{ padding: '4px 0' }}>
-          <div className="form-group" style={{ marginBottom: '12px' }}>
+          <div className="form-group" style={{ marginBottom: '12px', position: 'relative' }}>
             <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <User size={12} color="var(--primary)" /> Collaborateur
             </label>
-            <select name="employe" className="form-input" value={leaveForm.employe} onChange={handleLeaveChange} required>
-              <option value="">Choisir un employé...</option>
-              <option value="john-davis">John Davis</option>
-              <option value="maria-chen">Maria Chen</option>
-            </select>
+            <div 
+              className="form-input" 
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', backgroundColor: 'var(--main-bg)' }}
+              onClick={() => setIsEmployeeSearchOpen(!isEmployeeSearchOpen)}
+            >
+              <span style={{ color: leaveForm.employe ? 'inherit' : 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {leaveForm.employe ? <User size={14} color="var(--primary)" /> : null}
+                {leaveForm.employe ? (dashboardEmployees.find(e => (e._id || e.id) === leaveForm.employe)?.prenom + ' ' + dashboardEmployees.find(e => (e._id || e.id) === leaveForm.employe)?.nom) : 'Choisir un employé...'}
+              </span>
+              <i className="fas fa-chevron-down" style={{ fontSize: '0.8rem', color: 'var(--text-gray)' }}></i>
+            </div>
+            {isEmployeeSearchOpen && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'var(--main-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', marginTop: '4px', zIndex: 9999, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+                <div style={{ padding: '8px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--sidebar-bg)', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="Rechercher..." 
+                    value={employeeSearch} 
+                    onChange={e => setEmployeeSearch(e.target.value)} 
+                    style={{ padding: '6px 10px', minHeight: '32px', marginBottom: 0, backgroundColor: 'var(--main-bg)' }}
+                    autoFocus
+                  />
+                </div>
+                <div style={{ maxHeight: '150px', overflowY: 'auto', backgroundColor: 'var(--main-bg)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                  {dashboardEmployees.filter(e => `${e.prenom} ${e.nom}`.toLowerCase().includes(employeeSearch.toLowerCase())).map(emp => (
+                    <div 
+                      key={emp._id || emp.id} 
+                      style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background-color 0.1s' }}
+                      onClick={() => { setLeaveForm(p => ({ ...p, employe: emp._id || emp.id })); setIsEmployeeSearchOpen(false); setEmployeeSearch(''); }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--primary-bg)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                        {emp.prenom[0]}{emp.nom[0]}
+                      </div>
+                      <span style={{ fontWeight: 500 }}>{emp.prenom} {emp.nom}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group" style={{ marginBottom: '12px' }}>

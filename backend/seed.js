@@ -9,6 +9,7 @@ import Conge from './src/models/Conge.js';
 import Attestation from './src/models/Attestation.js';
 import Notification from './src/models/Notification.js';
 import Formation from './src/models/Formation.js';
+import Affectation from './src/models/Affectation.js';
 
 dotenv.config();
 
@@ -29,7 +30,8 @@ const seedDatabase = async () => {
       Conge.deleteMany(),
       Attestation.deleteMany(),
       Notification.deleteMany(),
-      Formation.deleteMany()
+      Formation.deleteMany(),
+      Affectation.deleteMany()
     ]);
     console.log('Anciennes données purgées.');
 
@@ -186,7 +188,24 @@ const seedDatabase = async () => {
     }
     await Formation.insertMany(formationsData);
 
-    console.log('Base de données remplie avec succès (10 Users, 100 Entités de base, 20 Formations) !');
+    // Generate 20 Affectations (Assignments)
+    console.log('Création de 20 affectations...');
+    const affectationsData = [];
+    const postes = ['Développeur Full Stack', 'Agent Administratif', 'Chef de Projet', 'Comptable', 'Consultant RH', 'Technicien Support', 'Analyste Financier', 'Designer UI/UX'];
+    for (let i = 0; i < 20; i++) {
+      const employe = employes[Math.floor(Math.random() * employes.length)];
+      const service = services[Math.floor(Math.random() * services.length)];
+      affectationsData.push({
+        employe: employe._id,
+        service: service._id,
+        poste: postes[Math.floor(Math.random() * postes.length)],
+        dateDebut: new Date(Date.now() - Math.random() * 30000000000), // Random past date
+        dateFin: Math.random() > 0.8 ? new Date(Date.now() + Math.random() * 30000000000) : null // 20% have end dates
+      });
+    }
+    await Affectation.insertMany(affectationsData);
+
+    console.log('Base de données remplie avec succès (10 Users, 100 Entités de base, 20 Formations, 20 Affectations) !');
     process.exit(0);
   } catch (err) {
     console.error('Erreur lors du peuplement de la BDD:', err);

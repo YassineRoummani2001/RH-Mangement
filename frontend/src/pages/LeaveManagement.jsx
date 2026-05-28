@@ -39,7 +39,7 @@ const LeaveManagement = () => {
         const initials = conge.employe ? `${conge.employe.prenom[0]}${conge.employe.nom[0]}`.toUpperCase() : 'U';
 
         return {
-          id: conge.id,
+          id: conge._id || conge.id,
           name: conge.employe ? `${conge.employe.prenom} ${conge.employe.nom}` : 'Utilisateur',
           dept: conge.employe?.service?.nom || 'Général',
           type: conge.motif || 'Congé Annuel',
