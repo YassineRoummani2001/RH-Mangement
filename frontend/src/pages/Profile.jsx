@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import { User, Mail, Phone, Calendar, Briefcase, MapPin, Shield, Edit3, Key, Clock, CheckCircle } from 'lucide-react';
+import { Skeleton } from '../components/Skeleton';
 
 const Profile = () => {
   const { user, effectiveRole } = useAuth();
@@ -15,9 +16,40 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/me');
+      const res = await api.get('/auth/me');
       const data = res.data.data;
-      setProfileData(data);
+      
+      let annualUsed = 0;
+      let sickUsed = 0;
+
+      try {
+        const congesRes = await api.get('/conges');
+        const allConges = congesRes.data.data || [];
+        
+        // Filter for this user's approved leaves
+        const myConges = allConges.filter(c => 
+          (c.employe && (c.employe._id === data.employe?.id || c.employe.id === data.employe?.id || c.employe === data.employe?.id)) &&
+          (c.statut === 'APPROUVE' || c.statut === 'APPROUVE_CHEF')
+        );
+        
+        myConges.forEach(c => {
+          let days = c.nombreJours;
+          if (!days) {
+            const d1 = new Date(c.dateDebut);
+            const d2 = new Date(c.dateFin);
+            days = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+          }
+          if (c.motif === 'Maladie') {
+            sickUsed += days;
+          } else if (c.motif === 'Congé Annuel' || !c.motif) {
+            annualUsed += days;
+          }
+        });
+      } catch (congeErr) {
+        console.error('Erreur conges:', congeErr);
+      }
+
+      setProfileData({ ...data, annualUsed, sickUsed });
     } catch (err) {
       console.error(err);
     } finally {
@@ -48,17 +80,79 @@ const Profile = () => {
     phone: profileData?.employe?.telephone || 'Non spécifié',
     department: profileData?.employe?.service?.nom || 'Général',
     hireDate: profileData?.employe?.dateRecrutement ? formatHireDate(profileData.employe.dateRecrutement.split('T')[0]) : 'Non spécifiée',
-    contractType: profileData?.employe?.statut === 'ACTIF' ? 'CDI (Temps Plein)' : (profileData?.employe?.statut || 'Non spécifié'),
-    location: profileData?.employe?.adresse || 'Non spécifiée',
-    annualLeavesUsed: 4,
-    annualLeavesTotal: 22,
-    sickLeavesUsed: 2,
-    sickLeavesTotal: 8,
+    contractType: profileData?.employe?.contrat || (profileData?.employe?.statut === 'ACTIF' ? 'CDI (Temps Plein)' : (profileData?.employe?.statut || 'Non spécifié')),
+    location: profileData?.employe?.localisation || profileData?.employe?.adresse || 'Non spécifiée',
+    annualLeavesUsed: profileData?.annualUsed || 0,
+    annualLeavesTotal: profileData?.employe?.soldeConges ?? 22,
+    sickLeavesUsed: profileData?.sickUsed || 0,
+    sickLeavesTotal: profileData?.employe?.soldeMaladie ?? 8,
   };
 
   const remainingAnnual = employeeDetails.annualLeavesTotal - employeeDetails.annualLeavesUsed;
   const remainingSick = employeeDetails.sickLeavesTotal - employeeDetails.sickLeavesUsed;
   const totalRemaining = remainingAnnual + remainingSick;
+
+  if (isLoading) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Header Skeleton */}
+        <div style={{ marginBottom: '24px' }}>
+          <Skeleton width="250px" height="38px" style={{ marginBottom: '8px' }} />
+          <Skeleton width="400px" height="20px" />
+        </div>
+
+        {/* Hero Profile Card Skeleton */}
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '32px', marginBottom: '24px' }}>
+          <Skeleton width="100px" height="100px" borderRadius="50%" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Skeleton width="250px" height="32px" />
+            <Skeleton width="180px" height="20px" />
+            <Skeleton width="200px" height="20px" />
+          </div>
+        </div>
+
+        <div className="two-col-grid">
+          {/* Left Column Skeleton */}
+          <div className="card">
+            <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
+              <Skeleton width="200px" height="24px" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <Skeleton width="36px" height="36px" borderRadius="8px" />
+                  <div>
+                    <Skeleton width="100px" height="14px" style={{ marginBottom: '6px' }} />
+                    <Skeleton width="150px" height="18px" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column Skeleton */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="card" style={{ flex: 1 }}>
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '16px' }}>
+                <Skeleton width="200px" height="24px" />
+              </div>
+              <Skeleton width="120px" height="40px" style={{ marginBottom: '24px' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <Skeleton width="100%" height="16px" style={{ marginBottom: '6px' }} />
+                  <Skeleton width="100%" height="8px" borderRadius="4px" />
+                </div>
+                <div>
+                  <Skeleton width="100%" height="16px" style={{ marginBottom: '6px' }} />
+                  <Skeleton width="100%" height="8px" borderRadius="4px" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>

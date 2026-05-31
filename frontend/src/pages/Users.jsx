@@ -30,6 +30,7 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
 
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [locationSearch, setLocationSearch] = useState('');
@@ -57,14 +58,22 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter ? u.role === roleFilter : true;
+    return matchesSearch && matchesRole;
+  });
 
   const paginated = filteredUsers.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   const roleLabels = {
+    'ROLE_ADMIN_RH': 'Administrateur RH',
+    'ROLE_AGENT_RH': 'Agent RH',
+    'ROLE_DEPARTMENT_MANAGER': 'Chef de Service',
+    'ROLE_INTERIM_MANAGER': 'Chef de Service (Int.)',
+    'ROLE_EMPLOYEE': 'Employé',
+    'ROLE_SECRETARY_GENERAL': 'Secrétaire Générale',
     'HR_MANAGER': 'Administrateur RH',
     'HR_AGENT': 'Agent RH',
     'DEPARTMENT_MANAGER': 'Chef de Service',
@@ -183,7 +192,20 @@ const Users = () => {
               <i className="fas fa-search"></i>
               <input type="text" placeholder={t('users.search')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            <button className="filter-pill filter-pill-blue">{t('users.allRoles')}</button>
+            <select 
+              className="filter-pill filter-pill-blue" 
+              style={{ outline: 'none', cursor: 'pointer', appearance: 'none', paddingRight: '30px', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232563EB%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px top 50%', backgroundSize: '10px auto' }}
+              value={roleFilter}
+              onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+            >
+              <option value="">{t('users.allRoles')}</option>
+              <option value="ROLE_ADMIN_RH">Administrateur RH</option>
+              <option value="ROLE_AGENT_RH">Agent RH</option>
+              <option value="ROLE_DEPARTMENT_MANAGER">Chef de Service</option>
+              <option value="ROLE_INTERIM_MANAGER">Chef de Service (Int.)</option>
+              <option value="ROLE_SECRETARY_GENERAL">Secrétaire Générale</option>
+              <option value="ROLE_EMPLOYEE">Employé</option>
+            </select>
           </div>
         </div>
 
@@ -248,17 +270,17 @@ const Users = () => {
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                       <button onClick={() => handleAction('view', u)}
-                        style={{ background: 'var(--primary-bg)', color: 'var(--primary)', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer' }}>
+                        style={{ background: 'var(--primary-bg)', color: 'var(--primary)', border: 'none', borderRadius: '8px', padding: '6px 8px', cursor: 'pointer' }}>
                         <i className="fas fa-eye"></i>
                       </button>
                       <button onClick={() => handleAction('edit', u)}
-                        style={{ background: '#EFF6FF', color: '#2563EB', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer' }}>
+                        style={{ background: '#EFF6FF', color: '#2563EB', border: 'none', borderRadius: '8px', padding: '6px 8px', cursor: 'pointer' }}>
                         <i className="fas fa-edit"></i>
                       </button>
                       <button onClick={() => handleAction('delete', u)}
-                        style={{ background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer' }}>
+                        style={{ background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: '8px', padding: '6px 8px', cursor: 'pointer' }}>
                         <i className="fas fa-trash"></i>
                       </button>
                     </div>

@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { logSystemActivity } from '../utils/rbac';
-import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { User, Mail, Briefcase, Building2, Calendar, Phone, ShieldCheck, AlertTriangle, Loader2, MapPin, Heart, FileText, DollarSign, CreditCard } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import { TableRowSkeleton } from '../components/SkeletonLoader';
 
@@ -26,8 +26,8 @@ const Employees = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Form states f Add Employee
-  const [addForm, setAddForm] = useState({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
-  const [editForm, setEditForm] = useState({ name: '', email: '', role: '' });
+  const [addForm, setAddForm] = useState({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI', situationFamiliale: 'Célibataire', nombreEnfants: 0, telephone: '', cin: '', localisation: '', salaire: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', role: '', situationFamiliale: 'Célibataire', nombreEnfants: 0, telephone: '', cin: '', localisation: '', salaire: '' });
 
   // Evaluate RBAC permissions locally f the page
   const isHRManager = effectiveRole === 'HR_MANAGER';
@@ -42,7 +42,17 @@ const Employees = () => {
     setSelectedEmployee(employee);
     if (type === 'view') setIsViewModalOpen(true);
     if (type === 'edit') {
-      setEditForm({ name: employee.name, email: employee.email, role: employee.role });
+      setEditForm({ 
+        name: employee.name, 
+        email: employee.email, 
+        role: employee.role,
+        situationFamiliale: employee.raw?.situationFamiliale || 'Célibataire',
+        nombreEnfants: employee.raw?.nombreEnfants || 0,
+        telephone: employee.raw?.telephone || '',
+        cin: employee.raw?.cin || '',
+        localisation: employee.raw?.localisation || '',
+        salaire: employee.raw?.salaire || ''
+      });
       setIsEditModalOpen(true);
     }
     if (type === 'delete') setIsDeleteModalOpen(true);
@@ -61,7 +71,13 @@ const Employees = () => {
         email: addForm.email,
         poste: addForm.role,
         statut: 'ACTIF',
-        service_id: serviceId
+        service_id: serviceId,
+        situationFamiliale: addForm.situationFamiliale,
+        nombreEnfants: parseInt(addForm.nombreEnfants) || 0,
+        telephone: addForm.telephone,
+        cin: addForm.cin,
+        localisation: addForm.localisation,
+        salaire: parseFloat(addForm.salaire) || 0
       });
 
       showToast(`Employé ${fullName} ajouté avec succès !`, 'success');
@@ -71,7 +87,7 @@ const Employees = () => {
         `Création du profil de l'employé: ${fullName} (${addForm.role}) dans le service ${addForm.dept}`
       );
       setIsAddModalOpen(false);
-      setAddForm({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI' });
+      setAddForm({ firstName: '', lastName: '', email: '', role: '', dept: 'Ingénierie', contract: 'CDI', situationFamiliale: 'Célibataire', nombreEnfants: 0, telephone: '', cin: '', localisation: '', salaire: '' });
       fetchEmployees();
     } catch (error) {
       console.error('Error adding employee:', error);
@@ -90,7 +106,13 @@ const Employees = () => {
         prenom: firstName,
         nom: lastName,
         email: editForm.email,
-        poste: editForm.role
+        poste: editForm.role,
+        situationFamiliale: editForm.situationFamiliale,
+        nombreEnfants: parseInt(editForm.nombreEnfants) || 0,
+        telephone: editForm.telephone,
+        cin: editForm.cin,
+        localisation: editForm.localisation,
+        salaire: parseFloat(editForm.salaire) || 0
       });
 
       showToast('Profil mis à jour !', 'success');
@@ -408,7 +430,7 @@ const Employees = () => {
         showFooter={false}
       >
         <form onSubmit={onAddSubmit} style={{ padding: '4px 0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <User size={12} color="var(--primary)" /> {t('employees.form.firstName')}
@@ -453,6 +475,49 @@ const Employees = () => {
                 <option value="Freelance">Freelance</option>
               </select>
             </div>
+            
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Phone size={12} color="var(--c-teal)" /> Téléphone
+              </label>
+              <input type="text" value={addForm.telephone} onChange={(e) => setAddForm({ ...addForm, telephone: e.target.value })} className="form-input" placeholder="06..." />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CreditCard size={12} color="var(--c-purple)" /> C.I.N
+              </label>
+              <input type="text" value={addForm.cin} onChange={(e) => setAddForm({ ...addForm, cin: e.target.value })} className="form-input" placeholder="AB12345" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <MapPin size={12} color="var(--text-gray)" /> Localisation
+              </label>
+              <input type="text" value={addForm.localisation} onChange={(e) => setAddForm({ ...addForm, localisation: e.target.value })} className="form-input" placeholder="Ville / Adresse" />
+            </div>
+            
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Heart size={12} color="var(--danger)" /> Situation Familiale
+              </label>
+              <select className="form-input" value={addForm.situationFamiliale} onChange={(e) => setAddForm({ ...addForm, situationFamiliale: e.target.value })}>
+                <option value="Célibataire">Célibataire</option>
+                <option value="Marié(e)">Marié(e)</option>
+                <option value="Divorcé(e)">Divorcé(e)</option>
+                <option value="Veuf(ve)">Veuf(ve)</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <User size={12} color="var(--c-teal)" /> Nombre d'enfants
+              </label>
+              <input type="number" min="0" value={addForm.nombreEnfants} onChange={(e) => setAddForm({ ...addForm, nombreEnfants: e.target.value })} className="form-input" disabled={addForm.situationFamiliale === 'Célibataire'} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <DollarSign size={12} color="var(--danger)" /> Salaire (MAD)
+              </label>
+              <input type="number" min="0" value={addForm.salaire} onChange={(e) => setAddForm({ ...addForm, salaire: e.target.value })} className="form-input" placeholder="ex: 15000" />
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button type="submit" className="action-btn primary" disabled={!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role} style={{ flex: 2, height: '42px', opacity: (!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role) ? 0.5 : 1, cursor: (!addForm.firstName || !addForm.lastName || !addForm.email || !addForm.role) ? 'not-allowed' : 'pointer' }}>{t('employees.form.createProfile')}</button>
@@ -473,56 +538,112 @@ const Employees = () => {
       >
         {selectedEmployee && (
           <div style={{ padding: '0' }}>
-            <div style={{ textAlign: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
-              <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: selectedEmployee.bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 800, margin: '0 auto 12px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', border: '3px solid var(--main-bg)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: selectedEmployee.bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800, margin: '0 auto 6px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
                 {selectedEmployee.initials}
               </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '2px' }}>{selectedEmployee.name}</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: '2px' }}>{selectedEmployee.name}</h3>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                <span className="filter-tag blue" style={{ padding: '2px 10px', fontSize: '0.65rem' }}>{selectedEmployee.role}</span>
-                <span className="modern-status-badge badge-success" style={{ padding: '2px 10px', fontSize: '0.65rem' }}>{selectedEmployee.status}</span>
+                <span className="filter-tag blue" style={{ padding: '2px 8px', fontSize: '0.6rem' }}>{selectedEmployee.role}</span>
+                <span className="modern-status-badge badge-success" style={{ padding: '2px 8px', fontSize: '0.6rem' }}>{selectedEmployee.status}</span>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
-              <div className="detail-box" style={{ padding: '8px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Mail size={12} color="var(--primary)" />
-                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>{t('employees.detail.email')}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '12px' }}>
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <Mail size={10} color="var(--primary)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>EMAIL</span>
                 </div>
-                <span className="detail-value" style={{ fontSize: '0.8rem' }}>{selectedEmployee.email}</span>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.email}</span>
               </div>
 
-              <div className="detail-box" style={{ padding: '8px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Building2 size={12} color="var(--c-purple)" />
-                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>{t('employees.detail.department')}</span>
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <Phone size={10} color="var(--c-blue)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>TÉLÉPHONE</span>
                 </div>
-                <span className="detail-value" style={{ fontSize: '0.8rem' }}>{selectedEmployee.dept}</span>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.raw?.telephone || '-'}</span>
               </div>
 
-              <div className="detail-box" style={{ padding: '8px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <ShieldCheck size={12} color="var(--c-orange)" />
-                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>{t('employees.detail.empId')}</span>
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <Building2 size={10} color="var(--c-purple)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>DÉPARTEMENT</span>
                 </div>
-                <span className="detail-value" style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>#EMP-00{selectedEmployee.id}</span>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.dept}</span>
               </div>
 
-              <div className="detail-box" style={{ padding: '8px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <Calendar size={12} color="var(--success)" />
-                  <span className="detail-label" style={{ fontSize: '0.65rem' }}>{t('employees.detail.hired')}</span>
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <ShieldCheck size={10} color="var(--c-orange)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>MATRICULE</span>
                 </div>
-                <span className="detail-value" style={{ fontSize: '0.8rem' }}>{selectedEmployee.date}</span>
+                <span className="detail-value" style={{ fontSize: '0.7rem', fontFamily: 'monospace' }}>{selectedEmployee.raw?.matricule || `#EMP-00${selectedEmployee.id}`}</span>
               </div>
+              
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <CreditCard size={10} color="var(--c-teal)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>C.I.N</span>
+                </div>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.raw?.cin || '-'}</span>
+              </div>
+
+              <div className="detail-box" style={{ padding: '4px 6px', gridColumn: 'span 2' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <MapPin size={10} color="var(--text-gray)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>LOCALISATION / ADRESSE</span>
+                </div>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.raw?.localisation || selectedEmployee.raw?.adresse || '-'}</span>
+              </div>
+
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <Calendar size={10} color="var(--success)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>EMBAUCHE</span>
+                </div>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.date}</span>
+              </div>
+              
+              <div className="detail-box" style={{ padding: '4px 6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                  <FileText size={10} color="var(--c-orange)" />
+                  <span className="detail-label" style={{ fontSize: '0.6rem' }}>CONTRAT</span>
+                </div>
+                <span className="detail-value" style={{ fontSize: '0.7rem' }}>{selectedEmployee.raw?.contrat || selectedEmployee.type || '-'}</span>
+              </div>
+
+              {/* Ligne pour le salaire et autres infos privées (Visible seulement pour RH/Admin) */}
+              {(isHRManager || isHRAgent) && (
+                <>
+                  <div className="detail-box" style={{ padding: '4px 6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                      <Heart size={10} color="var(--danger)" />
+                      <span className="detail-label" style={{ fontSize: '0.6rem' }}>SIT. FAMILIALE</span>
+                    </div>
+                    <span className="detail-value" style={{ fontSize: '0.7rem' }}>
+                      {selectedEmployee.raw?.situationFamiliale || '-'} 
+                      {selectedEmployee.raw?.nombreEnfants ? ` (${selectedEmployee.raw.nombreEnfants})` : ''}
+                    </span>
+                  </div>
+
+                  <div className="detail-box" style={{ padding: '4px 6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                      <DollarSign size={10} color="var(--danger)" />
+                      <span className="detail-label" style={{ fontSize: '0.6rem' }}>SALAIRE MENSUEL</span>
+                    </div>
+                    <span className="detail-value" style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{selectedEmployee.raw?.salaire ? `${selectedEmployee.raw.salaire.toLocaleString()} MAD` : '-'}</span>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="action-btn primary" style={{ flex: 1, justifyContent: 'center', height: '40px', fontSize: '0.85rem' }} onClick={() => { showToast('Email de contact envoyé !', 'info'); setIsViewModalOpen(false); }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="action-btn primary" style={{ flex: 1, justifyContent: 'center', height: '36px', fontSize: '0.8rem' }} onClick={() => { showToast('Email de contact envoyé !', 'info'); setIsViewModalOpen(false); }}>
                 {t('employees.detail.contact')}
               </button>
-              <button className="action-btn" style={{ flex: 1, justifyContent: 'center', height: '40px', fontSize: '0.85rem' }} onClick={() => setIsViewModalOpen(false)}>
+              <button className="action-btn" style={{ flex: 1, justifyContent: 'center', height: '36px', fontSize: '0.8rem' }} onClick={() => setIsViewModalOpen(false)}>
                 {t('employees.detail.close')}
               </button>
             </div>
@@ -542,7 +663,7 @@ const Employees = () => {
       >
         {selectedEmployee && (
           <form onSubmit={onEditSubmit} style={{ padding: '4px 0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '12px' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <User size={12} color="var(--primary)" /> {t('employees.table.employee')}
@@ -555,11 +676,53 @@ const Employees = () => {
                 </label>
                 <input type="email" className="form-input" required value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
               </div>
-              <div className="form-group" style={{ marginBottom: 0, gridColumn: '1/-1' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Briefcase size={12} color="var(--c-orange)" /> {t('employees.form.role')}
                 </label>
                 <input type="text" className="form-input" required value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Heart size={12} color="var(--danger)" /> Situation Familiale
+                </label>
+                <select className="form-input" value={editForm.situationFamiliale} onChange={(e) => setEditForm({ ...editForm, situationFamiliale: e.target.value })}>
+                  <option value="Célibataire">Célibataire</option>
+                  <option value="Marié(e)">Marié(e)</option>
+                  <option value="Divorcé(e)">Divorcé(e)</option>
+                  <option value="Veuf(ve)">Veuf(ve)</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <User size={12} color="var(--c-teal)" /> Nombre d'enfants
+                </label>
+                <input type="number" min="0" value={editForm.nombreEnfants} onChange={(e) => setEditForm({ ...editForm, nombreEnfants: e.target.value })} className="form-input" disabled={editForm.situationFamiliale === 'Célibataire'} />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Phone size={12} color="var(--c-teal)" /> Téléphone
+                </label>
+                <input type="text" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} className="form-input" placeholder="06..." />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <CreditCard size={12} color="var(--c-purple)" /> C.I.N
+                </label>
+                <input type="text" value={editForm.cin} onChange={(e) => setEditForm({ ...editForm, cin: e.target.value })} className="form-input" placeholder="AB12345" />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <MapPin size={12} color="var(--text-gray)" /> Localisation
+                </label>
+                <input type="text" value={editForm.localisation} onChange={(e) => setEditForm({ ...editForm, localisation: e.target.value })} className="form-input" placeholder="Ville / Adresse" />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <DollarSign size={12} color="var(--danger)" /> Salaire (MAD)
+                </label>
+                <input type="number" min="0" value={editForm.salaire} onChange={(e) => setEditForm({ ...editForm, salaire: e.target.value })} className="form-input" placeholder="ex: 15000" />
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>

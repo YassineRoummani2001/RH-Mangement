@@ -110,6 +110,13 @@
     border-color: var(--border-color) !important;
 }
 
+[data-theme="dark"] select.filter-pill-blue {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #60A5FA !important;
+    border: none !important;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2360A5FA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+}
+
 .dropdown-item:hover {
     background-color: var(--sidebar-bg) !important;
 }
@@ -564,6 +571,7 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
+    min-width: 0;
     margin-left: 260px;
     padding: 24px;
     background-color: var(--main-bg);
@@ -1289,7 +1297,7 @@ table {
 
 th {
     text-align: left;
-    padding: 14px 20px;
+    padding: 12px 14px;
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-gray);
@@ -1301,8 +1309,8 @@ th {
 }
 
 td {
-    padding: 14px 20px;
-    font-size: 0.875rem;
+    padding: 12px 14px;
+    font-size: 0.85rem;
     color: var(--text-dark);
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
@@ -1352,6 +1360,10 @@ tr:hover {
     display: block;
     font-size: 0.8rem;
     color: var(--text-gray);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
 }
 
 .dept-pill,
@@ -1578,11 +1590,7 @@ tr:hover {
     font-family: inherit;
 }
 
-.pagination-btn:hover:not(:disabled) {
-    background: var(--primary-bg);
-    border-color: var(--primary);
-    color: var(--primary);
-}
+/* Removed pagination hover effect based on user request */
 
 .pagination-btn:disabled {
     opacity: 0.4;
@@ -1601,11 +1609,7 @@ tr:hover {
     border-color: var(--primary);
 }
 
-.pagination-btn.page-num:hover:not(:disabled):not(.active) {
-    background: var(--primary-bg);
-    color: var(--primary);
-    border: 1px solid var(--border-color);
-}
+/* Removed page-num hover effect based on user request */
 
 .pagination-ellipsis {
     padding: 0 4px;

@@ -89,6 +89,10 @@ export const me = async (req, res) => {
         echelle: employe.echelle,
         dateRecrutement: employe.dateRecrutement ? employe.dateRecrutement.toISOString().split('T')[0] : null,
         statut: employe.statut,
+        contrat: employe.contrat,
+        localisation: employe.localisation,
+        soldeConges: employe.soldeConges ?? 22,
+        soldeMaladie: employe.soldeMaladie ?? 8,
         photo: employe.photo,
         service: employe.service ? {
           id: employe.service._id,

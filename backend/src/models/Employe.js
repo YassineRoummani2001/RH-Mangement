@@ -22,6 +22,8 @@ const employeSchema = new mongoose.Schema({
   salaire: { type: Number },
   contrat: { type: String, default: 'CDI' },
   localisation: { type: String, default: 'Siège Social' },
+  soldeConges: { type: Number, default: 22 },
+  soldeMaladie: { type: Number, default: 8 },
 
   // Informations familiales
   conjoint: { type: String },
